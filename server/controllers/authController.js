@@ -1,21 +1,7 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
-const hashPassword = async (req, res, next) => {
-	try {
-		const userPassword = req.body.password;
-		const hash = await bcrypt.hash(userPassword, 10);
-		req.hashedPassword = hash;
-		// need to store hashedPassword on DB, DB isn't yet initialized.
-		next();
-	} catch (err) {
-		return res.status(400).json({
-			status: "failed",
-			message: "bad request",
-			statuscode: 400,
-		});
-	}
-};
+const User = require("../models/userModel");
 
 const generateToken = (user) => {
 	const payload = {
@@ -28,59 +14,69 @@ const generateToken = (user) => {
 	return token;
 };
 
-const sendToken = (res, user) => {
+const sendToken = (user, statusCode, res) => {
 	const token = generateToken(user);
-	return res.status(200).json({
+	const cookieOptions = {
+		expires: new Date(
+			Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+		),
+		httpOnly: true,
+	};
+	res.cookie("jwt", token, cookieOptions);
+	user.password = undefined;
+	res.status(statusCode).json({
 		status: "success",
-		message: "Login successful",
-		statuscode: 200,
 		token,
+		data: {
+			user,
+		},
 	});
 };
 
 exports.login = async (req, res) => {
-	const { email, password } = req.body;
-	if (!email || !password) {
-		return res.status(400).json({
-			status: "failed",
-			message: "Please Provide email and password",
-			statuscode: 400,
-		});
-	}
-	const testPasswordHash = await bcrypt.hash("testpassword", 10);
-
-	const fakeUser = {
-		_id: "123456789",
-		email: "test@test.com",
-		passwordHash: testPasswordHash,
-	};
-
-	if (email !== fakeUser.email) {
-		return res.status(400).json({
-			status: "failed",
-			message: "Invalid credentials, email or password are incorrect",
-			statuscode: 400,
-		});
-	}
-
 	try {
-		const match = await bcrypt.compare(password, fakeUser.passwordHash);
-		if (match) {
-			return sendToken(res, fakeUser);
-		} else {
+		const { email, password } = req.body;
+
+		if (!email || !password) {
 			return res.status(400).json({
 				status: "failed",
-				message: "Invalid credentials, email or password are incorrect",
-				statuscode: 400,
+				message: "Please provide email and password",
 			});
 		}
+
+		const user = await User.findOne({ email }).select("+password");
+
+		if (!user || !(await bcrypt.compare(password, user.password))) {
+			return res.status(401).json({
+				status: "failed",
+				message: "Invalid credentials, email or password are incorrect",
+			});
+		}
+
+		sendToken(user, 200, res);
 	} catch (error) {
 		return res.status(500).json({
 			status: "failed",
 			message: "An error occurred during login",
-			statuscode: 500,
 		});
 	}
 };
 
-//exports.signUp = async((req, res) => {});
+exports.signup = async (req, res) => {
+	try {
+		const user = await User.create({
+			username: req.body.username,
+			email: req.body.email,
+			password: req.body.password,
+			passwordConfirm: req.body.passwordConfirm,
+			fullName: req.body.fullName,
+			profilePicture: req.body.profilePicture,
+		});
+		sendToken(user, 201, res);
+	} catch (err) {
+		res.status(400).json({
+			status: "failed",
+			message: err.message,
+		});
+	}
+};
