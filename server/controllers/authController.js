@@ -1,5 +1,22 @@
+const sendEmail = require("../utils/email");
 const User = require("../models/userModel");
-
+const resetPasswordMessage = require("../utils/passwordReset");
+const sendToken = (user, statusCode, res) => {
+	const token = user.generateAuthToken();
+	const cookieOptions = {
+		expires: new Date(
+			Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+		),
+		httpOnly: true,
+	};
+	res.cookie("jwt", token, cookieOptions);
+	user.password = undefined;
+	res.status(statusCode).json({
+		status: "success",
+		token,
+		data: { user },
+	});
+};
 exports.login = async (req, res) => {
 	try {
 		const { email, password } = req.body;
@@ -19,23 +36,7 @@ exports.login = async (req, res) => {
 				message: "Invalid credentials, email or password are incorrect",
 			});
 		}
-
-		const token = user.generateAuthToken();
-		const cookieOptions = {
-			expires: new Date(
-				Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
-			),
-			httpOnly: true,
-		};
-
-		res.cookie("jwt", token, cookieOptions);
-		user.password = undefined;
-
-		res.status(200).json({
-			status: "success",
-			token,
-			data: { user },
-		});
+		sendToken(user, 200, res);
 	} catch (error) {
 		return res.status(500).json({
 			status: "failed",
@@ -95,8 +96,30 @@ exports.forgotPassword = async (req, res) => {
 	const resetToken = user.createPasswordResetToken();
 	await user.save({ validateBeforeSave: false });
 
-	/*TODO: Generate Reset URL.
-	send an email with the url.
-	*/
-	
+	const resetURL = `${req.protocol}://${req.get(
+		"host"
+	)}/api/v1/users/resetPassword/${resetToken}`;
+
+	const message = resetPasswordMessage(resetURL);
+	try {
+		await sendEmail({
+			email: user.email,
+			subject: "Your Password Reset Request (valid for 10 min)",
+			message,
+		});
+
+		res.status(200).json({
+			status: "success",
+			message: "Token sent to email!",
+		});
+	} catch (error) {
+		user.passwordResetToken = undefined;
+		user.passwordResetExpires = undefined;
+		await user.save({ validateBeforeSave: false });
+
+		return res.status(500).json({
+			status: "failed",
+			message: "There was an error sending the email. Try again later!",
+		});
+	}
 };
