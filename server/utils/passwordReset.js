@@ -42,7 +42,7 @@ const createPasswordResetMessage = (resetURL) => {
     <p>If you didn't request this password reset, please ignore this email.</p>
     
     <div class="footer">
-      <p>Regards,<br>Your App Team</p>
+      <p>Regards,<br>Daniel.F & Iegor.K</p>
     </div>
   </div>
 </body>
