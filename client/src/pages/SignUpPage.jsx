@@ -1,7 +1,9 @@
-import axios from "axios";
 import React, { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import FormField from "../components/FormField";
 import AuthContext from "../context/AuthContext";
+import { useApi } from "../hooks/useApi";
+import { validationRules } from "../utils/validationRules";
 
 function SignupPage() {
 	const [formData, setFormData] = useState({
@@ -12,20 +14,18 @@ function SignupPage() {
 		fullName: "",
 		profilePicture: "",
 	});
-
 	const [errors, setErrors] = useState({});
-	const [loading, setLoading] = useState(false);
-	const [apiError, setApiError] = useState("");
-
 	const { login } = useContext(AuthContext);
 	const navigate = useNavigate();
-
+	const { loading, error: apiError, callApi } = useApi();
 	const handleChange = (e) => {
 		const { name, value } = e.target;
+
 		setFormData({
 			...formData,
 			[name]: value,
 		});
+
 		if (errors[name]) {
 			setErrors({
 				...errors,
@@ -33,166 +33,151 @@ function SignupPage() {
 			});
 		}
 	};
-
+	const validateField = (name, value = null) => {
+		const fieldValue = value !== null ? value : formData[name];
+		let error = "";
+		switch (name) {
+			case "username":
+				error = validationRules.validateUsername(fieldValue);
+				break;
+			case "email":
+				error = validationRules.validateEmail(fieldValue);
+				break;
+			case "password":
+				error = validationRules.validatePassword(fieldValue);
+				break;
+			case "passwordConfirm":
+				error = validationRules.validatePasswordConfirm(
+					formData.password,
+					fieldValue
+				);
+				break;
+			case "fullName":
+				error = validationRules.validateFullName(fieldValue);
+				break;
+			default:
+				break;
+		}
+		setErrors({
+			...errors,
+			[name]: error,
+		});
+		return !error;
+	};
 	const validateForm = () => {
-		const newErrors = {};
-
-		if (!formData.username) {
-			newErrors.username = "Username is required";
-		} else if (formData.username.length < 3) {
-			newErrors.username = "Username must be at least 3 characters";
-		}
-
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		if (!formData.email) {
-			newErrors.email = "Email is required";
-		} else if (!emailRegex.test(formData.email)) {
-			newErrors.email = "Please enter a valid email address";
-		}
-
-		if (!formData.password) {
-			newErrors.password = "Password is required";
-		} else if (formData.password.length < 8) {
-			newErrors.password = "Password must be at least 8 characters";
-		}
-
-		if (!formData.passwordConfirm) {
-			newErrors.passwordConfirm = "Please confirm your password";
-		} else if (formData.password !== formData.passwordConfirm) {
-			newErrors.passwordConfirm = "Passwords do not match";
-		}
-
-		if (!formData.fullName) {
-			newErrors.fullName = "Full name is required";
-		}
-
+		const newErrors = {
+			username: validationRules.validateUsername(formData.username),
+			email: validationRules.validateEmail(formData.email),
+			password: validationRules.validatePassword(formData.password),
+			passwordConfirm: validationRules.validatePasswordConfirm(
+				formData.password,
+				formData.passwordConfirm
+			),
+			fullName: validationRules.validateFullName(formData.fullName),
+		};
 		setErrors(newErrors);
-		return Object.keys(newErrors).length === 0;
+		return !Object.values(newErrors).some((error) => error);
 	};
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
-
 		if (!validateForm()) {
 			return;
 		}
 
 		try {
-			setLoading(true);
-			setApiError("");
-
-			const response = await axios({
-				method: "post",
-				url: "http://localhost:8000/api/v1/users/signup",
-				data: formData,
-				withCredentials: true,
-			});
-
-			if (response.data.data && response.data.data.user) {
-				login(response.data.data.user);
+			const response = await callApi("post", "/users/signup", formData);
+			if (response.data && response.data.user) {
+				login(response.data.user);
 				navigate("/dashboard");
 			} else {
 				navigate("/login");
 			}
-		} catch (err) {
-			let message;
-
-			if (err.response && err.response.data && err.response.data.message) {
-				message = err.response.data.message;
-			} else if (err.request) {
-				message = "No response from server. Please try again later.";
-			} else {
-				message = "Signup failed. Please try again.";
-			}
-			setApiError(message);
-		} finally {
-			setLoading(false);
-		}
+		} catch (err) {}
 	};
 
 	return (
-		<div className="signup-container">
+		<div className="auth-container">
 			<h2>Create an Account</h2>
 
 			<form onSubmit={handleSubmit}>
-				<div className="form-group">
-					<label htmlFor="username">Username</label>
-					<input
-						type="text"
-						id="username"
-						name="username"
-						value={formData.username}
-						onChange={handleChange}
-						placeholder="Enter username"
-					/>
-					{errors.username && <div className="error">{errors.username}</div>}
-				</div>
+				<FormField
+					id="username"
+					name="username"
+					type="text"
+					label="Username"
+					value={formData.username}
+					onChange={handleChange}
+					onBlur={() => validateField("username")}
+					placeholder="Enter username"
+					error={errors.username}
+					required
+				/>
 
-				<div className="form-group">
-					<label htmlFor="email">Email</label>
-					<input
-						type="email"
-						id="email"
-						name="email"
-						value={formData.email}
-						onChange={handleChange}
-						placeholder="Enter email"
-					/>
-					{errors.email && <div className="error">{errors.email}</div>}
-				</div>
+				<FormField
+					id="email"
+					name="email"
+					type="email"
+					label="Email"
+					value={formData.email}
+					onChange={handleChange}
+					onBlur={() => validateField("email")}
+					placeholder="Enter email"
+					error={errors.email}
+					required
+				/>
 
-				<div className="form-group">
-					<label htmlFor="fullName">Full Name</label>
-					<input
-						type="text"
-						id="fullName"
-						name="fullName"
-						value={formData.fullName}
-						onChange={handleChange}
-						placeholder="Enter your full name"
-					/>
-					{errors.fullName && <div className="error">{errors.fullName}</div>}
-				</div>
+				<FormField
+					id="fullName"
+					name="fullName"
+					type="text"
+					label="Full Name"
+					value={formData.fullName}
+					onChange={handleChange}
+					onBlur={() => validateField("fullName")}
+					placeholder="Enter your full name"
+					error={errors.fullName}
+					required
+				/>
 
-				<div className="form-group">
-					<label htmlFor="password">Password</label>
-					<input
-						type="password"
-						id="password"
-						name="password"
-						value={formData.password}
-						onChange={handleChange}
-						placeholder="Enter password"
-					/>
-					{errors.password && <div className="error">{errors.password}</div>}
-				</div>
+				<FormField
+					id="password"
+					name="password"
+					type="password"
+					label="Password"
+					value={formData.password}
+					onChange={handleChange}
+					onBlur={() => validateField("password")}
+					placeholder="Enter password (8+ characters)"
+					error={errors.password}
+					autoComplete="new-password"
+					required
+				/>
 
-				<div className="form-group">
-					<label htmlFor="passwordConfirm">Confirm Password</label>
-					<input
-						type="password"
-						id="passwordConfirm"
-						name="passwordConfirm"
-						value={formData.passwordConfirm}
-						onChange={handleChange}
-						placeholder="Confirm password"
-					/>
-					{errors.passwordConfirm && (
-						<div className="error">{errors.passwordConfirm}</div>
-					)}
-				</div>
+				<FormField
+					id="passwordConfirm"
+					name="passwordConfirm"
+					type="password"
+					label="Confirm Password"
+					value={formData.passwordConfirm}
+					onChange={handleChange}
+					onBlur={() => validateField("passwordConfirm")}
+					placeholder="Confirm password"
+					error={errors.passwordConfirm}
+					autoComplete="new-password"
+					required
+				/>
 
-				<div className="form-group">
-					<label htmlFor="profilePicture">Profile Picture URL (optional)</label>
-					<input
-						type="text"
-						id="profilePicture"
-						name="profilePicture"
-						value={formData.profilePicture}
-						onChange={handleChange}
-						placeholder="Enter profile picture URL"
-					/>
-				</div>
+				<FormField
+					id="profilePicture"
+					name="profilePicture"
+					type="text"
+					label="Profile Picture URL"
+					value={formData.profilePicture}
+					onChange={handleChange}
+					placeholder="Enter profile picture URL (optional)"
+					error={errors.profilePicture}
+				/>
 
 				{apiError && <div className="api-error">{apiError}</div>}
 

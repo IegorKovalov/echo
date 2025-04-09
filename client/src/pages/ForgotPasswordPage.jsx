@@ -1,25 +1,25 @@
-import axios from "axios";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import FormField from "../components/FormField";
+import { useApi } from "../hooks/useApi";
+import { validationRules } from "../utils/validationRules";
 
 function ForgotPasswordPage() {
 	const [email, setEmail] = useState("");
 	const [emailError, setEmailError] = useState("");
-	const [loading, setLoading] = useState(false);
 	const [success, setSuccess] = useState(false);
-	const [apiError, setApiError] = useState("");
+
+	const { loading, error: apiError, callApi } = useApi();
 
 	const validateEmail = () => {
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		if (!email) {
-			setEmailError("Email is required");
-			return false;
-		} else if (!emailRegex.test(email)) {
-			setEmailError("Please enter a valid email address");
-			return false;
-		}
-		setEmailError("");
-		return true;
+		const error = validationRules.validateEmail(email);
+		setEmailError(error);
+		return !error;
+	};
+
+	const handleChange = (e) => {
+		setEmail(e.target.value);
+		if (emailError) setEmailError("");
 	};
 
 	const handleSubmit = async (e) => {
@@ -30,35 +30,13 @@ function ForgotPasswordPage() {
 		}
 
 		try {
-			setLoading(true);
-			setApiError("");
-
-			await axios({
-				method: "post",
-				url: "http://localhost:8000/api/v1/users/forgotPassword",
-				data: { email },
-				withCredentials: true,
-			});
-
+			await callApi("post", "/users/forgotPassword", { email });
 			setSuccess(true);
-		} catch (err) {
-			let message;
-
-			if (err.response && err.response.data && err.response.data.message) {
-				message = err.response.data.message;
-			} else if (err.request) {
-				message = "No response from server. Please try again later.";
-			} else {
-				message = "Request failed. Please try again.";
-			}
-			setApiError(message);
-		} finally {
-			setLoading(false);
-		}
+		} catch (err) {}
 	};
 
 	return (
-		<div className="forgot-password-container">
+		<div className="auth-container">
 			<h2>Forgot Password</h2>
 
 			{success ? (
@@ -77,21 +55,18 @@ function ForgotPasswordPage() {
 					</p>
 
 					<form onSubmit={handleSubmit}>
-						<div className="form-group">
-							<label htmlFor="email">Email</label>
-							<input
-								type="email"
-								id="email"
-								value={email}
-								onChange={(e) => {
-									setEmail(e.target.value);
-									if (emailError) setEmailError("");
-									if (apiError) setApiError("");
-								}}
-								placeholder="Enter your email address"
-							/>
-							{emailError && <div className="error">{emailError}</div>}
-						</div>
+						<FormField
+							id="email"
+							name="email"
+							type="email"
+							label="Email"
+							value={email}
+							onChange={handleChange}
+							onBlur={validateEmail}
+							placeholder="Enter your email address"
+							error={emailError}
+							required
+						/>
 
 						{apiError && <div className="api-error">{apiError}</div>}
 
