@@ -1,21 +1,56 @@
 import axios from "axios";
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useContext, useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import AuthContext from "../context/AuthContext";
 
 function LoginPage() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
-	const [error, setError] = useState("");
+	const [emailError, setEmailError] = useState("");
+	const [passwordError, setPasswordError] = useState("");
+	const [formError, setFormError] = useState("");
 	const [loading, setLoading] = useState(false);
+
+	const { login } = useContext(AuthContext);
+	const navigate = useNavigate();
+
+	useEffect(() => {
+		if (formError) setFormError("");
+	}, [email, password]);
+
+	const validateEmail = (email) => {
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!email) {
+			setEmailError("Email is required");
+			return false;
+		} else if (!emailRegex.test(email)) {
+			setEmailError("Please enter a valid email address");
+			return false;
+		}
+		setEmailError("");
+		return true;
+	};
+
+	const validatePassword = (password) => {
+		if (!password) {
+			setPasswordError("Password is required");
+			return false;
+		} else if (password.length < 6) {
+			setPasswordError("Password must be at least 6 characters");
+			return false;
+		}
+		setPasswordError("");
+		return true;
+	};
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
-		if (!email || !password) {
-			const message = "Please fill in all fields";
-			setError(message);
-			alert(message);
+		const isEmailValid = validateEmail(email);
+		const isPasswordValid = validatePassword(password);
+		if (!isEmailValid || !isPasswordValid) {
 			return;
 		}
+
 		try {
 			setLoading(true);
 			const response = await axios({
@@ -27,8 +62,8 @@ function LoginPage() {
 				},
 				withCredentials: true,
 			});
-			console.log(response);
-			setLoading(false);
+			login(response.data.data.user);
+			navigate("/dashboard");
 		} catch (err) {
 			let message;
 
@@ -39,29 +74,47 @@ function LoginPage() {
 			} else {
 				message = "Login failed. Please try again.";
 			}
-			setError(message);
+			setFormError(message);
+		} finally {
 			setLoading(false);
-			alert(message);
 		}
 	};
+
 	return (
 		<>
 			<form onSubmit={handleSubmit}>
-				<input
-					type="email"
-					placeholder="Enter Email"
-					value={email}
-					onChange={(e) => setEmail(e.target.value)}
-				></input>
-				<input
-					type="password"
-					placeholder="Enter Password"
-					value={password}
-					onChange={(e) => setPassword(e.target.value)}
-				></input>
+				<div>
+					<input
+						type="email"
+						placeholder="Enter Email"
+						value={email}
+						onChange={(e) => setEmail(e.target.value)}
+						onBlur={() => validateEmail(email)}
+					/>
+					{emailError && <div style={{ color: "red" }}>{emailError}</div>}
+				</div>
+
+				<div>
+					<input
+						type="password"
+						placeholder="Enter Password"
+						value={password}
+						onChange={(e) => setPassword(e.target.value)}
+						onBlur={() => validatePassword(password)}
+					/>
+					{passwordError && <div style={{ color: "red" }}>{passwordError}</div>}
+				</div>
+
+				{formError && <div style={{ color: "red" }}>{formError}</div>}
+
 				{loading ? <p>loading...</p> : <button type="submit">Login</button>}
-				<Link to="/signup">Don't have an account? Sign up</Link>
-				<Link to="/forgotPassword">Forgot your password?</Link>
+
+				<div>
+					<Link to="/signup">Don't have an account? Sign up</Link>
+				</div>
+				<div>
+					<Link to="/forgotPassword">Forgot your password?</Link>
+				</div>
 			</form>
 		</>
 	);

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { createContext, useEffect, useState } from "react";
+import { createContext, useState } from "react";
 const AuthContext = createContext({});
 
 export const AuthProvider = ({ children }) => {
@@ -15,12 +15,11 @@ export const AuthProvider = ({ children }) => {
 		setUser(null);
 		setIsAuthenticated(false);
 		try {
-			const response = await axios({
+			await axios({
 				method: "get",
 				url: "http://localhost:8000/api/v1/users/logout",
 				withCredentials: true,
 			});
-			console.log(response);
 		} catch (err) {
 			let message;
 			if (err.response && err.response.data && err.response.data.message) {

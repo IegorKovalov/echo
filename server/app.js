@@ -14,7 +14,12 @@ const app = express();
 // Middleware
 app.use(morgan("dev")); // Logging middleware
 app.use(helmet()); // Security middleware
-app.use(cors()); // Enable CORS
+app.use(
+	cors({
+		origin: "http://localhost:5173",
+		credentials: true,
+	})
+); // Enable CORS
 
 // Body parser middleware
 app.use(express.json()); // Parse JSON request bodies
