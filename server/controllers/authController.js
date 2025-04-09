@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const sendEmail = require("../utils/email");
 const User = require("../models/userModel");
 const resetPasswordMessage = require("../utils/passwordReset");
@@ -120,6 +121,39 @@ exports.forgotPassword = async (req, res) => {
 		return res.status(500).json({
 			status: "failed",
 			message: "There was an error sending the email. Try again later!",
+		});
+	}
+};
+
+exports.resetPassword = async (req, res) => {
+	const resetToken = req.params.token;
+	const hashedToken = crypto
+		.createHash("sha256")
+		.update(resetToken)
+		.digest("hex");
+	const user = await User.findOne({
+		passwordResetToken: hashedToken,
+		passwordResetExpires: { $gt: Date.now() },
+	});
+
+	try {
+		if (!user) {
+			return res.status(404).json({
+				status: "failed",
+				message: "Token is invalid or has expired",
+			});
+		}
+		user.passwordResetExpires = undefined;
+		user.passwordResetToken = undefined;
+		user.passwordChangedAt = Date.now();
+		user.password = req.body.password;
+		user.passwordConfirm = req.body.passwordConfirm;
+		await user.save();
+		sendToken(user, 200, res);
+	} catch (err) {
+		return res.status(500).json({
+			status: "failed",
+			message: err.message,
 		});
 	}
 };
