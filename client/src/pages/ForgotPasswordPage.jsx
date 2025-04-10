@@ -86,7 +86,11 @@ function ForgotPasswordPage() {
 							</div>
 						)}
 
-						<button type="submit" disabled={loading} className="form-button">
+						<button
+							type="submit"
+							disabled={loading}
+							className="btn btn-primary w-100 mt-3 mb-3"
+						>
 							{loading ? "Sending..." : "Reset Password"}
 						</button>
 					</form>

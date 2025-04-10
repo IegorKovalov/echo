@@ -14,10 +14,10 @@ const FormField = ({
 	required = false,
 }) => {
 	return (
-		<div className="form-field">
+		<div className="mb-3">
 			<label htmlFor={id} className="form-label">
 				{label}
-				{required && <span className="text-red-500 ml-1">*</span>}
+				{required && <span className="text-danger ms-1">*</span>}
 			</label>
 			<input
 				type={type}
@@ -28,7 +28,7 @@ const FormField = ({
 				onBlur={onBlur}
 				placeholder={placeholder}
 				autoComplete={autoComplete}
-				className="form-input"
+				className={`form-control ${error ? "is-invalid" : ""}`}
 				required={required}
 			/>
 			{error && <div className="form-error">{error}</div>}

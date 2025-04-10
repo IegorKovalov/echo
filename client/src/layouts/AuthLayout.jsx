@@ -3,26 +3,21 @@ import { Link } from "react-router-dom";
 
 const AuthLayout = ({ children, title }) => {
 	return (
-		<div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-			<div className="sm:mx-auto sm:w-full sm:max-w-md">
-				<h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-					{title}
-				</h2>
-			</div>
+		<div className="min-vh-100 bg-light d-flex flex-column justify-content-center py-4">
+			<div className="container">
+				<div className="row justify-content-center">
+					<div className="col-12 col-md-8 col-lg-6">
+						<h2 className="text-center fw-bold mb-4">{title}</h2>
 
-			<div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-				<div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-					{children}
+						<div className="bg-white p-4 p-md-5 rounded shadow">{children}</div>
+
+						<div className="mt-4 text-center">
+							<Link to="/" className="fw-medium text-primary">
+								Return to Home
+							</Link>
+						</div>
+					</div>
 				</div>
-			</div>
-
-			<div className="mt-6 text-center text-sm">
-				<Link
-					to="/"
-					className="font-medium text-primary-600 hover:text-primary-500"
-				>
-					Return to Home
-				</Link>
 			</div>
 		</div>
 	);

@@ -181,25 +181,20 @@ function SignupPage() {
 					error={errors.profilePicture}
 				/>
 
-				{apiError && (
-					<div className="rounded-md bg-red-50 p-4 mb-4">
-						<div className="flex">
-							<div className="text-sm text-red-700">{apiError}</div>
-						</div>
-					</div>
-				)}
+				{apiError && <div className="alert alert-danger mb-3">{apiError}</div>}
 
-				<button type="submit" disabled={loading} className="form-button">
+				<button
+					type="submit"
+					disabled={loading}
+					className="btn btn-primary w-100 mt-3"
+				>
 					{loading ? "Creating Account..." : "Sign Up"}
 				</button>
 			</form>
 
-			<div className="mt-6 text-center text-sm">
+			<div className="mt-4 text-center">
 				Already have an account?{" "}
-				<Link
-					to="/login"
-					className="font-medium text-primary-600 hover:text-primary-500"
-				>
+				<Link to="/login" className="fw-medium text-primary">
 					Login
 				</Link>
 			</div>

@@ -95,26 +95,21 @@ function ResetPasswordPage() {
 		<AuthLayout title="Reset Your Password">
 			{success ? (
 				<div className="text-center">
-					<div className="rounded-md bg-green-50 p-4 mb-4">
-						<div className="flex">
-							<div className="text-sm text-green-700">
-								Your password has been reset successfully!
-							</div>
+					<div className="alert alert-success mb-4">
+						<div className="d-flex">
+							<div>Your password has been reset successfully!</div>
 						</div>
 					</div>
-					<p className="mt-2 text-sm text-gray-600 mb-4">
+					<p className="text-muted mb-4">
 						You will be redirected to the login page shortly.
 					</p>
-					<Link
-						to="/login"
-						className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-					>
+					<Link to="/login" className="btn btn-primary w-100">
 						Login Now
 					</Link>
 				</div>
 			) : (
 				<>
-					<p className="text-sm text-gray-600 mb-4">
+					<p className="text-muted mb-4">
 						Please enter your new password below.
 					</p>
 
@@ -144,23 +139,24 @@ function ResetPasswordPage() {
 						/>
 
 						{apiError && (
-							<div className="rounded-md bg-red-50 p-4 mb-4">
-								<div className="flex">
-									<div className="text-sm text-red-700">{apiError}</div>
+							<div className="alert alert-danger mb-4">
+								<div className="d-flex">
+									<div>{apiError}</div>
 								</div>
 							</div>
 						)}
 
-						<button type="submit" disabled={loading} className="form-button">
+						<button
+							type="submit"
+							disabled={loading}
+							className="btn btn-primary w-100 mt-3"
+						>
 							{loading ? "Resetting..." : "Reset Password"}
 						</button>
 					</form>
 
-					<div className="mt-6 text-center text-sm">
-						<Link
-							to="/login"
-							className="font-medium text-primary-600 hover:text-primary-500"
-						>
+					<div className="mt-4 text-center">
+						<Link to="/login" className="fw-medium text-primary">
 							Back to Login
 						</Link>
 					</div>

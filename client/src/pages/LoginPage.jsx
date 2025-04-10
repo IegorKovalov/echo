@@ -110,33 +110,25 @@ function LoginPage() {
 					required
 				/>
 
-				{apiError && (
-					<div className="rounded-md bg-red-50 p-4 mb-4">
-						<div className="flex">
-							<div className="text-sm text-red-700">{apiError}</div>
-						</div>
-					</div>
-				)}
+				{apiError && <div className="alert alert-danger mb-3">{apiError}</div>}
 
-				<button type="submit" disabled={loading} className="form-button">
+				<button
+					type="submit"
+					disabled={loading}
+					className="btn btn-primary w-100 mt-3"
+				>
 					{loading ? "Logging in..." : "Log In"}
 				</button>
 			</form>
 
-			<div className="mt-6 grid grid-cols-1 gap-3">
-				<div className="text-sm text-center">
-					<Link
-						to="/signup"
-						className="font-medium text-primary-600 hover:text-primary-500"
-					>
+			<div className="mt-4 text-center">
+				<div className="mb-2">
+					<Link to="/signup" className="fw-medium text-primary">
 						Don't have an account? Sign up
 					</Link>
 				</div>
-				<div className="text-sm text-center">
-					<Link
-						to="/forgotPassword"
-						className="font-medium text-primary-600 hover:text-primary-500"
-					>
+				<div>
+					<Link to="/forgotPassword" className="fw-medium text-primary">
 						Forgot your password?
 					</Link>
 				</div>
