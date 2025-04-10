@@ -1,6 +1,8 @@
 import axios from "axios";
 import React, { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import FormField from "../components/FormField";
+import AuthLayout from "../layouts/AuthLayout";
 
 function ResetPasswordPage() {
 	const [formData, setFormData] = useState({
@@ -15,6 +17,7 @@ function ResetPasswordPage() {
 
 	const { token } = useParams();
 	const navigate = useNavigate();
+
 	const handleChange = (e) => {
 		const { name, value } = e.target;
 		setFormData({
@@ -87,60 +90,83 @@ function ResetPasswordPage() {
 			setLoading(false);
 		}
 	};
-	return (
-		<div>
-			<h2>Reset Your Password</h2>
 
+	return (
+		<AuthLayout title="Reset Your Password">
 			{success ? (
-				<div>
-					<p>Your password has been reset successfully!</p>
-					<p>You will be redirected to the login page shortly.</p>
-					<Link to="/login">Login Now</Link>
+				<div className="text-center">
+					<div className="rounded-md bg-green-50 p-4 mb-4">
+						<div className="flex">
+							<div className="text-sm text-green-700">
+								Your password has been reset successfully!
+							</div>
+						</div>
+					</div>
+					<p className="mt-2 text-sm text-gray-600 mb-4">
+						You will be redirected to the login page shortly.
+					</p>
+					<Link
+						to="/login"
+						className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+					>
+						Login Now
+					</Link>
 				</div>
 			) : (
 				<>
-					<p>Please enter your new password below.</p>
+					<p className="text-sm text-gray-600 mb-4">
+						Please enter your new password below.
+					</p>
 
 					<form onSubmit={handleSubmit}>
-						<div>
-							<label htmlFor="password">New Password</label>
-							<input
-								type="password"
-								id="password"
-								name="password"
-								value={formData.password}
-								onChange={handleChange}
-								placeholder="Enter new password"
-							/>
-							{errors.password && <div>{errors.password}</div>}
-						</div>
+						<FormField
+							id="password"
+							name="password"
+							type="password"
+							label="New Password"
+							value={formData.password}
+							onChange={handleChange}
+							placeholder="Enter new password"
+							error={errors.password}
+							required
+						/>
 
-						<div>
-							<label htmlFor="passwordConfirm">Confirm New Password</label>
-							<input
-								type="password"
-								id="passwordConfirm"
-								name="passwordConfirm"
-								value={formData.passwordConfirm}
-								onChange={handleChange}
-								placeholder="Confirm new password"
-							/>
-							{errors.passwordConfirm && <div>{errors.passwordConfirm}</div>}
-						</div>
+						<FormField
+							id="passwordConfirm"
+							name="passwordConfirm"
+							type="password"
+							label="Confirm New Password"
+							value={formData.passwordConfirm}
+							onChange={handleChange}
+							placeholder="Confirm new password"
+							error={errors.passwordConfirm}
+							required
+						/>
 
-						{apiError && <div>{apiError}</div>}
+						{apiError && (
+							<div className="rounded-md bg-red-50 p-4 mb-4">
+								<div className="flex">
+									<div className="text-sm text-red-700">{apiError}</div>
+								</div>
+							</div>
+						)}
 
-						<button type="submit" disabled={loading}>
+						<button type="submit" disabled={loading} className="form-button">
 							{loading ? "Resetting..." : "Reset Password"}
 						</button>
 					</form>
 
-					<div>
-						<Link to="/login">Back to Login</Link>
+					<div className="mt-6 text-center text-sm">
+						<Link
+							to="/login"
+							className="font-medium text-primary-600 hover:text-primary-500"
+						>
+							Back to Login
+						</Link>
 					</div>
 				</>
 			)}
-		</div>
+		</AuthLayout>
 	);
 }
 

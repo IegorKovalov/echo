@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import FormField from "../components/FormField";
 import AuthContext from "../context/AuthContext";
 import { useApi } from "../hooks/useApi";
+import AuthLayout from "../layouts/AuthLayout";
 import { validationRules } from "../utils/validationRules";
 
 function SignupPage() {
@@ -18,6 +19,7 @@ function SignupPage() {
 	const { login } = useContext(AuthContext);
 	const navigate = useNavigate();
 	const { loading, error: apiError, callApi } = useApi();
+
 	const handleChange = (e) => {
 		const { name, value } = e.target;
 
@@ -33,6 +35,7 @@ function SignupPage() {
 			});
 		}
 	};
+
 	const validateField = (name, value = null) => {
 		const fieldValue = value !== null ? value : formData[name];
 		let error = "";
@@ -64,6 +67,7 @@ function SignupPage() {
 		});
 		return !error;
 	};
+
 	const validateForm = () => {
 		const newErrors = {
 			username: validationRules.validateUsername(formData.username),
@@ -97,9 +101,7 @@ function SignupPage() {
 	};
 
 	return (
-		<div>
-			<h2>Create an Account</h2>
-
+		<AuthLayout title="Create an Account">
 			<form onSubmit={handleSubmit}>
 				<FormField
 					id="username"
@@ -179,17 +181,29 @@ function SignupPage() {
 					error={errors.profilePicture}
 				/>
 
-				{apiError && <div>{apiError}</div>}
+				{apiError && (
+					<div className="rounded-md bg-red-50 p-4 mb-4">
+						<div className="flex">
+							<div className="text-sm text-red-700">{apiError}</div>
+						</div>
+					</div>
+				)}
 
-				<button type="submit" disabled={loading}>
+				<button type="submit" disabled={loading} className="form-button">
 					{loading ? "Creating Account..." : "Sign Up"}
 				</button>
 			</form>
 
-			<div>
-				Already have an account? <Link to="/login">Login</Link>
+			<div className="mt-6 text-center text-sm">
+				Already have an account?{" "}
+				<Link
+					to="/login"
+					className="font-medium text-primary-600 hover:text-primary-500"
+				>
+					Login
+				</Link>
 			</div>
-		</div>
+		</AuthLayout>
 	);
 }
 

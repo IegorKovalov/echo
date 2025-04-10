@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import FormField from "../components/FormField";
 import AuthContext from "../context/AuthContext";
 import { useApi } from "../hooks/useApi";
+import AuthLayout from "../layouts/AuthLayout";
 import { validationRules } from "../utils/validationRules";
 
 function LoginPage() {
@@ -32,6 +33,7 @@ function LoginPage() {
 			setApiError("");
 		}
 	};
+
 	const validateField = (name, value) => {
 		let error = "";
 		switch (name) {
@@ -51,6 +53,7 @@ function LoginPage() {
 
 		return !error;
 	};
+
 	const validateForm = () => {
 		const newErrors = {
 			email: validationRules.validateEmail(formData.email),
@@ -59,6 +62,7 @@ function LoginPage() {
 		setErrors(newErrors);
 		return !Object.values(newErrors).some((error) => error);
 	};
+
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 
@@ -77,9 +81,7 @@ function LoginPage() {
 	};
 
 	return (
-		<div>
-			<h2>Log In</h2>
-
+		<AuthLayout title="Log In to Your Account">
 			<form onSubmit={handleSubmit}>
 				<FormField
 					id="email"
@@ -108,22 +110,38 @@ function LoginPage() {
 					required
 				/>
 
-				{apiError && <div>{apiError}</div>}
+				{apiError && (
+					<div className="rounded-md bg-red-50 p-4 mb-4">
+						<div className="flex">
+							<div className="text-sm text-red-700">{apiError}</div>
+						</div>
+					</div>
+				)}
 
-				<button type="submit" disabled={loading}>
+				<button type="submit" disabled={loading} className="form-button">
 					{loading ? "Logging in..." : "Log In"}
 				</button>
 			</form>
 
-			<div>
-				<div>
-					<Link to="/signup">Don't have an account? Sign up</Link>
+			<div className="mt-6 grid grid-cols-1 gap-3">
+				<div className="text-sm text-center">
+					<Link
+						to="/signup"
+						className="font-medium text-primary-600 hover:text-primary-500"
+					>
+						Don't have an account? Sign up
+					</Link>
 				</div>
-				<div>
-					<Link to="/forgotPassword">Forgot your password?</Link>
+				<div className="text-sm text-center">
+					<Link
+						to="/forgotPassword"
+						className="font-medium text-primary-600 hover:text-primary-500"
+					>
+						Forgot your password?
+					</Link>
 				</div>
 			</div>
-		</div>
+		</AuthLayout>
 	);
 }
 
