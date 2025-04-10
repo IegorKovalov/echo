@@ -77,7 +77,7 @@ function LoginPage() {
 	};
 
 	return (
-		<div className="auth-container">
+		<div>
 			<h2>Log In</h2>
 
 			<form onSubmit={handleSubmit}>
@@ -108,14 +108,14 @@ function LoginPage() {
 					required
 				/>
 
-				{apiError && <div className="api-error">{apiError}</div>}
+				{apiError && <div>{apiError}</div>}
 
 				<button type="submit" disabled={loading}>
 					{loading ? "Logging in..." : "Log In"}
 				</button>
 			</form>
 
-			<div className="form-footer">
+			<div>
 				<div>
 					<Link to="/signup">Don't have an account? Sign up</Link>
 				</div>

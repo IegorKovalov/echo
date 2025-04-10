@@ -97,7 +97,7 @@ function SignupPage() {
 	};
 
 	return (
-		<div className="auth-container">
+		<div>
 			<h2>Create an Account</h2>
 
 			<form onSubmit={handleSubmit}>
@@ -179,14 +179,14 @@ function SignupPage() {
 					error={errors.profilePicture}
 				/>
 
-				{apiError && <div className="api-error">{apiError}</div>}
+				{apiError && <div>{apiError}</div>}
 
 				<button type="submit" disabled={loading}>
 					{loading ? "Creating Account..." : "Sign Up"}
 				</button>
 			</form>
 
-			<div className="form-footer">
+			<div>
 				Already have an account? <Link to="/login">Login</Link>
 			</div>
 		</div>

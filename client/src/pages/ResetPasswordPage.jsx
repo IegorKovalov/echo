@@ -88,11 +88,11 @@ function ResetPasswordPage() {
 		}
 	};
 	return (
-		<div className="reset-password-container">
+		<div>
 			<h2>Reset Your Password</h2>
 
 			{success ? (
-				<div className="success-message">
+				<div>
 					<p>Your password has been reset successfully!</p>
 					<p>You will be redirected to the login page shortly.</p>
 					<Link to="/login">Login Now</Link>
@@ -102,7 +102,7 @@ function ResetPasswordPage() {
 					<p>Please enter your new password below.</p>
 
 					<form onSubmit={handleSubmit}>
-						<div className="form-group">
+						<div>
 							<label htmlFor="password">New Password</label>
 							<input
 								type="password"
@@ -112,12 +112,10 @@ function ResetPasswordPage() {
 								onChange={handleChange}
 								placeholder="Enter new password"
 							/>
-							{errors.password && (
-								<div className="error">{errors.password}</div>
-							)}
+							{errors.password && <div>{errors.password}</div>}
 						</div>
 
-						<div className="form-group">
+						<div>
 							<label htmlFor="passwordConfirm">Confirm New Password</label>
 							<input
 								type="password"
@@ -127,19 +125,17 @@ function ResetPasswordPage() {
 								onChange={handleChange}
 								placeholder="Confirm new password"
 							/>
-							{errors.passwordConfirm && (
-								<div className="error">{errors.passwordConfirm}</div>
-							)}
+							{errors.passwordConfirm && <div>{errors.passwordConfirm}</div>}
 						</div>
 
-						{apiError && <div className="api-error">{apiError}</div>}
+						{apiError && <div>{apiError}</div>}
 
 						<button type="submit" disabled={loading}>
 							{loading ? "Resetting..." : "Reset Password"}
 						</button>
 					</form>
 
-					<div className="form-footer">
+					<div>
 						<Link to="/login">Back to Login</Link>
 					</div>
 				</>

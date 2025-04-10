@@ -14,10 +14,10 @@ const FormField = ({
 	required = false,
 }) => {
 	return (
-		<div className="form-group">
+		<div>
 			<label htmlFor={id}>
 				{label}
-				{required && <span className="required">*</span>}
+				{required && <span>*</span>}
 			</label>
 			<input
 				type={type}
@@ -28,9 +28,8 @@ const FormField = ({
 				onBlur={onBlur}
 				placeholder={placeholder}
 				autoComplete={autoComplete}
-				className={error ? "error-input" : ""}
 			/>
-			{error && <div className="error">{error}</div>}
+			{error && <div>{error}</div>}
 		</div>
 	);
 };

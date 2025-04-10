@@ -36,11 +36,11 @@ function ForgotPasswordPage() {
 	};
 
 	return (
-		<div className="auth-container">
+		<div>
 			<h2>Forgot Password</h2>
 
 			{success ? (
-				<div className="success-message">
+				<div>
 					<p>Password reset email sent!</p>
 					<p>
 						Please check your email for instructions to reset your password.
@@ -68,14 +68,14 @@ function ForgotPasswordPage() {
 							required
 						/>
 
-						{apiError && <div className="api-error">{apiError}</div>}
+						{apiError && <div>{apiError}</div>}
 
 						<button type="submit" disabled={loading}>
 							{loading ? "Sending..." : "Reset Password"}
 						</button>
 					</form>
 
-					<div className="form-footer">
+					<div>
 						<Link to="/login">Back to Login</Link>
 					</div>
 				</>
