@@ -93,7 +93,7 @@ function SignupPage() {
 			const response = await callApi("post", "/users/signup", formData);
 			if (response.data && response.data.user) {
 				login(response.data.user);
-				navigate("/dashboard");
+				navigate("/");
 			} else {
 				navigate("/login");
 			}

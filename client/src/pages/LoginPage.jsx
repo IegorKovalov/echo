@@ -76,7 +76,7 @@ function LoginPage() {
 			});
 
 			login(response.data.user);
-			navigate("/dashboard");
+			navigate("/");
 		} catch (err) {}
 	};
 

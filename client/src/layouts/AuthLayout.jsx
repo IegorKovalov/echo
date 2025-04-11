@@ -10,12 +10,6 @@ const AuthLayout = ({ children, title }) => {
 						<h2 className="text-center fw-bold mb-4">{title}</h2>
 
 						<div className="bg-white p-4 p-md-5 rounded shadow">{children}</div>
-
-						<div className="mt-4 text-center">
-							<Link to="/" className="fw-medium text-primary">
-								Return to Home
-							</Link>
-						</div>
 					</div>
 				</div>
 			</div>

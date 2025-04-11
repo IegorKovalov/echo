@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const { promisify } = require("util");
 const sendEmail = require("../utils/email");
 const User = require("../models/userModel");
 const resetPasswordMessage = require("../utils/passwordReset");
@@ -153,5 +154,74 @@ exports.resetPassword = async (req, res) => {
 			status: "failed",
 			message: err.message,
 		});
+	}
+};
+exports.protect = async (req, res, next) => {
+	try {
+		let token;
+		if (
+			req.headers.authorization &&
+			req.headers.authorization.startsWith("Bearer")
+		) {
+			token = req.headers.authorization.split(" ")[1];
+		} else if (req.cookies.jwt) {
+			token = req.cookies.jwt;
+		}
+		if (!token) {
+			return res.status(401).json({
+				status: "failed",
+				message: "You are not logged in! Please log in to get access",
+			});
+		}
+		const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+		const freshUser = await User.findById(decoded.id);
+		if (!freshUser) {
+			return res.status(401).json({
+				status: "failed",
+				message: "The user belonging to this token no longer exists.",
+			});
+		}
+		if (freshUser.changedPasswordAfter(decoded.iat)) {
+			return res.status(401).json({
+				status: "failed",
+				message: "User recently changed password! Please log in again.",
+			});
+		}
+		req.user = freshUser;
+		res.locals.user = freshUser;
+		next();
+	} catch (err) {
+		return res.status(401).json({
+			status: "failed",
+			message: "Invalid token or token expired",
+		});
+	}
+};
+exports.isLoggedIn = async (req, res, next) => {
+	try {
+		let token;
+		if (req.cookies.jwt) {
+			token = req.cookies.jwt;
+		}
+
+		if (!token) {
+			return next();
+		}
+
+		const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+
+		const currentUser = await User.findById(decoded.id);
+		if (!currentUser) {
+			return next();
+		}
+
+		if (currentUser.changedPasswordAfter(decoded.iat)) {
+			return next();
+		}
+		req.user = currentUser;
+		res.locals.user = currentUser;
+		return next();
+	} catch (err) {
+		return next();
 	}
 };
