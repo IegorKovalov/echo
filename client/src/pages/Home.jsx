@@ -1,13 +1,16 @@
 import React, { useContext } from "react";
 import AuthContext from "../context/AuthContext";
+import MainLayout from "../layouts/MainLayout";
 
 function Home() {
 	const { user } = useContext(AuthContext);
 
 	return (
-		<div>
-			<p>{user.fullName} logged in successfully</p>
-		</div>
+		<MainLayout>
+			<div>
+				<p>Home Page - Need to implement the whole project logic.</p>
+			</div>
+		</MainLayout>
 	);
 }
 

@@ -2,7 +2,6 @@ import React, { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import FormField from "../components/FormField";
 import AuthContext from "../context/AuthContext";
-import { useApi } from "../hooks/useApi";
 import AuthLayout from "../layouts/AuthLayout";
 import { validationRules } from "../utils/validationRules";
 
@@ -12,10 +11,11 @@ function LoginPage() {
 		password: "",
 	});
 	const [errors, setErrors] = useState({});
+	const [loading, setLoading] = useState(false);
+	const [apiError, setApiError] = useState("");
 
 	const { login } = useContext(AuthContext);
 	const navigate = useNavigate();
-	const { loading, error: apiError, callApi, setError: setApiError } = useApi();
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
@@ -65,19 +65,28 @@ function LoginPage() {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+		setLoading(true);
+		setApiError("");
 
 		if (!validateForm()) {
+			setLoading(false);
 			return;
 		}
-		try {
-			const response = await callApi("post", "/users/login", {
-				email: formData.email,
-				password: formData.password,
-			});
 
-			login(response.data.user);
-			navigate("/");
-		} catch (err) {}
+		try {
+			// Use the context login method directly - no need for separate API call
+			const result = await login(formData.email, formData.password);
+
+			if (result.success) {
+				navigate("/");
+			} else {
+				setApiError(result.message);
+			}
+		} catch (err) {
+			setApiError("An unexpected error occurred. Please try again.");
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	return (
