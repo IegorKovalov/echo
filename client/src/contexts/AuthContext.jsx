@@ -41,7 +41,7 @@ export function AuthProvider({ children }) {
 			setCurrentUser(null);
 		} catch (error) {
 			console.error("Logout error", error);
-			setCurrentUser(null);
+			return false;
 		}
 	};
 

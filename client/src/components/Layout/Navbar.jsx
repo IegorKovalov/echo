@@ -5,6 +5,7 @@ import {
 	Nav,
 } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useAuth } from "../../contexts/AuthContext";
 import "./Navbar.css";
 import UserMenu from "./UserMenu";
@@ -16,10 +17,15 @@ const Navbar = () => {
 
 	const handleLogout = async () => {
 		try {
-			await logout();
-			navigate("/login");
+			const success = await logout();
+			if (success) {
+				navigate("/login");
+			} else {
+				toast.error("Logout failed on the server. Try again later.");
+			}
 		} catch (error) {
 			console.error("Logout error:", error);
+			toast.error("An error occurred during logout.");
 		}
 	};
 

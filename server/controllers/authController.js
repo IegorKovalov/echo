@@ -132,24 +132,50 @@ exports.resetPassword = async (req, res) => {
 		.createHash("sha256")
 		.update(resetToken)
 		.digest("hex");
-	const user = await User.findOne({
-		passwordResetToken: hashedToken,
-		passwordResetExpires: { $gt: Date.now() },
-	});
 
 	try {
+		const user = await User.findOne({
+			passwordResetToken: hashedToken,
+			passwordResetExpires: { $gt: Date.now() },
+		});
+
 		if (!user) {
 			return res.status(404).json({
 				status: "failed",
 				message: "Token is invalid or has expired",
 			});
 		}
+
+		const { password, passwordConfirm } = req.body;
+
+		if (!password || !passwordConfirm) {
+			return res.status(400).json({
+				status: "failed",
+				message: "Please provide password and password confirmation",
+			});
+		}
+
+		if (password.length < 8) {
+			return res.status(400).json({
+				status: "failed",
+				message: "Password must be at least 8 characters",
+			});
+		}
+
+		if (password !== passwordConfirm) {
+			return res.status(400).json({
+				status: "failed",
+				message: "Passwords do not match",
+			});
+		}
+
 		user.passwordResetExpires = undefined;
 		user.passwordResetToken = undefined;
 		user.passwordChangedAt = Date.now();
-		user.password = req.body.password;
-		user.passwordConfirm = req.body.passwordConfirm;
+		user.password = password;
+		user.passwordConfirm = passwordConfirm;
 		await user.save();
+
 		sendToken(user, 200, res);
 	} catch (err) {
 		return res.status(500).json({
