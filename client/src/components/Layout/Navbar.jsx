@@ -1,11 +1,18 @@
+import {
+	Navbar as BootstrapNavbar,
+	Container,
+	Form,
+	Nav,
+} from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { Container, Navbar as BootstrapNavbar, Nav, Form, Button } from "react-bootstrap";
 import "./Navbar.css";
+import UserMenu from "./UserMenu";
 
 const Navbar = () => {
 	const { currentUser, logout, isAuthenticated } = useAuth();
 	const navigate = useNavigate();
+	const userFullName = currentUser ? currentUser.fullName || "User" : "User";
 
 	const handleLogout = async () => {
 		try {
@@ -22,11 +29,11 @@ const Navbar = () => {
 				<BootstrapNavbar.Brand as={Link} to="/" className="navbar-logo">
 					SocialNetwork
 				</BootstrapNavbar.Brand>
-				
+
 				<BootstrapNavbar.Toggle aria-controls="basic-navbar-nav" />
-				
+
 				<BootstrapNavbar.Collapse id="basic-navbar-nav">
-					{isAuthenticated() && (
+					{isAuthenticated() ? (
 						<Nav className="ms-auto align-items-center">
 							<Form className="d-flex me-3">
 								<Form.Control
@@ -36,17 +43,10 @@ const Navbar = () => {
 									aria-label="Search"
 								/>
 							</Form>
-							<Nav.Link as={Link} to="/profile" className="navbar-user">
-								{currentUser.fullName}
-							</Nav.Link>
-							<Button
-								variant="outline-light"
-								onClick={handleLogout}
-								className="logout-button"
-							>
-								Logout
-							</Button>
+							<UserMenu fullName={userFullName} onLogout={handleLogout} />
 						</Nav>
+					) : (
+						<></>
 					)}
 				</BootstrapNavbar.Collapse>
 			</Container>
