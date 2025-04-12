@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../../contexts/AuthContext";
+import { Container, Card, Form, Button, Alert } from "react-bootstrap";
 import "./Auth.css";
 
 const Login = () => {
@@ -34,59 +35,91 @@ const Login = () => {
 	};
 
 	return (
-		<div className="form-container">
-			<h2 className="form-title">Login to Your Account</h2>
-
-			{error && <div className="error-message">{error}</div>}
-
-			<form onSubmit={handleSubmit}>
-				<div className="form-group">
-					<label htmlFor="email" className="form-label">
-						Email
-					</label>
-					<input
-						type="email"
-						id="email"
-						className="form-input"
-						value={email}
-						onChange={(e) => setEmail(e.target.value)}
-						required
-					/>
+		<Container fluid className="auth-container">
+			<div className="auth-brand-column">
+				<div className="auth-brand-pattern" />
+				<div className="auth-brand-content">
+					<h1 className="auth-brand-title">Welcome Back!</h1>
+					<p className="auth-brand-subtitle">
+						Connect with friends, share your thoughts, and discover new content.
+					</p>
+					<div className="auth-brand-features">
+						<div className="auth-brand-feature">
+							<i className="fas fa-users" />
+							<span>Connect with friends and family</span>
+						</div>
+						<div className="auth-brand-feature">
+							<i className="fas fa-share-alt" />
+							<span>Share your thoughts and experiences</span>
+						</div>
+						<div className="auth-brand-feature">
+							<i className="fas fa-globe" />
+							<span>Discover new content and communities</span>
+						</div>
+					</div>
 				</div>
-
-				<div className="form-group">
-					<label htmlFor="password" className="form-label">
-						Password
-					</label>
-					<input
-						type="password"
-						id="password"
-						className="form-input"
-						value={password}
-						onChange={(e) => setPassword(e.target.value)}
-						required
-					/>
-				</div>
-
-				<button type="submit" className="btn btn-block" disabled={loading}>
-					{loading ? "Logging in..." : "Login"}
-				</button>
-			</form>
-
-			<div className="text-center mt-3">
-				<p>
-					<Link to="/forgot-password" className="form-link">
-						Forgot Password?
-					</Link>
-				</p>
-				<p>
-					Don't have an account?{" "}
-					<Link to="/register" className="form-link">
-						Register
-					</Link>
-				</p>
 			</div>
-		</div>
+			<Card className="auth-card">
+				<Card.Body>
+					<Card.Title className="text-center mb-4">Login to Your Account</Card.Title>
+
+					{error && (
+						<Alert variant="danger" className="mb-4">
+							{error}
+						</Alert>
+					)}
+
+					<Form onSubmit={handleSubmit}>
+						<Form.Group className="mb-3">
+							<Form.Label>Email</Form.Label>
+							<Form.Control
+								type="email"
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+								required
+								className="form-input"
+								placeholder="Enter your email"
+							/>
+						</Form.Group>
+
+						<Form.Group className="mb-4">
+							<Form.Label>Password</Form.Label>
+							<Form.Control
+								type="password"
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								required
+								className="form-input"
+								placeholder="Enter your password"
+							/>
+						</Form.Group>
+
+						<Button
+							variant="primary"
+							type="submit"
+							className="w-100 mb-3"
+							disabled={loading}
+						>
+							{loading ? "Logging in..." : "Login"}
+						</Button>
+					</Form>
+
+					<div className="text-center">
+						<p className="mb-2">
+							<Link to="/forgot-password" className="form-link">
+								Forgot Password?
+							</Link>
+						</p>
+						<p className="mb-0">
+							Don't have an account?{" "}
+							<Link to="/register" className="form-link">
+								Register
+							</Link>
+						</p>
+					</div>
+				</Card.Body>
+			</Card>
+		</Container>
 	);
 };
 

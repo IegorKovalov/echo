@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import { Container, Navbar as BootstrapNavbar, Nav, Form, Button } from "react-bootstrap";
 import "./Navbar.css";
 
 const Navbar = () => {
@@ -16,37 +17,40 @@ const Navbar = () => {
 	};
 
 	return (
-		<nav className="navbar">
-			<div className="navbar-container">
-				<div className="navbar-left">
-					<Link to="/" className="navbar-logo">
-						SocialNetwork
-					</Link>
-				</div>
-
-				<div className="navbar-menu">
-					{isAuthenticated() ? (
-						<>
-							<div className="navbar-search">
-								<span className="navbar-search-icon">🔍</span>
-								<input type="text" placeholder="Search SocialNetwork" />
-							</div>
-							<Link to="/profile" className="navbar-user">
+		<BootstrapNavbar expand="lg" className="custom-navbar">
+			<Container>
+				<BootstrapNavbar.Brand as={Link} to="/" className="navbar-logo">
+					SocialNetwork
+				</BootstrapNavbar.Brand>
+				
+				<BootstrapNavbar.Toggle aria-controls="basic-navbar-nav" />
+				
+				<BootstrapNavbar.Collapse id="basic-navbar-nav">
+					{isAuthenticated() && (
+						<Nav className="ms-auto align-items-center">
+							<Form className="d-flex me-3">
+								<Form.Control
+									type="search"
+									placeholder="Search SocialNetwork"
+									className="me-2 search-input"
+									aria-label="Search"
+								/>
+							</Form>
+							<Nav.Link as={Link} to="/profile" className="navbar-user">
 								{currentUser.fullName}
-							</Link>
-							<button
+							</Nav.Link>
+							<Button
+								variant="outline-light"
 								onClick={handleLogout}
-								className="navbar-link navbar-button"
+								className="logout-button"
 							>
 								Logout
-							</button>
-						</>
-					) : (
-						<></>
+							</Button>
+						</Nav>
 					)}
-				</div>
-			</div>
-		</nav>
+				</BootstrapNavbar.Collapse>
+			</Container>
+		</BootstrapNavbar>
 	);
 };
 

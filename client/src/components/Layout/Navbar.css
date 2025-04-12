@@ -1,14 +1,8 @@
 /* Using the color variables from your paste.txt */
-.navbar {
-  background-color: var(--primary-color); /* Discord-inspired blue */
-  box-shadow: var(--shadow-sm);
-  padding: 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  height: 56px;
-  display: flex;
-  align-items: center;
+.custom-navbar {
+  background-color: var(--primary-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 0.5rem 0;
 }
 
 .navbar-container {
@@ -22,18 +16,17 @@
 }
 
 .navbar-logo {
-  color: var(--text-light);
+  color: white !important;
   font-size: 1.5rem;
   font-weight: 700;
   text-decoration: none;
-  display: flex;
-  align-items: center;
   letter-spacing: -0.5px;
   transition: transform 0.2s ease;
 }
 
 .navbar-logo:hover {
   transform: translateY(-1px);
+  color: white !important;
 }
 
 .navbar-menu {
@@ -73,17 +66,32 @@
   background-color: var(--primary-hover);
 }
 
+.search-input {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  border: none !important;
+  border-radius: 50px !important;
+  color: white !important;
+  padding: 0.5rem 1rem !important;
+  width: 240px !important;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.search-input:focus {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: none !important;
+  color: white !important;
+}
+
 .navbar-user {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1.25rem;
+  color: white !important;
   background-color: var(--secondary-color);
-  color: var(--text-light);
   border-radius: 8px;
-  font-size: 0.875rem;
+  padding: 0.5rem 1.25rem !important;
+  margin: 0 0.5rem;
   font-weight: 500;
-  text-decoration: none;
   transition: all 0.2s ease;
   box-shadow: 0 2px 5px rgba(255, 78, 205, 0.3);
 }
@@ -91,37 +99,37 @@
 .navbar-user:hover {
   background-color: var(--secondary-hover);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 8px rgba(255, 78, 205, 0.4);
+  color: white !important;
 }
 
-.navbar-search {
-  background-color: rgba(255, 255, 255, 0.15);
-  border-radius: 50px;
-  padding: 0.5rem 1rem;
-  display: flex;
-  align-items: center;
-  margin-left: 0.75rem;
-  gap: 0.5rem;
-  width: 240px;
+.logout-button {
+  border-radius: 8px !important;
+  padding: 0.5rem 1.25rem !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
 }
 
-.navbar-search input {
-  background: transparent;
-  border: none;
-  outline: none;
-  font-size: 0.95rem;
-  width: 100%;
-  color: var(--text-light);
+.logout-button:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  transform: translateY(-1px);
 }
 
-.navbar-search input::placeholder {
-  color: rgba(255, 255, 255, 0.7);
-}
+@media (max-width: 991.98px) {
+  .search-input {
+    width: 100% !important;
+    margin: 0.5rem 0;
+  }
 
-.navbar-search-icon {
-  color: var(--text-light);
-  opacity: 0.7;
-  font-size: 0.95rem;
+  .navbar-user {
+    margin: 0.5rem 0;
+    text-align: center;
+  }
+
+  .logout-button {
+    width: 100%;
+    margin: 0.5rem 0;
+  }
 }
 
 @media (max-width: 768px) {

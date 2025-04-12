@@ -11,7 +11,6 @@ import ForgotPassword from "./components/Auth/ForgotPassword";
 import Login from "./components/Auth/Login";
 import Register from "./components/Auth/Register";
 import ResetPassword from "./components/Auth/ResetPassword";
-import Footer from "./components/Layout/Footer";
 import Navbar from "./components/Layout/Navbar";
 import ProtectedRoute from "./components/Layout/ProtectedRoute";
 import UserProfile from "./components/Profile/UserProfile";
@@ -44,7 +43,6 @@ function App() {
 							<Route path="*" element={<Navigate to="/login" replace />} />
 						</Routes>
 					</main>
-					<Footer />
 				</div>
 				<ToastContainer position="bottom-right" />
 			</AuthProvider>
