@@ -14,7 +14,4 @@ router.patch("/reset-password/:token", authController.resetPassword);
 // Protected routes - require authentication
 router.use(authController.protect);
 
-router.get("/me", userController.getMe);
-router.patch("/updateMe", userController.updateMe);
-
 module.exports = router;
