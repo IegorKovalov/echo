@@ -16,16 +16,13 @@ const Navbar = () => {
 	const userFullName = currentUser ? currentUser.fullName || "User" : "User";
 
 	const handleLogout = async () => {
-		try {
-			const success = await logout();
-			if (success) {
-				navigate("/login");
-			} else {
-				toast.error("Logout failed on the server. Try again later.");
-			}
-		} catch (error) {
-			console.error("Logout error:", error);
-			toast.error("An error occurred during logout.");
+		const result = await logout();
+
+		if (result.success) {
+			navigate("/login");
+		} else {
+			console.error("Logout error:", result.error);
+			toast.error("Logout failed on the server. Try again later.");
 		}
 	};
 

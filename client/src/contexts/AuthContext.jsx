@@ -34,14 +34,14 @@ export function AuthProvider({ children }) {
 			throw error;
 		}
 	};
-
 	const logout = async () => {
 		try {
 			await AuthService.logout();
 			setCurrentUser(null);
+			return { success: true };
 		} catch (error) {
 			console.error("Logout error", error);
-			return false;
+			return { success: false, error };
 		}
 	};
 
