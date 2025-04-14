@@ -1,0 +1,25 @@
+.profile-picture-container {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.profile-picture {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.profile-picture-instruction {
+  color: #6c757d;
+  margin-top: 0.5rem;
+}
+
+.settings-container {
+  margin-top: 1rem;
+}
+
+.settings-title {
+  margin-bottom: 1rem;
+} 
