@@ -4,8 +4,11 @@ const { promisify } = require("util");
 const sendEmail = require("../utils/email");
 const User = require("../models/userModel");
 const resetPasswordMessage = require("../utils/passwordReset");
+const {
+	experimentalSetDeliveryMetricsExportedToBigQueryEnabled,
+} = require("firebase/messaging/sw");
 
-exports.sendToken = (user, statusCode, res) => {
+const sendToken = (user, statusCode, res) => {
 	const token = user.generateAuthToken();
 	const cookieOptions = {
 		expires: new Date(
@@ -21,6 +24,7 @@ exports.sendToken = (user, statusCode, res) => {
 		data: { user },
 	});
 };
+exports.sendToken = sendToken;
 exports.login = async (req, res) => {
 	try {
 		const { email, password } = req.body;
@@ -42,6 +46,7 @@ exports.login = async (req, res) => {
 		}
 		sendToken(user, 200, res);
 	} catch (error) {
+		console.log(error);
 		return res.status(500).json({
 			status: "failed",
 			message: "An error occurred during login",
