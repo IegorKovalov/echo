@@ -1,6 +1,9 @@
 // Create a new file: server/controllers/userController.js
 const User = require("../models/userModel");
 const { sendToken } = require("./authController");
+const cloudinary = require("../utils/cloudinary");
+const fs = require("fs");
+
 exports.getMe = (req, res) => {
 	const user = req.user;
 	if (!user) {
@@ -103,6 +106,68 @@ exports.updatePassword = async (req, res) => {
 		return res.status(500).json({
 			status: "failed",
 			message: "Oops, something went wrong",
+		});
+	}
+};
+exports.updateProfilePicture = async (req, res) => {
+	try {
+		// Check if a file was uploaded
+		if (!req.file) {
+			return res.status(400).json({
+				status: "failed",
+				message: "Please upload an image file",
+			});
+		}
+
+		// Get current user
+		const user = req.user;
+
+		// Upload to cloudinary
+		const result = await cloudinary.uploader.upload(req.file.path, {
+			folder: `users/${user._id}/profile`,
+			width: 500,
+			height: 500,
+			crop: "fill",
+		});
+
+		// Delete old profile picture from Cloudinary if exists
+		if (user.profilePicture) {
+			const publicId = user.profilePicture.split("/").pop().split(".")[0];
+			if (publicId) {
+				await cloudinary.uploader.destroy(
+					`users/${user._id}/profile/${publicId}`
+				);
+			}
+		}
+
+		// Update user with new profile picture URL
+		const updatedUser = await User.findByIdAndUpdate(
+			user._id,
+			{ profilePicture: result.secure_url },
+			{ new: true, runValidators: true }
+		);
+
+		// Delete temporary file
+		fs.unlinkSync(req.file.path);
+
+		// Return success response
+		res.status(200).json({
+			status: "success",
+			message: "Profile picture updated successfully",
+			data: {
+				user: updatedUser,
+			},
+		});
+	} catch (error) {
+		// If we have a temporary file, delete it
+		if (req.file) {
+			fs.unlinkSync(req.file.path);
+		}
+
+		return res.status(500).json({
+			status: "failed",
+			message: "Error updating profile picture",
+			error: error.message,
 		});
 	}
 };
