@@ -14,6 +14,7 @@ import ResetPassword from "./components/Auth/ResetPassword";
 import Navbar from "./components/Layout/Navbar";
 import ProtectedRoute from "./components/Layout/ProtectedRoute";
 import UserProfile from "./components/Profile/UserProfile";
+import UserSettings from "./components/Profile/UserSettings";
 import { AuthProvider } from "./contexts/AuthContext";
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
 							{/* Protected routes */}
 							<Route element={<ProtectedRoute />}>
 								<Route path="/profile" element={<UserProfile />} />
+								<Route path="/settings" element={<UserSettings />} />
 							</Route>
 
 							{/* Redirect to login if path doesn't match */}
