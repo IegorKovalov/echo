@@ -1,4 +1,5 @@
 import React from "react";
+import User from "../../../../server/models/userModel";
 import {
 	getInitials,
 	getInitialsBackgroundColor,

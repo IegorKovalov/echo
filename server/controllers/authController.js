@@ -5,7 +5,7 @@ const sendEmail = require("../utils/email");
 const User = require("../models/userModel");
 const resetPasswordMessage = require("../utils/passwordReset");
 
-const sendToken = (user, statusCode, res) => {
+exports.sendToken = (user, statusCode, res) => {
 	const token = user.generateAuthToken();
 	const cookieOptions = {
 		expires: new Date(
