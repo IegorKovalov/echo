@@ -31,13 +31,6 @@ const AccountSettingsTab = ({
 
 	return (
 		<div className="settings-form-container">
-			{error && (
-				<div className="alert alert-danger settings-alert">{error}</div>
-			)}
-			{success && (
-				<div className="alert alert-success settings-alert">{success}</div>
-			)}
-
 			<form onSubmit={handleSubmit}>
 				{/* Username field */}
 				<div className="mb-3">

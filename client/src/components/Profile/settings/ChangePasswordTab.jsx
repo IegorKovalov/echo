@@ -3,7 +3,6 @@ import { toast } from "react-toastify";
 
 const ChangePasswordTab = ({
 	passwordData,
-	setPasswordData,
 	onSubmit,
 	loading,
 	error,
@@ -35,13 +34,6 @@ const ChangePasswordTab = ({
 
 	return (
 		<div className="settings-form-container">
-			{error && (
-				<div className="alert alert-danger settings-alert">{error}</div>
-			)}
-			{success && (
-				<div className="alert alert-success settings-alert">{success}</div>
-			)}
-
 			<form onSubmit={handleSubmit}>
 				<div className="mb-3">
 					<label htmlFor="currentPassword" className="form-label">

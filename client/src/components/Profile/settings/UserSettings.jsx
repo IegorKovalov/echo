@@ -40,8 +40,6 @@ const UserSettings = () => {
 				fullName: formData.fullname,
 				email: formData.email,
 			};
-
-			// Handle profile picture update if it's a base64 string
 			if (formData.picture && formData.picture.startsWith("data:")) {
 				const pictureFormData = new FormData();
 				pictureFormData.append("profilePicture", formData.picture);
