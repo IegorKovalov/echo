@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Alert, Button, Form } from "react-bootstrap";
 import { toast } from "react-toastify";
 
 const ChangePasswordTab = ({
@@ -41,58 +40,53 @@ const ChangePasswordTab = ({
 
 	return (
 		<>
-			{error && (
-				<Alert variant="danger" className="settings-alert">
-					{error}
-				</Alert>
-			)}
-			{success && (
-				<Alert variant="success" className="settings-alert">
-					{success}
-				</Alert>
-			)}
+			{error && <div>{error}</div>}
+			{success && <div>{success}</div>}
 
-			<Form onSubmit={handleSubmit}>
-				<Form.Group className="mb-3 form-group">
-					<Form.Label>Current Password</Form.Label>
-					<Form.Control
+			<form onSubmit={handleSubmit}>
+				<div>
+					<label htmlFor="currentPassword">Current Password</label>
+					<input
 						type="password"
+						id="currentPassword"
 						name="currentPassword"
 						value={formData.currentPassword}
 						onChange={handleChange}
 						required
 						placeholder="Enter your current password"
 					/>
-				</Form.Group>
+				</div>
 
-				<Form.Group className="mb-3 form-group">
-					<Form.Label>New Password</Form.Label>
-					<Form.Control
+				<div>
+					<label htmlFor="newPassword">New Password</label>
+					<input
 						type="password"
+						id="newPassword"
 						name="newPassword"
 						value={formData.newPassword}
 						onChange={handleChange}
 						required
 						placeholder="Enter your new password"
 					/>
-				</Form.Group>
+				</div>
 
-				<Form.Group className="mb-3 form-group">
-					<Form.Label>Confirm New Password</Form.Label>
-					<Form.Control
+				<div>
+					<label htmlFor="confirmPassword">Confirm New Password</label>
+					<input
 						type="password"
+						id="confirmPassword"
 						name="confirmPassword"
 						value={formData.confirmPassword}
 						onChange={handleChange}
 						required
 						placeholder="Confirm your new password"
 					/>
-				</Form.Group>
+				</div>
 
-				<Button type="submit" className="btn-primary" disabled={loading}>
+				<button type="submit" disabled={loading}>
 					{loading ? "Updating..." : "Change Password"}
-				</Button>
-			</Form>
+				</button>
+			</form>
 		</>
 	);
 };

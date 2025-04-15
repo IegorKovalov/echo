@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Alert, Button, Form } from "react-bootstrap";
 import { toast } from "react-toastify";
 
 const ProfileInformationTab = () => {
@@ -28,71 +27,75 @@ const ProfileInformationTab = () => {
 	};
 
 	return (
-		<div className="py-4">
-			<Alert variant="info" className="settings-alert mb-4">
+		<div>
+			<div>
 				Add more information to your profile to help others connect with you.
-			</Alert>
+			</div>
 
-			<Form onSubmit={handleSubmit}>
-				<Form.Group className="mb-3 form-group">
-					<Form.Label>Bio</Form.Label>
-					<Form.Control
-						as="textarea"
+			<form onSubmit={handleSubmit}>
+				<div>
+					<label htmlFor="bio">Bio</label>
+					<textarea
+						id="bio"
 						name="bio"
 						value={formData.bio}
 						onChange={handleChange}
 						placeholder="Tell others about yourself"
 						rows={3}
-					/>
-				</Form.Group>
+					></textarea>
+				</div>
 
-				<Form.Group className="mb-3 form-group">
-					<Form.Label>Location</Form.Label>
-					<Form.Control
+				<div>
+					<label htmlFor="location">Location</label>
+					<input
 						type="text"
+						id="location"
 						name="location"
 						value={formData.location}
 						onChange={handleChange}
 						placeholder="Where are you located?"
 					/>
-				</Form.Group>
+				</div>
 
-				<Form.Group className="mb-3 form-group">
-					<Form.Label>Website</Form.Label>
-					<Form.Control
+				<div>
+					<label htmlFor="website">Website</label>
+					<input
 						type="url"
+						id="website"
 						name="website"
 						value={formData.website}
 						onChange={handleChange}
 						placeholder="Your website or portfolio"
 					/>
-				</Form.Group>
+				</div>
 
-				<Form.Group className="mb-3 form-group">
-					<Form.Label>Birthday</Form.Label>
-					<Form.Control
+				<div>
+					<label htmlFor="birthday">Birthday</label>
+					<input
 						type="date"
+						id="birthday"
 						name="birthday"
 						value={formData.birthday}
 						onChange={handleChange}
 					/>
-				</Form.Group>
+				</div>
 
-				<Form.Group className="mb-3 form-group">
-					<Form.Label>Occupation</Form.Label>
-					<Form.Control
+				<div>
+					<label htmlFor="occupation">Occupation</label>
+					<input
 						type="text"
+						id="occupation"
 						name="occupation"
 						value={formData.occupation}
 						onChange={handleChange}
 						placeholder="What do you do?"
 					/>
-				</Form.Group>
+				</div>
 
-				<Button type="submit" className="btn-primary" disabled={loading}>
+				<button type="submit" disabled={loading}>
 					{loading ? "Saving..." : "Save Profile Information"}
-				</Button>
-			</Form>
+				</button>
+			</form>
 		</div>
 	);
 };

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Tab, Tabs } from "react-bootstrap";
 import { FaLock, FaUser, FaUserCog } from "react-icons/fa";
 import { useAuth } from "../../../contexts/AuthContext";
 import AuthService from "../../../services/auth.service";
@@ -8,13 +7,13 @@ import AccountSettingsTab from "./AccountSettingsTab";
 import ChangePasswordTab from "./ChangePasswordTab";
 import ProfileInformationTab from "./ProfileInformationTab";
 import ProfilePicture from "./ProfilePicture";
-import "./settings.css"; // We'll create this later
 
 const UserSettings = () => {
 	const { currentUser, setCurrentUser } = useAuth();
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState("");
+	const [activeTab, setActiveTab] = useState("account");
 
 	const [accountData, setAccountData] = useState({
 		username: currentUser?.username || "",
@@ -90,8 +89,8 @@ const UserSettings = () => {
 	};
 
 	return (
-		<div className="container settings-container">
-			<h2 className="settings-title">User Settings</h2>
+		<div>
+			<h2>User Settings</h2>
 
 			<ProfilePicture
 				picture={accountData.picture}
@@ -99,15 +98,20 @@ const UserSettings = () => {
 				onPictureUpdate={updatePicture}
 			/>
 
-			<Tabs defaultActiveKey="account" className="mb-4 settings-tabs">
-				<Tab
-					eventKey="account"
-					title={
-						<span>
-							<FaUserCog className="me-2" /> Account Settings
-						</span>
-					}
-				>
+			<div>
+				<button onClick={() => setActiveTab("account")}>
+					<FaUserCog /> Account Settings
+				</button>
+				<button onClick={() => setActiveTab("profile")}>
+					<FaUser /> Profile Information
+				</button>
+				<button onClick={() => setActiveTab("password")}>
+					<FaLock /> Change Password
+				</button>
+			</div>
+
+			<div>
+				{activeTab === "account" && (
 					<AccountSettingsTab
 						accountData={accountData}
 						setAccountData={setAccountData}
@@ -116,27 +120,11 @@ const UserSettings = () => {
 						error={error}
 						success={success}
 					/>
-				</Tab>
+				)}
 
-				<Tab
-					eventKey="profile"
-					title={
-						<span>
-							<FaUser className="me-2" /> Profile Information
-						</span>
-					}
-				>
-					<ProfileInformationTab />
-				</Tab>
+				{activeTab === "profile" && <ProfileInformationTab />}
 
-				<Tab
-					eventKey="password"
-					title={
-						<span>
-							<FaLock className="me-2" /> Change Password
-						</span>
-					}
-				>
+				{activeTab === "password" && (
 					<ChangePasswordTab
 						passwordData={passwordData}
 						setPasswordData={setPasswordData}
@@ -145,8 +133,8 @@ const UserSettings = () => {
 						error={error}
 						success={success}
 					/>
-				</Tab>
-			</Tabs>
+				)}
+			</div>
 		</div>
 	);
 };

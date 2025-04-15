@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Alert, Button, Form } from "react-bootstrap";
 import { toast } from "react-toastify";
 
 const AccountSettingsTab = ({
@@ -32,62 +31,57 @@ const AccountSettingsTab = ({
 
 	return (
 		<>
-			{error && (
-				<Alert variant="danger" className="settings-alert">
-					{error}
-				</Alert>
-			)}
-			{success && (
-				<Alert variant="success" className="settings-alert">
-					{success}
-				</Alert>
-			)}
+			{error && <div>{error}</div>}
+			{success && <div>{success}</div>}
 
-			<Form onSubmit={handleSubmit}>
+			<form onSubmit={handleSubmit}>
 				{/* Username field */}
-				<Form.Group className="mb-3 form-group">
-					<Form.Label>Username</Form.Label>
-					<Form.Control
+				<div>
+					<label htmlFor="username">Username</label>
+					<input
 						type="text"
+						id="username"
 						name="username"
 						value={formData.username}
 						onChange={handleChange}
 						required
 						placeholder="Enter your username"
 					/>
-				</Form.Group>
+				</div>
 
 				{/* Fullname field */}
-				<Form.Group className="mb-3 form-group">
-					<Form.Label>Full Name</Form.Label>
-					<Form.Control
+				<div>
+					<label htmlFor="fullname">Full Name</label>
+					<input
 						type="text"
+						id="fullname"
 						name="fullname"
 						value={formData.fullname}
 						onChange={handleChange}
 						required
 						placeholder="Enter your full name"
 					/>
-				</Form.Group>
+				</div>
 
 				{/* Email field */}
-				<Form.Group className="mb-3 form-group">
-					<Form.Label>Email</Form.Label>
-					<Form.Control
+				<div>
+					<label htmlFor="email">Email</label>
+					<input
 						type="email"
+						id="email"
 						name="email"
 						value={formData.email}
 						onChange={handleChange}
 						required
 						placeholder="Enter your email address"
 					/>
-				</Form.Group>
+				</div>
 
 				{/* Submit button */}
-				<Button type="submit" className="btn-primary" disabled={loading}>
+				<button type="submit" disabled={loading}>
 					{loading ? "Saving..." : "Save Changes"}
-				</Button>
-			</Form>
+				</button>
+			</form>
 		</>
 	);
 };

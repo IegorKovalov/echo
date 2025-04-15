@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { FaCamera } from "react-icons/fa";
-import UserAvatar from "../shared/UserAvatar"; // Updated import path
+import UserAvatar from "../shared/UserAvatar";
 
 const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 	const fileInputRef = useRef(null);
@@ -21,29 +21,24 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 	};
 
 	return (
-		<div className="profile-picture-container">
-			<div className="profile-picture-wrapper">
+		<div>
+			<div onClick={handleProfilePictureClick}>
 				{picture ? (
-					<img src={picture} alt="Profile" className="profile-picture" />
+					<img src={picture} alt="Profile" />
 				) : (
-					<UserAvatar fullName={fullName || "User"} className="large" />
+					<UserAvatar fullName={fullName || "User"} />
 				)}
-				<div
-					className="profile-picture-overlay"
-					onClick={handleProfilePictureClick}
-				>
-					<FaCamera className="profile-picture-icon" />
+				<div onClick={handleProfilePictureClick}>
+					<FaCamera />
 				</div>
 			</div>
-			<p className="profile-picture-instruction">
-				Click on the image to update your profile picture
-			</p>
+			<p>Click on the image to update your profile picture</p>
 			<input
 				type="file"
 				accept="image/*"
 				id="profilePictureInput"
 				ref={fileInputRef}
-				className="d-none"
+				style={{ display: "none" }}
 				onChange={handleFileChange}
 			/>
 		</div>
