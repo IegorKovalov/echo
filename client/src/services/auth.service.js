@@ -1,6 +1,6 @@
 import api from "./api";
 
-const AUTH_URL = "/users";
+const AUTH_URL = "http://www.localhost:8000/api/v1/users";
 
 const AuthService = {
 	register: async (userData) => {

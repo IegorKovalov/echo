@@ -21,4 +21,6 @@ router.patch(
 	upload.single("profilePicture"),
 	userController.updateProfilePicture
 );
+router.patch("/updateProfileInfo", userController.updateProfileInfo);
+router.patch("/updateMe", userController.updateMe);
 module.exports = router;

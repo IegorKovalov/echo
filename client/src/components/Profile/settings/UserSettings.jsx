@@ -24,9 +24,9 @@ const UserSettings = () => {
 	});
 
 	const [passwordData, setPasswordData] = useState({
-		currentPassword: "",
-		newPassword: "",
-		confirmPassword: "",
+		passwordCurrent: "",
+		password: "",
+		passwordConfirm: "",
 	});
 
 	const handleAccountSubmit = async (formData) => {
@@ -35,7 +35,17 @@ const UserSettings = () => {
 		setSuccess("");
 
 		try {
-			const response = await UserService.updateProfile(formData);
+			const userData = {
+				username: formData.username,
+				fullName: formData.fullname,
+				email: formData.email,
+			};
+			if (formData.picture && formData.picture.startsWith("data:")) {
+			} else if (formData.picture) {
+				userData.profilePicture = formData.picture;
+			}
+
+			const response = await UserService.updateProfile(userData);
 			setCurrentUser(response.data.data.user);
 			setAccountData({
 				username: response.data.data.user.username || "",
@@ -56,7 +66,7 @@ const UserSettings = () => {
 	};
 
 	const handlePasswordSubmit = async (passwordFormData) => {
-		if (passwordFormData.newPassword !== passwordFormData.confirmPassword) {
+		if (passwordFormData.password !== passwordFormData.passwordConfirm) {
 			setError("New passwords don't match");
 			return { success: false };
 		}
@@ -66,15 +76,15 @@ const UserSettings = () => {
 		setSuccess("");
 
 		try {
-			await AuthService.changePassword(
-				passwordFormData.currentPassword,
-				passwordFormData.newPassword
+			await UserService.changePassword(
+				passwordFormData.passwordCurrent,
+				passwordFormData.password
 			);
 			setSuccess("Password updated successfully!");
 			setPasswordData({
-				currentPassword: "",
-				newPassword: "",
-				confirmPassword: "",
+				passwordCurrent: "",
+				password: "",
+				passwordConfirm: "",
 			});
 			return { success: true };
 		} catch (err) {

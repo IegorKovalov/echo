@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import UserService from "../../../services/user.service";
 
 const ProfileInformationTab = () => {
 	const [formData, setFormData] = useState({
@@ -11,19 +12,56 @@ const ProfileInformationTab = () => {
 	});
 
 	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState("");
+	const [success, setSuccess] = useState("");
+
+	useEffect(() => {
+		const fetchProfileInfo = async () => {
+			try {
+				const response = await UserService.getProfileInfo();
+				if (response.data.user) {
+					const user = response.data.user;
+					setFormData({
+						bio: user.bio || "",
+						location: user.location || "",
+						website: user.website || "",
+						birthday: user.birthday
+							? new Date(user.birthday).toISOString().split("T")[0]
+							: "",
+						occupation: user.occupation || "",
+					});
+				}
+			} catch (err) {
+				console.error("Error fetching profile data:", err);
+			}
+		};
+
+		fetchProfileInfo();
+	}, []);
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
 		setFormData({ ...formData, [name]: value });
 	};
 
-	const handleSubmit = (e) => {
+	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setLoading(true);
-		setTimeout(() => {
-			setLoading(false);
+		setError("");
+		setSuccess("");
+
+		try {
+			await UserService.updateProfileInfo(formData);
+			setSuccess("Profile information updated successfully!");
 			toast.success("Profile information updated!");
-		}, 1000);
+		} catch (err) {
+			setError(
+				err.response?.data?.message || "Failed to update profile information."
+			);
+			toast.error("Failed to update profile information.");
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	return (

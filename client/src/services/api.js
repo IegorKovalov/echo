@@ -16,6 +16,12 @@ api.interceptors.request.use(
 		if (token) {
 			config.headers.Authorization = `Bearer ${token}`;
 		}
+		if (config.data instanceof FormData) {
+			// Let the browser set it
+		} else if (config.headers["Content-Type"] !== "multipart/form-data") {
+			config.headers["Content-Type"] = "application/json";
+		}
+
 		return config;
 	},
 	(error) => {

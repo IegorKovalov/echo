@@ -76,39 +76,47 @@ exports.updateMe = async (req, res) => {
 };
 
 exports.updatePassword = async (req, res) => {
-	const { currentPassword, newPassword, confirmPassword } = req.body;
-	if (!currentPassword || !newPassword || !confirmPassword) {
+	const { passwordCurrent, password, passwordConfirm } = req.body;
+
+	if (!passwordCurrent || !password || !passwordConfirm) {
 		return res.status(400).json({
 			status: "failed",
-			message: "Please provide password and password confirmation",
+			message:
+				"Please provide current password, new password and password confirmation",
 		});
 	}
-	if (newPassword !== confirmPassword) {
+
+	if (password !== passwordConfirm) {
 		return res.status(400).json({
 			status: "failed",
-			message: "password does not match",
+			message: "New passwords do not match",
 		});
 	}
+
 	try {
-		const user = await User.findOne({ _id: req.user._id }).select("+password");
-		if (!(await user.comparePassword(currentPassword))) {
-			return res.status(400).json({
+		const user = await User.findById(req.user._id).select("+password");
+
+		if (!(await user.comparePassword(passwordCurrent))) {
+			return res.status(401).json({
 				status: "failed",
-				message: "current password is invalid, try again",
+				message: "Your current password is incorrect",
 			});
 		}
-		user.passwordChangedAt = Date.now();
-		user.password = newPassword;
-		user.passwordConfirm = confirmPassword;
+
+		user.password = password;
+		user.passwordConfirm = passwordConfirm;
 		await user.save();
+
 		sendToken(user, 200, res);
 	} catch (err) {
 		return res.status(500).json({
 			status: "failed",
-			message: "Oops, something went wrong",
+			message: "Error updating password",
+			error: process.env.NODE_ENV === "development" ? err.message : undefined,
 		});
 	}
 };
+
 exports.updateProfilePicture = async (req, res) => {
 	try {
 		// Check if a file was uploaded
@@ -159,7 +167,6 @@ exports.updateProfilePicture = async (req, res) => {
 			},
 		});
 	} catch (error) {
-		// If we have a temporary file, delete it
 		if (req.file) {
 			fs.unlinkSync(req.file.path);
 		}
@@ -168,6 +175,48 @@ exports.updateProfilePicture = async (req, res) => {
 			status: "failed",
 			message: "Error updating profile picture",
 			error: error.message,
+		});
+	}
+};
+exports.updateProfileInfo = async (req, res) => {
+	try {
+		const allowedFields = [
+			"bio",
+			"location",
+			"website",
+			"birthday",
+			"occupation",
+		];
+		const filteredBody = {};
+
+		Object.keys(req.body).forEach((field) => {
+			if (allowedFields.includes(field)) {
+				filteredBody[field] = req.body[field];
+			}
+		});
+
+		const updatedUser = await User.findByIdAndUpdate(
+			req.user._id,
+			filteredBody,
+			{
+				new: true,
+				runValidators: true,
+			}
+		);
+
+		res.status(200).json({
+			status: "success",
+			message: "Profile information updated successfully",
+			data: {
+				user: updatedUser,
+			},
+		});
+	} catch (error) {
+		return res.status(500).json({
+			status: "failed",
+			message:
+				"Something went wrong while updating profile information, try again later",
+			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
 };

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
 	Navbar as BootstrapNavbar,
 	Button,
@@ -18,7 +17,6 @@ const Navbar = () => {
 	const { currentUser, logout, isAuthenticated } = useAuth();
 	const navigate = useNavigate();
 	const userFullName = currentUser ? currentUser.fullName || "User" : "User";
-	const [searchQuery, setSearchQuery] = useState("");
 
 	const handleLogout = async () => {
 		const result = await logout();
@@ -29,13 +27,6 @@ const Navbar = () => {
 		} else {
 			console.error("Logout error:", result.error);
 			toast.error("Logout failed. Please try again later.");
-		}
-	};
-
-	const handleSearch = (e) => {
-		e.preventDefault();
-		if (searchQuery.trim()) {
-			navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
 		}
 	};
 
@@ -51,35 +42,21 @@ const Navbar = () => {
 				<BootstrapNavbar.Collapse id="basic-navbar-nav">
 					{isAuthenticated() ? (
 						<>
-							<div className="search-container mx-auto">
-								<Form onSubmit={handleSearch} className="d-flex">
-									<InputGroup>
+							<Nav className="ms-auto align-items-center">
+								<div className="d-flex align-items-center">
+									<div className="position-relative me-3">
 										<Form.Control
 											type="search"
 											placeholder="Search..."
 											className="search-input"
 											aria-label="Search"
-											value={searchQuery}
-											onChange={(e) => setSearchQuery(e.target.value)}
 										/>
-										<Button
-											variant="link"
-											type="submit"
-											className="position-absolute end-0 bg-transparent border-0 text-white"
-											style={{
-												zIndex: 5,
-												paddingRight: "15px",
-												top: "0",
-												height: "100%",
-											}}
-										>
+										<div className="position-absolute top-50 end-0 translate-middle-y me-3 text-white">
 											<FaSearch />
-										</Button>
-									</InputGroup>
-								</Form>
-							</div>
-							<Nav className="ms-auto align-items-center">
-								<UserMenu fullName={userFullName} onLogout={handleLogout} />
+										</div>
+									</div>
+									<UserMenu fullName={userFullName} onLogout={handleLogout} />
+								</div>
 							</Nav>
 						</>
 					) : (

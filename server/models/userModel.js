@@ -73,6 +73,33 @@ const userSchema = new Schema(
 			},
 			default: null,
 		},
+		bio: {
+			type: String,
+			trim: true,
+			maxlength: [500, "Bio cannot exceed 500 characters"],
+		},
+		location: {
+			type: String,
+			trim: true,
+			maxlength: [100, "Location cannot exceed 100 characters"],
+		},
+		website: {
+			type: String,
+			trim: true,
+			validate: {
+				validator: function (v) {
+					if (!v) return true;
+					return validator.isURL(v);
+				},
+				message: "Please provide a valid URL",
+			},
+		},
+		birthday: Date,
+		occupation: {
+			type: String,
+			trim: true,
+			maxlength: [100, "Occupation cannot exceed 100 characters"],
+		},
 		passwordChangedAt: Date,
 		passwordResetToken: String,
 		passwordResetExpires: Date,
