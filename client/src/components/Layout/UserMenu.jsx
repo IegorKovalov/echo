@@ -1,7 +1,7 @@
 import React from "react";
 import { Dropdown } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import UserAvatar from "../Profile/UserAvatar";
+import UserAvatar from "../Profile/shared/UserAvatar";
 
 const UserMenu = ({ fullName, onLogout }) => (
 	<Dropdown align="end" className="me-2">

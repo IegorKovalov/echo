@@ -13,8 +13,8 @@ import Register from "./components/Auth/Register";
 import ResetPassword from "./components/Auth/ResetPassword";
 import Navbar from "./components/Layout/Navbar";
 import ProtectedRoute from "./components/Layout/ProtectedRoute";
-import UserProfile from "./components/Profile/UserProfile";
-import UserSettings from "./components/Profile/UserSettings";
+import UserProfile from "./components/Profile/myProfile/UserProfile";
+import UserSettings from "./components/Profile/settings/UserSettings";
 import { AuthProvider } from "./contexts/AuthContext";
 
 function App() {
