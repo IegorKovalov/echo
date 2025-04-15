@@ -1,0 +1,83 @@
+
+.profile-picture-container {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 2rem;
+    cursor: pointer;
+  }
+  
+  .profile-picture-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid #f8f9fa;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .camera-icon-overlay {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background-color: #0d6efd;
+    color: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    transition: all 0.2s ease;
+  }
+  
+  .camera-icon-overlay:hover {
+    background-color: #0b5ed7;
+    transform: scale(1.1);
+  }
+  
+  /* User Avatar Styles */
+  .user-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background-color: #6c757d;
+    color: white;
+    font-size: 3rem;
+    font-weight: bold;
+    border-radius: 50%;
+  }
+  
+  .settings-tabs .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+  
+  .settings-tabs .nav-link.active {
+    font-weight: 600;
+  }
+  
+  .settings-tabs .nav-link svg {
+    margin-right: 0.5rem;
+  }
+  
+  .settings-form-container {
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 2rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+  
+  .form-label {
+    font-weight: 500;
+  }
+  
+
+  .settings-alert {
+    margin-bottom: 1.5rem;
+  }

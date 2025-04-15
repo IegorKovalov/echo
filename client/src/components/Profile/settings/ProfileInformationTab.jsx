@@ -27,15 +27,18 @@ const ProfileInformationTab = () => {
 	};
 
 	return (
-		<div>
-			<div>
+		<div className="settings-form-container">
+			<div className="alert alert-info mb-4">
 				Add more information to your profile to help others connect with you.
 			</div>
 
 			<form onSubmit={handleSubmit}>
-				<div>
-					<label htmlFor="bio">Bio</label>
+				<div className="mb-3">
+					<label htmlFor="bio" className="form-label">
+						Bio
+					</label>
 					<textarea
+						className="form-control"
 						id="bio"
 						name="bio"
 						value={formData.bio}
@@ -45,10 +48,13 @@ const ProfileInformationTab = () => {
 					></textarea>
 				</div>
 
-				<div>
-					<label htmlFor="location">Location</label>
+				<div className="mb-3">
+					<label htmlFor="location" className="form-label">
+						Location
+					</label>
 					<input
 						type="text"
+						className="form-control"
 						id="location"
 						name="location"
 						value={formData.location}
@@ -57,10 +63,13 @@ const ProfileInformationTab = () => {
 					/>
 				</div>
 
-				<div>
-					<label htmlFor="website">Website</label>
+				<div className="mb-3">
+					<label htmlFor="website" className="form-label">
+						Website
+					</label>
 					<input
 						type="url"
+						className="form-control"
 						id="website"
 						name="website"
 						value={formData.website}
@@ -69,10 +78,13 @@ const ProfileInformationTab = () => {
 					/>
 				</div>
 
-				<div>
-					<label htmlFor="birthday">Birthday</label>
+				<div className="mb-3">
+					<label htmlFor="birthday" className="form-label">
+						Birthday
+					</label>
 					<input
 						type="date"
+						className="form-control"
 						id="birthday"
 						name="birthday"
 						value={formData.birthday}
@@ -80,10 +92,13 @@ const ProfileInformationTab = () => {
 					/>
 				</div>
 
-				<div>
-					<label htmlFor="occupation">Occupation</label>
+				<div className="mb-4">
+					<label htmlFor="occupation" className="form-label">
+						Occupation
+					</label>
 					<input
 						type="text"
+						className="form-control"
 						id="occupation"
 						name="occupation"
 						value={formData.occupation}
@@ -92,8 +107,19 @@ const ProfileInformationTab = () => {
 					/>
 				</div>
 
-				<button type="submit" disabled={loading}>
-					{loading ? "Saving..." : "Save Profile Information"}
+				<button type="submit" className="btn btn-primary" disabled={loading}>
+					{loading ? (
+						<>
+							<span
+								className="spinner-border spinner-border-sm me-2"
+								role="status"
+								aria-hidden="true"
+							></span>
+							Saving...
+						</>
+					) : (
+						"Save Profile Information"
+					)}
 				</button>
 			</form>
 		</div>

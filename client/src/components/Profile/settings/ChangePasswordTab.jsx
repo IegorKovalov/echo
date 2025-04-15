@@ -39,15 +39,22 @@ const ChangePasswordTab = ({
 	};
 
 	return (
-		<>
-			{error && <div>{error}</div>}
-			{success && <div>{success}</div>}
+		<div className="settings-form-container">
+			{error && (
+				<div className="alert alert-danger settings-alert">{error}</div>
+			)}
+			{success && (
+				<div className="alert alert-success settings-alert">{success}</div>
+			)}
 
 			<form onSubmit={handleSubmit}>
-				<div>
-					<label htmlFor="currentPassword">Current Password</label>
+				<div className="mb-3">
+					<label htmlFor="currentPassword" className="form-label">
+						Current Password
+					</label>
 					<input
 						type="password"
+						className="form-control"
 						id="currentPassword"
 						name="currentPassword"
 						value={formData.currentPassword}
@@ -57,10 +64,13 @@ const ChangePasswordTab = ({
 					/>
 				</div>
 
-				<div>
-					<label htmlFor="newPassword">New Password</label>
+				<div className="mb-3">
+					<label htmlFor="newPassword" className="form-label">
+						New Password
+					</label>
 					<input
 						type="password"
+						className="form-control"
 						id="newPassword"
 						name="newPassword"
 						value={formData.newPassword}
@@ -70,10 +80,13 @@ const ChangePasswordTab = ({
 					/>
 				</div>
 
-				<div>
-					<label htmlFor="confirmPassword">Confirm New Password</label>
+				<div className="mb-4">
+					<label htmlFor="confirmPassword" className="form-label">
+						Confirm New Password
+					</label>
 					<input
 						type="password"
+						className="form-control"
 						id="confirmPassword"
 						name="confirmPassword"
 						value={formData.confirmPassword}
@@ -83,11 +96,22 @@ const ChangePasswordTab = ({
 					/>
 				</div>
 
-				<button type="submit" disabled={loading}>
-					{loading ? "Updating..." : "Change Password"}
+				<button type="submit" className="btn btn-primary" disabled={loading}>
+					{loading ? (
+						<>
+							<span
+								className="spinner-border spinner-border-sm me-2"
+								role="status"
+								aria-hidden="true"
+							></span>
+							Updating...
+						</>
+					) : (
+						"Change Password"
+					)}
 				</button>
 			</form>
-		</>
+		</div>
 	);
 };
 

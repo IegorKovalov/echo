@@ -3,6 +3,7 @@ import { FaLock, FaUser, FaUserCog } from "react-icons/fa";
 import { useAuth } from "../../../contexts/AuthContext";
 import AuthService from "../../../services/auth.service";
 import UserService from "../../../services/user.service";
+import "../settings/usersettings.css";
 import AccountSettingsTab from "./AccountSettingsTab";
 import ChangePasswordTab from "./ChangePasswordTab";
 import ProfileInformationTab from "./ProfileInformationTab";
@@ -89,51 +90,81 @@ const UserSettings = () => {
 	};
 
 	return (
-		<div>
-			<h2>User Settings</h2>
+		<div className="container py-4">
+			<div className="row justify-content-center">
+				<div className="col-lg-8">
+					<div className="card shadow-sm">
+						<div className="card-header bg-white py-3">
+							<h2 className="card-title text-center mb-0">User Settings</h2>
+						</div>
+						<div className="card-body">
+							<ProfilePicture
+								picture={accountData.picture}
+								fullName={accountData.fullname}
+								onPictureUpdate={updatePicture}
+							/>
 
-			<ProfilePicture
-				picture={accountData.picture}
-				fullName={accountData.fullname}
-				onPictureUpdate={updatePicture}
-			/>
+							<ul className="nav nav-tabs settings-tabs mb-4">
+								<li className="nav-item">
+									<button
+										className={`nav-link ${
+											activeTab === "account" ? "active" : ""
+										}`}
+										onClick={() => setActiveTab("account")}
+									>
+										<FaUserCog /> Account Settings
+									</button>
+								</li>
+								<li className="nav-item">
+									<button
+										className={`nav-link ${
+											activeTab === "profile" ? "active" : ""
+										}`}
+										onClick={() => setActiveTab("profile")}
+									>
+										<FaUser /> Profile Information
+									</button>
+								</li>
+								<li className="nav-item">
+									<button
+										className={`nav-link ${
+											activeTab === "password" ? "active" : ""
+										}`}
+										onClick={() => setActiveTab("password")}
+									>
+										<FaLock /> Change Password
+									</button>
+								</li>
+							</ul>
 
-			<div>
-				<button onClick={() => setActiveTab("account")}>
-					<FaUserCog /> Account Settings
-				</button>
-				<button onClick={() => setActiveTab("profile")}>
-					<FaUser /> Profile Information
-				</button>
-				<button onClick={() => setActiveTab("password")}>
-					<FaLock /> Change Password
-				</button>
-			</div>
+							<div className="tab-content">
+								{activeTab === "account" && (
+									<AccountSettingsTab
+										accountData={accountData}
+										setAccountData={setAccountData}
+										onSubmit={handleAccountSubmit}
+										loading={loading}
+										error={error}
+										success={success}
+									/>
+								)}
 
-			<div>
-				{activeTab === "account" && (
-					<AccountSettingsTab
-						accountData={accountData}
-						setAccountData={setAccountData}
-						onSubmit={handleAccountSubmit}
-						loading={loading}
-						error={error}
-						success={success}
-					/>
-				)}
+								{activeTab === "profile" && <ProfileInformationTab />}
 
-				{activeTab === "profile" && <ProfileInformationTab />}
-
-				{activeTab === "password" && (
-					<ChangePasswordTab
-						passwordData={passwordData}
-						setPasswordData={setPasswordData}
-						onSubmit={handlePasswordSubmit}
-						loading={loading}
-						error={error}
-						success={success}
-					/>
-				)}
+								{activeTab === "password" && (
+									<ChangePasswordTab
+										passwordData={passwordData}
+										setPasswordData={setPasswordData}
+										onSubmit={handlePasswordSubmit}
+										loading={loading}
+										error={error}
+										success={success}
+									/>
+								)}
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 	);

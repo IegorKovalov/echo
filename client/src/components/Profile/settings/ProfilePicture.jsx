@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { FaCamera } from "react-icons/fa";
+import "../settings/usersettings.css";
 import UserAvatar from "../shared/UserAvatar";
 
 const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
@@ -21,18 +22,23 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 	};
 
 	return (
-		<div>
-			<div onClick={handleProfilePictureClick}>
+		<div className="text-center mb-4">
+			<div
+				className="profile-picture-container"
+				onClick={handleProfilePictureClick}
+			>
 				{picture ? (
-					<img src={picture} alt="Profile" />
+					<img src={picture} alt="Profile" className="shadow" />
 				) : (
 					<UserAvatar fullName={fullName || "User"} />
 				)}
-				<div onClick={handleProfilePictureClick}>
+				<div className="camera-icon-overlay">
 					<FaCamera />
 				</div>
 			</div>
-			<p>Click on the image to update your profile picture</p>
+			<p className="text-muted small">
+				Click on the image to update your profile picture
+			</p>
 			<input
 				type="file"
 				accept="image/*"
