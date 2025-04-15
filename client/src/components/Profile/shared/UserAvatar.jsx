@@ -1,5 +1,6 @@
+// src/components/Profile/shared/UserAvatar.jsx
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../../../contexts/AuthContext";
+import { useProfile } from "../../../contexts/ProfileContext";
 import "../settings/usersettings.css";
 
 const getInitials = (name) => {
@@ -10,11 +11,22 @@ const getInitials = (name) => {
 };
 
 const UserAvatar = ({ fullName, src = null, size = "md" }) => {
-	const { currentUser } = useAuth();
+	const { profileImage } = useProfile();
 	const [avatarImage, setAvatarImage] = useState(null);
 	const [imageLoaded, setImageLoaded] = useState(false);
 
-	const imageSrc = src || currentUser?.profilePicture || null;
+	const imageSrc = src || profileImage || null;
+
+	const sizeClasses = {
+		xs: "w-6 h-6 text-xs",
+		sm: "w-8 h-8 text-sm",
+		md: "w-10 h-10 text-base",
+		lg: "w-24 h-24 text-2xl",
+		xl: "w-32 h-32 text-3xl",
+		navbar: "w-full h-full text-base",
+	};
+
+	const avatarSize = sizeClasses[size] || sizeClasses.md;
 
 	useEffect(() => {
 		if (!imageSrc) {
@@ -38,17 +50,20 @@ const UserAvatar = ({ fullName, src = null, size = "md" }) => {
 
 	if (avatarImage && imageLoaded) {
 		return (
-			<div className="user-avatar-container">
+			<div className={`user-avatar-container ${avatarSize}`}>
 				<img
 					src={avatarImage}
 					alt={`${fullName}'s avatar`}
 					className="img-fluid rounded-circle"
+					style={{ width: "100%", height: "100%", objectFit: "cover" }}
 				/>
 			</div>
 		);
 	}
 
-	return <div className="user-avatar">{getInitials(fullName)}</div>;
+	return (
+		<div className={`user-avatar ${avatarSize}`}>{getInitials(fullName)}</div>
+	);
 };
 
 export default UserAvatar;

@@ -1,6 +1,8 @@
+// src/components/Profile/settings/ProfilePicture.jsx
 import { useRef, useState } from "react";
 import { FaCamera } from "react-icons/fa";
 import { toast } from "react-toastify";
+import { useProfile } from "../../../contexts/ProfileContext";
 import UserService from "../../../services/user.service";
 import "../settings/usersettings.css";
 import UserAvatar from "../shared/UserAvatar";
@@ -9,6 +11,7 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 	const fileInputRef = useRef(null);
 	const [uploading, setUploading] = useState(false);
 	const [previewImage, setPreviewImage] = useState(picture || null);
+	const { updateProfileImage } = useProfile();
 
 	const handleProfilePictureClick = () => {
 		fileInputRef.current.click();
@@ -37,9 +40,10 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 			const formData = new FormData();
 			formData.append("profilePicture", file);
 			const response = await UserService.updateProfilePicture(formData);
-			console.log(response.data);
 			const serverProfilePicUrl = response.data.user.profilePicture;
 			onPictureUpdate(serverProfilePicUrl);
+			updateProfileImage(serverProfilePicUrl);
+
 			toast.success("Profile picture updated successfully!");
 		} catch (error) {
 			toast.error("Failed to upload profile picture");

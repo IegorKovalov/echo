@@ -1,12 +1,10 @@
 import {
 	Navbar as BootstrapNavbar,
-	Button,
 	Container,
 	Form,
-	InputGroup,
 	Nav,
 } from "react-bootstrap";
-import { FaSearch, FaSignOutAlt } from "react-icons/fa";
+import { FaSearch } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../../contexts/AuthContext";

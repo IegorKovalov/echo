@@ -1,3 +1,4 @@
+// src/components/Layout/UserMenu.jsx
 import React from "react";
 import { Dropdown } from "react-bootstrap";
 import { FaCog, FaSignOutAlt, FaUser } from "react-icons/fa";
@@ -8,7 +9,9 @@ const UserMenu = ({ fullName, onLogout }) => (
 	<Dropdown align="end">
 		<Dropdown.Toggle as="div" className="navbar-user-toggle">
 			<div className="d-flex align-items-center">
-				<UserAvatar fullName={fullName} />
+				<div className="navbar-avatar">
+					<UserAvatar fullName={fullName} size="navbar" />
+				</div>
 				<span className="navbar-username d-none d-sm-block">{fullName}</span>
 			</div>
 		</Dropdown.Toggle>
