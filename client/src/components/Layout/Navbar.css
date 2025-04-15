@@ -1,4 +1,3 @@
-
 .custom-navbar {
   background-color: #4267B2;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
@@ -16,6 +15,14 @@
 .navbar-logo:hover {
   color: white;
   opacity: 0.9;
+}
+
+.search-container {
+  display: flex;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  max-width: 450px;
 }
 
 .search-input {
@@ -39,6 +46,23 @@
 
 .search-input::placeholder {
   color: rgba(255, 255, 255, 0.7);
+}
+
+.search-button {
+  background: transparent;
+  border: none;
+  color: white;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+}
+
+.search-button:hover,
+.search-button:focus {
+  color: rgba(255, 255, 255, 0.8);
+  background: transparent;
+  box-shadow: none;
 }
 
 .navbar-user-toggle {
@@ -126,17 +150,15 @@
   border-color: white;
 }
 
-.search-container {
-  display: flex;
-  justify-content: center;
-  position: relative;
-  width: 100%;
-}
-
 @media (max-width: 991.98px) {
+  .search-container {
+    max-width: 100%;
+    margin: 0.5rem 0;
+  }
+  
   .search-input {
     width: 100%;
-    margin: 1rem 0;
+    margin: 0;
   }
   
   .search-input:focus {
