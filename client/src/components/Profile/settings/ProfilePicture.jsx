@@ -8,6 +8,7 @@ import UserAvatar from "../shared/UserAvatar";
 const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 	const fileInputRef = useRef(null);
 	const [uploading, setUploading] = useState(false);
+	const [previewImage, setPreviewImage] = useState(picture || null);
 
 	const handleProfilePictureClick = () => {
 		fileInputRef.current.click();
@@ -20,25 +21,30 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 			toast.error("Please select an image file");
 			return;
 		}
-		if (file.size > 5 * 1024 * 1024) {
-			toast.error("File size should not exceed 5MB");
+		if (file.size > 12 * 1024 * 1024) {
+			toast.error("File size should not exceed 12MB");
 			return;
 		}
+
 		setUploading(true);
+
 		try {
 			const reader = new FileReader();
 			reader.onload = (event) => {
-				onPictureUpdate(event.target.result);
+				setPreviewImage(event.target.result);
 			};
 			reader.readAsDataURL(file);
 			const formData = new FormData();
 			formData.append("profilePicture", file);
 			const response = await UserService.updateProfilePicture(formData);
-			onPictureUpdate(response.data.data.user.profilePicture);
+			console.log(response.data);
+			const serverProfilePicUrl = response.data.user.profilePicture;
+			onPictureUpdate(serverProfilePicUrl);
 			toast.success("Profile picture updated successfully!");
 		} catch (error) {
 			toast.error("Failed to upload profile picture");
 			console.error("Upload error:", error);
+			setPreviewImage(picture);
 		} finally {
 			setUploading(false);
 		}
@@ -51,10 +57,10 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 				onClick={handleProfilePictureClick}
 				style={{ cursor: uploading ? "wait" : "pointer" }}
 			>
-				{picture ? (
-					<img src={picture} alt="Profile" className="shadow" />
+				{previewImage ? (
+					<img src={previewImage} alt="Profile" className="shadow" />
 				) : (
-					<UserAvatar fullName={fullName || "User"} />
+					<UserAvatar fullName={fullName || "User"} size="lg" />
 				)}
 				<div className="camera-icon-overlay">
 					{uploading ? (

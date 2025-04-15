@@ -77,6 +77,7 @@ exports.updateMe = async (req, res) => {
 
 exports.updatePassword = async (req, res) => {
 	const { passwordCurrent, password, passwordConfirm } = req.body;
+
 	if (!passwordCurrent || !password || !passwordConfirm) {
 		return res.status(400).json({
 			status: "failed",
@@ -116,6 +117,7 @@ exports.updatePassword = async (req, res) => {
 	}
 };
 
+// Inside server/controllers/userController.js
 exports.updateProfilePicture = async (req, res) => {
 	try {
 		if (!req.file) {
@@ -124,7 +126,9 @@ exports.updateProfilePicture = async (req, res) => {
 				message: "Please upload an image file",
 			});
 		}
+
 		const user = req.user;
+
 		const result = await cloudinary.uploader.upload(req.file.path, {
 			folder: `users/${user._id}/profile`,
 			width: 500,
@@ -132,11 +136,22 @@ exports.updateProfilePicture = async (req, res) => {
 			crop: "fill",
 		});
 		if (user.profilePicture) {
-			const publicId = user.profilePicture.split("/").pop().split(".")[0];
-			if (publicId) {
-				await cloudinary.uploader.destroy(
-					`users/${user._id}/profile/${publicId}`
-				);
+			try {
+				const urlParts = user.profilePicture.split("/");
+				const publicIdIndex = urlParts.indexOf("profile") + 1;
+
+				if (publicIdIndex < urlParts.length) {
+					const publicIdWithExtension = urlParts[publicIdIndex];
+					const publicId = publicIdWithExtension.split(".")[0];
+
+					if (publicId) {
+						await cloudinary.uploader.destroy(
+							`users/${user._id}/profile/${publicId}`
+						);
+					}
+				}
+			} catch (deleteError) {
+				console.error("Error deleting old profile picture:", deleteError);
 			}
 		}
 		const updatedUser = await User.findByIdAndUpdate(
@@ -153,14 +168,19 @@ exports.updateProfilePicture = async (req, res) => {
 			},
 		});
 	} catch (error) {
-		if (req.file) {
-			fs.unlinkSync(req.file.path);
+		if (req.file && req.file.path) {
+			try {
+				fs.unlinkSync(req.file.path);
+			} catch (unlinkError) {
+				console.error("Error removing temporary file:", unlinkError);
+			}
 		}
 
 		return res.status(500).json({
 			status: "failed",
 			message: "Error updating profile picture",
-			error: error.message,
+			error:
+				process.env.NODE_ENV === "development" ? error.message : "Server error",
 		});
 	}
 };

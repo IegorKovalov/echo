@@ -34,6 +34,7 @@ const UserService = {
 		);
 		return response.data;
 	},
+	
 	updateProfilePicture: async (formData) => {
 		const response = await api.patch(
 			`${USER_URL}/update-profile-picture`,
