@@ -19,11 +19,6 @@ const ChangePasswordTab = ({
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 
-		if (formData.password !== formData.passwordConfirm) {
-			toast.error("New passwords don't match");
-			return;
-		}
-
 		const result = await onSubmit(formData);
 
 		if (result.success) {
@@ -35,7 +30,6 @@ const ChangePasswordTab = ({
 			toast.success("Password updated successfully!");
 		} else {
 			toast.error("Failed to update password");
-			console.log(result, formData);
 		}
 	};
 
@@ -57,7 +51,7 @@ const ChangePasswordTab = ({
 						type="password"
 						className="form-control"
 						id="currentPassword"
-						name="currentPassword"
+						name="passwordCurrent"
 						value={formData.passwordCurrent}
 						onChange={handleChange}
 						required
@@ -73,7 +67,7 @@ const ChangePasswordTab = ({
 						type="password"
 						className="form-control"
 						id="newPassword"
-						name="newPassword"
+						name="password"
 						value={formData.password}
 						onChange={handleChange}
 						required
@@ -89,7 +83,7 @@ const ChangePasswordTab = ({
 						type="password"
 						className="form-control"
 						id="confirmPassword"
-						name="confirmPassword"
+						name="passwordConfirm"
 						value={formData.passwordConfirm}
 						onChange={handleChange}
 						required

@@ -34,11 +34,6 @@ const UserService = {
 		);
 		return response.data;
 	},
-
-	getProfileInfo: async () => {
-		const response = await api.get(`${USER_URL}/me`);
-		return response.data;
-	},
 	updateProfilePicture: async (formData) => {
 		const response = await api.patch(
 			`${USER_URL}/update-profile-picture`,
@@ -57,6 +52,11 @@ const UserService = {
 		}
 
 		return response.data;
+	},
+	updateUserInStorage: (userData) => {
+		const currentUser = JSON.parse(localStorage.getItem("user"));
+		const updatedUser = { ...currentUser, ...userData };
+		localStorage.setItem("user", JSON.stringify(updatedUser));
 	},
 };
 

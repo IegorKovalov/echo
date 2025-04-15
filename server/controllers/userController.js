@@ -77,7 +77,6 @@ exports.updateMe = async (req, res) => {
 
 exports.updatePassword = async (req, res) => {
 	const { passwordCurrent, password, passwordConfirm } = req.body;
-
 	if (!passwordCurrent || !password || !passwordConfirm) {
 		return res.status(400).json({
 			status: "failed",
@@ -119,26 +118,19 @@ exports.updatePassword = async (req, res) => {
 
 exports.updateProfilePicture = async (req, res) => {
 	try {
-		// Check if a file was uploaded
 		if (!req.file) {
 			return res.status(400).json({
 				status: "failed",
 				message: "Please upload an image file",
 			});
 		}
-
-		// Get current user
 		const user = req.user;
-
-		// Upload to cloudinary
 		const result = await cloudinary.uploader.upload(req.file.path, {
 			folder: `users/${user._id}/profile`,
 			width: 500,
 			height: 500,
 			crop: "fill",
 		});
-
-		// Delete old profile picture from Cloudinary if exists
 		if (user.profilePicture) {
 			const publicId = user.profilePicture.split("/").pop().split(".")[0];
 			if (publicId) {
@@ -147,18 +139,12 @@ exports.updateProfilePicture = async (req, res) => {
 				);
 			}
 		}
-
-		// Update user with new profile picture URL
 		const updatedUser = await User.findByIdAndUpdate(
 			user._id,
 			{ profilePicture: result.secure_url },
 			{ new: true, runValidators: true }
 		);
-
-		// Delete temporary file
 		fs.unlinkSync(req.file.path);
-
-		// Return success response
 		res.status(200).json({
 			status: "success",
 			message: "Profile picture updated successfully",

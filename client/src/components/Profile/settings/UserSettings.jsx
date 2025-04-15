@@ -40,7 +40,12 @@ const UserSettings = () => {
 				fullName: formData.fullname,
 				email: formData.email,
 			};
+
+			// Handle profile picture update if it's a base64 string
 			if (formData.picture && formData.picture.startsWith("data:")) {
+				const pictureFormData = new FormData();
+				pictureFormData.append("profilePicture", formData.picture);
+				await UserService.updateProfilePicture(pictureFormData);
 			} else if (formData.picture) {
 				userData.profilePicture = formData.picture;
 			}
@@ -78,7 +83,8 @@ const UserSettings = () => {
 		try {
 			await UserService.changePassword(
 				passwordFormData.passwordCurrent,
-				passwordFormData.password
+				passwordFormData.password,
+				passwordFormData.passwordConfirm
 			);
 			setSuccess("Password updated successfully!");
 			setPasswordData({
