@@ -158,3 +158,8 @@
   .settings-alert {
     margin-bottom: 1.5rem;
   }
+  .btn-primary:disabled, .btn-primary.disabled {
+    background-color: #6c757d;  /* A gray color */
+    border-color: #6c757d;
+    opacity: 0.65;
+  }
