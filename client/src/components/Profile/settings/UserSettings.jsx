@@ -51,12 +51,12 @@ const UserSettings = () => {
 			}
 
 			const response = await UserService.updateProfile(userData);
-			setCurrentUser(response.data.data.user);
+			setCurrentUser(response.data.user);
 			setAccountData({
-				username: response.data.data.user.username || "",
-				fullname: response.data.data.user.fullName || "",
-				picture: response.data.data.user.profilePicture || "",
-				email: response.data.data.user.email || "",
+				username: response.data.user.username || "",
+				fullname: response.data.user.fullName || "",
+				picture: response.data.user.profilePicture || "",
+				email: response.data.user.email || "",
 			});
 			setSuccess("Account settings updated successfully!");
 			return { success: true };
