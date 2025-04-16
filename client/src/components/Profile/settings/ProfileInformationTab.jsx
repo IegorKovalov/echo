@@ -24,7 +24,6 @@ const ProfileInformationTab = () => {
 	const [validationErrors, setValidationErrors] = useState({});
 	const [success, setSuccess] = useState("");
 	const [error, setError] = useState("");
-	const [activeSection, setActiveSection] = useState("all");
 
 	const MAX_BIO_LENGTH = 160;
 

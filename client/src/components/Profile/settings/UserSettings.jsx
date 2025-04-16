@@ -113,9 +113,8 @@ const UserSettings = () => {
 	return (
 		<div className="container py-5 settings-container">
 			<div className="settings-card card shadow">
-				<div className="card-header bg-white py-4">
+				<div className="card-header bg-black py-4">
 					<div className="d-flex align-items-center justify-content-center mb-3">
-						<FaShieldAlt className="text-primary me-2 fs-4" />
 						<h2 className="mb-0 fw-bold">Account Settings</h2>
 					</div>
 					<p className="text-center text-muted mb-0">

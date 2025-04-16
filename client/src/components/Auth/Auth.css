@@ -27,9 +27,9 @@
 
 .auth-card-container {
   width: 100%;
-  max-width: 500px; /* Increased from 400px */
-  padding: 2.5rem; /* Add padding around content */
-  background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
+  max-width: 500px;
+  padding: 2.5rem;
+  background-color: rgba(0, 0, 0, 0.6);
   border-radius: 16px;
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
