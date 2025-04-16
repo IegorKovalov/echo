@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
+import { Button, Form } from "react-bootstrap";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import AuthService from "../../services/auth.service";
-import { Container, Card, Form, Button, Alert } from "react-bootstrap";
+
 import "./Auth.css";
 
 const ResetPassword = () => {
@@ -43,7 +44,7 @@ const ResetPassword = () => {
 					"Failed to reset password. The token may be invalid or expired."
 			);
 			setTimeout(() => {
-				toast.error("Failed to reset password.");
+				toast.error(error);
 			}, 1000);
 		} finally {
 			setLoading(false);
@@ -52,129 +53,118 @@ const ResetPassword = () => {
 
 	if (!tokenValid) {
 		return (
-			<Container fluid className="auth-container">
-				<div className="auth-brand-column">
-					<div className="auth-brand-pattern" />
-					<div className="auth-brand-content">
-						<h1 className="auth-brand-title">Password Reset Failed</h1>
-						<p className="auth-brand-subtitle">
-							The password reset link is invalid or has expired.
-						</p>
-						<div className="auth-brand-features">
-							<div className="auth-brand-feature">
-								<i className="fas fa-exclamation-triangle" />
-								<span>Invalid or expired reset link</span>
+			<div className="min-h-screen bg-black text-white d-flex flex-column">
+				<div className="flex-grow-1 d-flex flex-column justify-content-center align-items-center p-4">
+					<div className="auth-card-container animate-fade-down">
+						<div className="text-center mb-4">
+							<h1 className="gradient-title mb-2">echo</h1>
+							<p className="text-secondary">Password Reset Failed</p>
+						</div>
+
+						<div className="space-y-6">
+							<div className="text-center p-3 bg-danger bg-opacity-10 rounded-3 mb-4 text-white">
+								{error ||
+									"Invalid or expired reset token. Please request a new password reset."}
 							</div>
-							<div className="auth-brand-feature">
-								<i className="fas fa-redo" />
-								<span>Request a new reset link</span>
+
+							<div className="text-center">
+								<Link
+									to="/forgot-password"
+									className="gradient-button btn d-inline-block"
+								>
+									Request New Reset Link
+								</Link>
 							</div>
-							<div className="auth-brand-feature">
-								<i className="fas fa-shield-alt" />
-								<span>Secure password reset process</span>
-							</div>
+
+							<p className="text-center mt-4 text-secondary">
+								Remember your password?{" "}
+								<Link to="/login" className="signup-link">
+									Back to Login
+								</Link>
+							</p>
 						</div>
 					</div>
 				</div>
-				<Card className="auth-card">
-					<Card.Body>
-						<Card.Title className="text-center mb-4">Password Reset Failed</Card.Title>
-						<Alert variant="danger" className="mb-4">
-							{error}
-						</Alert>
-						<div className="text-center">
-							<Link to="/forgot-password" className="btn btn-primary">
-								Request a new reset link
-							</Link>
-						</div>
-					</Card.Body>
-				</Card>
-			</Container>
+
+				<footer className="py-3 text-center text-secondary">
+					© 2025 Echo. All rights reserved.
+				</footer>
+			</div>
 		);
 	}
 
 	return (
-		<Container fluid className="auth-container">
-			<div className="auth-brand-column">
-				<div className="auth-brand-pattern" />
-				<div className="auth-brand-content">
-					<h1 className="auth-brand-title">Set New Password</h1>
-					<p className="auth-brand-subtitle">
-						Create a strong password to secure your account.
-					</p>
-					<div className="auth-brand-features">
-						<div className="auth-brand-feature">
-							<i className="fas fa-key" />
-							<span>Create a strong password</span>
-						</div>
-						<div className="auth-brand-feature">
-							<i className="fas fa-check-circle" />
-							<span>Confirm your new password</span>
-						</div>
-						<div className="auth-brand-feature">
-							<i className="fas fa-shield-alt" />
-							<span>Secure password reset process</span>
-						</div>
+		<div className="min-h-screen bg-black text-white d-flex flex-column">
+			<div className="flex-grow-1 d-flex flex-column justify-content-center align-items-center p-4">
+				<div className="auth-card-container animate-fade-down">
+					<div className="text-center mb-4">
+						<h1 className="gradient-title mb-2">echo</h1>
+						<p className="text-secondary">Create your new password</p>
 					</div>
-				</div>
-			</div>
-			<Card className="auth-card">
-				<Card.Body>
-					<Card.Title className="text-center mb-4">Reset Password</Card.Title>
 
-					{error && (
-						<Alert variant="danger" className="mb-4">
-							{error}
-						</Alert>
-					)}
+					<div className="space-y-6">
+						<Form onSubmit={handleSubmit} className="space-y-4">
+							<Form.Group className="mb-3">
+								<Form.Label className="text-secondary">New Password</Form.Label>
+								<Form.Control
+									type="password"
+									value={password}
+									onChange={(e) => setPassword(e.target.value)}
+									minLength="8"
+									required
+									className="custom-input"
+									placeholder="Enter new password"
+								/>
+							</Form.Group>
 
-					<Form onSubmit={handleSubmit}>
-						<Form.Group className="mb-3">
-							<Form.Label>New Password</Form.Label>
-							<Form.Control
-								type="password"
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-								minLength="8"
-								required
-								className="form-input"
-								placeholder="Enter new password"
-							/>
-						</Form.Group>
+							<Form.Group className="mb-4">
+								<Form.Label className="text-secondary">
+									Confirm New Password
+								</Form.Label>
+								<Form.Control
+									type="password"
+									value={passwordConfirm}
+									onChange={(e) => setPasswordConfirm(e.target.value)}
+									minLength="8"
+									required
+									className="custom-input"
+									placeholder="Confirm your new password"
+								/>
+								{password && passwordConfirm && (
+									<div className="mt-2">
+										{password === passwordConfirm ? (
+											<small className="text-success">Passwords match</small>
+										) : (
+											<small className="text-danger">
+												Passwords don't match
+											</small>
+										)}
+									</div>
+								)}
+							</Form.Group>
 
-						<Form.Group className="mb-4">
-							<Form.Label>Confirm New Password</Form.Label>
-							<Form.Control
-								type="password"
-								value={passwordConfirm}
-								onChange={(e) => setPasswordConfirm(e.target.value)}
-								minLength="8"
-								required
-								className="form-input"
-								placeholder="Confirm new password"
-							/>
-						</Form.Group>
+							<Button
+								type="submit"
+								className="w-100 gradient-button"
+								disabled={loading || password !== passwordConfirm}
+							>
+								{loading ? "Resetting..." : "Reset Password"}
+							</Button>
+						</Form>
 
-						<Button
-							variant="primary"
-							type="submit"
-							className="w-100 mb-3"
-							disabled={loading}
-						>
-							{loading ? "Resetting..." : "Reset Password"}
-						</Button>
-					</Form>
-
-					<div className="text-center">
-						<p className="mb-0">
-							<Link to="/login" className="form-link">
+						<p className="text-center mt-4 text-secondary">
+							<Link to="/login" className="signup-link">
 								Back to Login
 							</Link>
 						</p>
 					</div>
-				</Card.Body>
-			</Card>
-		</Container>
+				</div>
+			</div>
+
+			<footer className="py-3 text-center text-secondary">
+				© 2025 Echo. All rights reserved.
+			</footer>
+		</div>
 	);
 };
 

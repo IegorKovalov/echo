@@ -1,118 +1,103 @@
 import { useState } from "react";
+import { Button, Form } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import AuthService from "../../services/auth.service";
-import { Container, Card, Form, Button, Alert } from "react-bootstrap";
 import "./Auth.css";
 
 const ForgotPassword = () => {
 	const [email, setEmail] = useState("");
-	const [error, setError] = useState("");
-	const [success, setSuccess] = useState("");
 	const [loading, setLoading] = useState(false);
+	const [sent, setSent] = useState(false);
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 
 		try {
-			setError("");
-			setSuccess("");
 			setLoading(true);
 
 			const response = await AuthService.forgotPassword(email);
 
-			setSuccess(
-				response.data.message ||
-					"Password reset email sent. Please check your inbox."
-			);
-			toast.success("Password reset email sent!");
+			setSent(true);
+			toast.success("Password reset email sent. Please check your inbox.");
 		} catch (err) {
-			setError(
-				err.response.data.message ||
-					"Failed to send password reset email. Please try again."
-			);
-			setTimeout(() => {
-				toast.error("Failed to send password reset email.");
-			}, 1500);
+			const errorMessage =
+				err.response?.data?.message ||
+				"Failed to send password reset email. Please try again.";
+			toast.error(errorMessage);
 		} finally {
 			setLoading(false);
 		}
 	};
 
 	return (
-		<Container fluid className="auth-container">
-			<div className="auth-brand-column">
-				<div className="auth-brand-pattern" />
-				<div className="auth-brand-content">
-					<h1 className="auth-brand-title">Reset Your Password</h1>
-					<p className="auth-brand-subtitle">
-						Enter your email address and we'll send you a link to reset your password.
-					</p>
-					<div className="auth-brand-features">
-						<div className="auth-brand-feature">
-							<i className="fas fa-envelope" />
-							<span>Check your email for reset instructions</span>
-						</div>
-						<div className="auth-brand-feature">
-							<i className="fas fa-clock" />
-							<span>Reset link expires in 1 hour</span>
-						</div>
-						<div className="auth-brand-feature">
-							<i className="fas fa-shield-alt" />
-							<span>Secure password reset process</span>
-						</div>
+		<div className="min-h-screen bg-black text-white d-flex flex-column">
+			<div className="flex-grow-1 d-flex flex-column justify-content-center align-items-center p-4">
+				<div className="auth-card-container animate-fade-down">
+					<div className="text-center mb-4">
+						<h1 className="gradient-title mb-2">echo</h1>
+						<p className="text-secondary">Reset your password</p>
 					</div>
-				</div>
-			</div>
-			<Card className="auth-card">
-				<Card.Body>
-					<Card.Title className="text-center mb-4">Forgot Password</Card.Title>
 
-					{error && (
-						<Alert variant="danger" className="mb-4">
-							{error}
-						</Alert>
-					)}
+					<div className="space-y-6">
+						<Form onSubmit={handleSubmit} className="space-y-4">
+							<Form.Group className="mb-4">
+								<Form.Label className="text-secondary">
+									Email Address
+								</Form.Label>
+								<Form.Control
+									type="email"
+									value={email}
+									onChange={(e) => setEmail(e.target.value)}
+									required
+									className="custom-input"
+									placeholder="Enter your email"
+									disabled={sent}
+								/>
+								<Form.Text className="text-secondary mt-2 d-block">
+									We'll send you an email with instructions to reset your
+									password.
+								</Form.Text>
+							</Form.Group>
 
-					{success && (
-						<Alert variant="success" className="mb-4">
-							{success}
-						</Alert>
-					)}
+							{sent ? (
+								<div className="text-center mt-4">
+									<div className="mb-3 text-white">
+										Reset link has been sent! Please check your email.
+									</div>
+									<Button
+										type="button"
+										onClick={() => setSent(false)}
+										className="w-100 social-button"
+									>
+										Send Again
+									</Button>
+								</div>
+							) : (
+								<Button
+									type="submit"
+									className="w-100 gradient-button"
+									disabled={loading}
+								>
+									{loading ? "Sending..." : "Send Reset Link"}
+								</Button>
+							)}
+						</Form>
 
-					<Form onSubmit={handleSubmit}>
-						<Form.Group className="mb-4">
-							<Form.Label>Enter your email address</Form.Label>
-							<Form.Control
-								type="email"
-								value={email}
-								onChange={(e) => setEmail(e.target.value)}
-								required
-								className="form-input"
-								placeholder="Enter your email"
-							/>
-						</Form.Group>
-
-						<Button
-							variant="primary"
-							type="submit"
-							className="w-100 mb-3"
-							disabled={loading}
-						>
-							{loading ? "Sending..." : "Send Reset Link"}
-						</Button>
-					</Form>
-
-					<div className="text-center">
-						<p className="mb-0">
-							<Link to="/login" className="form-link">
+						<p className="text-center mt-4 text-secondary">
+							Remember your password?{" "}
+							<Link to="/login" className="signup-link">
 								Back to Login
 							</Link>
 						</p>
 					</div>
-				</Card.Body>
-			</Card>
-		</Container>
+				</div>
+			</div>
+
+			<footer className="py-3 text-center text-secondary">
+				© 2025 Echo. All rights reserved.
+			</footer>
+		</div>
 	);
 };
 

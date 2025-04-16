@@ -1,4 +1,3 @@
-// src/components/Layout/UserMenu.jsx
 import React from "react";
 import { Dropdown } from "react-bootstrap";
 import { FaCog, FaSignOutAlt, FaUser } from "react-icons/fa";
@@ -12,7 +11,7 @@ const UserMenu = ({ fullName, onLogout }) => (
 				<div className="navbar-avatar">
 					<UserAvatar fullName={fullName} size="navbar" />
 				</div>
-				<span className="navbar-username d-none d-sm-block">{fullName}</span>
+				<span className="navbar-username">{fullName}</span>
 			</div>
 		</Dropdown.Toggle>
 
@@ -22,7 +21,7 @@ const UserMenu = ({ fullName, onLogout }) => (
 				to="/profile"
 				className="d-flex align-items-center"
 			>
-				<FaUser className="me-2 text-secondary" />
+				<FaUser className="me-2" style={{ color: "#8b5cf6" }} />
 				My Profile
 			</Dropdown.Item>
 			<Dropdown.Item
@@ -30,13 +29,14 @@ const UserMenu = ({ fullName, onLogout }) => (
 				to="/settings"
 				className="d-flex align-items-center"
 			>
-				<FaCog className="me-2 text-secondary" />
+				<FaCog className="me-2" style={{ color: "#ec4899" }} />
 				Settings
 			</Dropdown.Item>
 			<Dropdown.Divider />
 			<Dropdown.Item
 				onClick={onLogout}
-				className="d-flex align-items-center text-danger"
+				className="d-flex align-items-center"
+				style={{ color: "#f97316" }}
 			>
 				<FaSignOutAlt className="me-2" />
 				Log Out

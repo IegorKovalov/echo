@@ -1,20 +1,43 @@
+import { useEffect, useState } from "react";
 import {
 	Navbar as BootstrapNavbar,
 	Container,
+	Dropdown,
 	Form,
 	Nav,
 } from "react-bootstrap";
-import { FaSearch } from "react-icons/fa";
+import {
+	FaBell,
+	FaClock,
+	FaCog,
+	FaSearch,
+	FaSignOutAlt,
+	FaUser,
+} from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../../contexts/AuthContext";
+import UserAvatar from "../Profile/shared/UserAvatar";
 import "./Navbar.css";
-import UserMenu from "./UserMenu";
 
 const Navbar = () => {
-	const { currentUser, logout, isAuthenticated } = useAuth();
+	const { currentUser, logout } = useAuth();
 	const navigate = useNavigate();
 	const userFullName = currentUser ? currentUser.fullName || "User" : "User";
+	const [scrolled, setScrolled] = useState(false);
+
+	// Handle scrolling effect
+	useEffect(() => {
+		const handleScroll = () => {
+			const isScrolled = window.scrollY > 10;
+			if (isScrolled !== scrolled) {
+				setScrolled(isScrolled);
+			}
+		};
+
+		window.addEventListener("scroll", handleScroll);
+		return () => window.removeEventListener("scroll", handleScroll);
+	}, [scrolled]);
 
 	const handleLogout = async () => {
 		const result = await logout();
@@ -29,44 +52,82 @@ const Navbar = () => {
 	};
 
 	return (
-		<BootstrapNavbar expand="lg" className="custom-navbar sticky-top">
+		<BootstrapNavbar
+			expand="lg"
+			className={`custom-navbar sticky-top ${
+				scrolled ? "navbar-scrolled" : ""
+			}`}
+		>
 			<Container>
+				{/* Logo Section */}
 				<BootstrapNavbar.Brand as={Link} to="/" className="navbar-logo">
-					SocialNetwork
+					<span className="gradient-text">echo</span>
 				</BootstrapNavbar.Brand>
 
 				<BootstrapNavbar.Toggle aria-controls="basic-navbar-nav" />
 
 				<BootstrapNavbar.Collapse id="basic-navbar-nav">
-					{isAuthenticated() ? (
-						<>
-							<Nav className="ms-auto align-items-center">
-								<div className="d-flex align-items-center">
-									<div className="position-relative me-3">
-										<Form.Control
-											type="search"
-											placeholder="Search..."
-											className="search-input"
-											aria-label="Search"
-										/>
-										<div className="position-absolute top-50 end-0 translate-middle-y me-3 text-white">
-											<FaSearch />
-										</div>
-									</div>
-									<UserMenu fullName={userFullName} onLogout={handleLogout} />
+					<>
+						{/* Search Bar */}
+						<div className="search-container mx-auto">
+							<div className="search-input-wrapper">
+								<Form.Control
+									type="search"
+									placeholder="Search for people, posts, or topics..."
+									className="search-input"
+									aria-label="Search"
+								/>
+								<div className="search-icon">
+									<FaSearch />
 								</div>
-							</Nav>
-						</>
-					) : (
-						<Nav className="ms-auto">
-							<Nav.Link as={Link} to="/login" className="text-white">
-								Login
-							</Nav.Link>
-							<Nav.Link as={Link} to="/register" className="text-white">
-								Register
-							</Nav.Link>
+							</div>
+						</div>
+
+						{/* User Menu */}
+						<Nav className="ms-auto align-items-center">
+							<Dropdown align="end">
+								<Dropdown.Toggle as="div" className="user-menu-toggle">
+									<div className="d-flex align-items-center">
+										<div className="navbar-avatar">
+											<UserAvatar fullName={userFullName} size="navbar" />
+										</div>
+										<span className="navbar-username d-none d-sm-block">
+											{userFullName}
+										</span>
+									</div>
+								</Dropdown.Toggle>
+
+								<Dropdown.Menu className="user-dropdown-menu">
+									<Dropdown.Header>My Account</Dropdown.Header>
+									<Dropdown.Divider />
+									<Dropdown.Item
+										as={Link}
+										to="/profile"
+										className="dropdown-menu-item"
+									>
+										<FaUser className="me-2" />
+										Profile
+									</Dropdown.Item>
+									<Dropdown.Item
+										as={Link}
+										to="/settings"
+										className="dropdown-menu-item"
+									>
+										<FaCog className="me-2" />
+										Settings
+									</Dropdown.Item>
+									<Dropdown.Divider />
+									<Dropdown.Item
+										onClick={handleLogout}
+										className="dropdown-menu-item text-danger"
+									>
+										<FaSignOutAlt className="me-2" />
+										Log Out
+									</Dropdown.Item>
+								</Dropdown.Menu>
+							</Dropdown>
 						</Nav>
-					)}
+					</>
 				</BootstrapNavbar.Collapse>
 			</Container>
 		</BootstrapNavbar>
