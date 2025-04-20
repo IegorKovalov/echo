@@ -24,3 +24,5 @@ router
 router.post("/:id/comments", postController.addComment);
 
 router.delete("/:id/comments/:commentId", postController.deleteComment);
+
+module.exports = router;

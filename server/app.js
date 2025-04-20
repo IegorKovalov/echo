@@ -6,6 +6,8 @@ const helmet = require("helmet");
 const dotenv = require("dotenv");
 
 const userRouter = require("./routes/userRoutes");
+const postRouter = require("./routes/postRoutes");
+
 // Load environment variables from .env file
 dotenv.config();
 
@@ -32,6 +34,8 @@ app.get("/", (req, res) => {
 		message: "API is working correctly",
 	});
 });
+
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/posts", postRouter);
+
 module.exports = app;
