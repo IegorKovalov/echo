@@ -33,4 +33,5 @@ app.get("/", (req, res) => {
 	});
 });
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/posts", postRouter);
 module.exports = app;

@@ -1,4 +1,3 @@
-// Create a new file: server/controllers/userController.js
 const User = require("../models/userModel");
 const { sendToken } = require("./authController");
 const cloudinary = require("../utils/cloudinary");
