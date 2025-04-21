@@ -39,65 +39,12 @@ const UserProfilePage = () => {
 
 	return (
 		<Container className="py-5">
-			<div className="text-white">
-				<div className="row">
-					<div className="col-md-4 mb-4">
-						<div className="settings-section text-center">
-							<div className="d-flex justify-content-center mb-3">
-								<div style={{ width: "150px", height: "150px" }}>
-									<UserAvatar
-										fullName={currentUser?.fullName}
-										src={profileImage}
-										variant="settings"
-									/>
-								</div>
-							</div>
-
-							<h2 className="mt-3 mb-1">{currentUser?.fullName}</h2>
-							<p className="text-secondary mb-2">@{currentUser?.username}</p>
-
-							{userData?.bio && (
-								<p className="text-white-50 mb-3">{userData.bio}</p>
-							)}
-
-							<div className="d-flex justify-content-center gap-3 mb-2">
-								{userData?.location && (
-									<span className="text-secondary">
-										<i className="bi bi-geo-alt me-1"></i> {userData.location}
-									</span>
-								)}
-
-								{userData?.website && (
-									<a
-										href={
-											userData.website.startsWith("http")
-												? userData.website
-												: `https://${userData.website}`
-										}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="text-primary"
-									>
-										<i className="bi bi-link-45deg me-1"></i> Website
-									</a>
-								)}
-							</div>
-						</div>
-					</div>
-
-					<div className="col-md-8">
-						<div className="settings-section">
-							<h3 className="mb-4">My Posts</h3>
-
-							<div className="text-center py-4 text-secondary">
-								<p>You haven't created any posts yet.</p>
-								<button className="btn gradient-button mt-2">
-									Create Your First Post
-								</button>
-							</div>
-						</div>
-					</div>
-				</div>
+			{/* Content will be added here */}
+			<div className="text-center py-5 my-5">
+				<h3 className="gradient-text mb-3">Coming Soon</h3>
+				<p className="text-secondary">
+					We're working on your personalized profile. Check back soon!
+				</p>
 			</div>
 		</Container>
 	);
