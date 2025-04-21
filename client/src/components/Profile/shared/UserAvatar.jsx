@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import PropTypes from "prop-types";
+import { useEffect, useState } from "react";
 import { useProfile } from "../../../contexts/ProfileContext";
 import "../settings/usersettings.css";
 
@@ -16,7 +17,6 @@ const UserAvatar = ({ fullName, src = null, size = "md" }) => {
 
 	const imageSrc = src || profileImage || null;
 
-	// Updated sizes for better proportions
 	const sizeClasses = {
 		xs: "w-6 h-6 text-xs",
 		sm: "w-8 h-8 text-sm",
@@ -36,15 +36,24 @@ const UserAvatar = ({ fullName, src = null, size = "md" }) => {
 		}
 
 		setImageLoaded(false);
+
 		const img = new Image();
-		img.src = imageSrc;
+
 		img.onload = () => {
 			setAvatarImage(imageSrc);
 			setImageLoaded(true);
 		};
+
 		img.onerror = () => {
 			setImageLoaded(false);
 			setAvatarImage(null);
+		};
+
+		img.src = imageSrc;
+
+		return () => {
+			img.onload = null;
+			img.onerror = null;
 		};
 	}, [imageSrc]);
 
@@ -53,7 +62,7 @@ const UserAvatar = ({ fullName, src = null, size = "md" }) => {
 			<div className={`user-avatar-container ${avatarSize}`}>
 				<img
 					src={avatarImage}
-					alt={`${fullName}'s avatar`}
+					alt={`${fullName || "User"}'s avatar`}
 					className="img-fluid rounded-circle"
 					style={{
 						width: "100%",
@@ -69,6 +78,12 @@ const UserAvatar = ({ fullName, src = null, size = "md" }) => {
 	return (
 		<div className={`user-avatar ${avatarSize}`}>{getInitials(fullName)}</div>
 	);
+};
+
+UserAvatar.propTypes = {
+	fullName: PropTypes.string,
+	src: PropTypes.string,
+	size: PropTypes.oneOf(["xs", "sm", "md", "lg", "xl", "navbar"]),
 };
 
 export default UserAvatar;

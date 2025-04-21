@@ -17,7 +17,7 @@ api.interceptors.request.use(
 			config.headers.Authorization = `Bearer ${token}`;
 		}
 		if (config.data instanceof FormData) {
-			// Let the browser set it
+			delete config.headers["Content-Type"];
 		} else if (config.headers["Content-Type"] !== "multipart/form-data") {
 			config.headers["Content-Type"] = "application/json";
 		}
@@ -25,6 +25,7 @@ api.interceptors.request.use(
 		return config;
 	},
 	(error) => {
+		console.error("Request interceptor error:", error);
 		return Promise.reject(error);
 	}
 );
@@ -33,10 +34,16 @@ api.interceptors.response.use(
 	(response) => response,
 	(error) => {
 		if (error.response && error.response.status === 401) {
-			localStorage.removeItem("token");
-			localStorage.removeItem("user");
-			window.location.href = "/login";
+			if (!window.location.pathname.includes("/login")) {
+				localStorage.removeItem("token");
+				localStorage.removeItem("user");
+
+				window.history.pushState({}, "", "/login");
+
+				window.dispatchEvent(new Event("popstate"));
+			}
 		}
+
 		return Promise.reject(error);
 	}
 );

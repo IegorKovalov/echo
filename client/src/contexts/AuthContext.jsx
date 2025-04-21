@@ -8,19 +8,27 @@ export function AuthProvider({ children }) {
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
-		const user = AuthService.getCurrentUser();
-		if (user) {
-			setCurrentUser(user);
+		try {
+			const user = AuthService.getCurrentUser();
+			if (user) {
+				setCurrentUser(user);
+			}
+		} catch (error) {
+			console.error("Error initializing auth state:", error);
+		} finally {
+			setLoading(false);
 		}
-		setLoading(false);
 	}, []);
 
 	const login = async (email, password) => {
 		try {
 			const response = await AuthService.login(email, password);
-			setCurrentUser(response.data.user);
+			if (response && response.data && response.data.user) {
+				setCurrentUser(response.data.user);
+			}
 			return response;
 		} catch (error) {
+			console.error("Login error in context:", error);
 			throw error;
 		}
 	};
@@ -28,19 +36,23 @@ export function AuthProvider({ children }) {
 	const register = async (userData) => {
 		try {
 			const response = await AuthService.register(userData);
-			setCurrentUser(response.data.user);
+			if (response && response.data && response.data.user) {
+				setCurrentUser(response.data.user);
+			}
 			return response;
 		} catch (error) {
+			console.error("Register error in context:", error);
 			throw error;
 		}
 	};
+
 	const logout = async () => {
 		try {
-			await AuthService.logout();
+			const result = await AuthService.logout();
 			setCurrentUser(null);
 			return { success: true };
 		} catch (error) {
-			console.error("Logout error", error);
+			console.error("Logout error in context:", error);
 			return { success: false, error };
 		}
 	};
@@ -51,7 +63,7 @@ export function AuthProvider({ children }) {
 		login,
 		register,
 		logout,
-		isAuthenticated: AuthService.isAuthenticated,
+		isAuthenticated: () => AuthService.isAuthenticated(),
 	};
 
 	return (

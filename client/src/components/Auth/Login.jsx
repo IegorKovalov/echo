@@ -15,20 +15,28 @@ const Login = () => {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+		if (loading) return;
 
 		try {
 			setLoading(true);
-			await login(email, password);
-			toast.success("Login successful!");
-			navigate("/profile");
+			const response = await login(email, password);
+			if (response && response.data && response.data.user) {
+				toast.success("Login successful!");
+				navigate("/profile");
+			} else {
+				toast.error("Login failed. Unexpected response format.");
+			}
 		} catch (err) {
+			console.error("Login error:", err);
 			const errorMessage =
 				err?.response?.data?.message ||
 				"Failed to log in. Please check your credentials.";
 			toast.error(errorMessage);
+			return false;
 		} finally {
 			setLoading(false);
 		}
+		return false;
 	};
 
 	return (
@@ -43,7 +51,7 @@ const Login = () => {
 					</div>
 
 					<div className="space-y-6">
-						<Form onSubmit={handleSubmit} className="space-y-4">
+						<Form noValidate onSubmit={handleSubmit} className="space-y-4">
 							<Form.Group className="mb-3">
 								<Form.Label className="text-secondary">Email</Form.Label>
 								<Form.Control
