@@ -3,6 +3,7 @@ import "./avatar.css";
 import "./global.css";
 import "./navigation.css";
 import "./profile-picture.css";
+import "./settings-tabs.css";
 import "./settings.css";
 import "./theme.css";
 

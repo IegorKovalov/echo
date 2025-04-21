@@ -6,7 +6,6 @@ const HomePage = () => {
 	const { currentUser } = useAuth();
 	const [greeting, setGreeting] = useState("");
 
-	// Set appropriate greeting based on time of day
 	useEffect(() => {
 		const hour = new Date().getHours();
 		let newGreeting = "";
@@ -34,7 +33,7 @@ const HomePage = () => {
 
 				{/* Content will be added here */}
 				<div className="text-center py-5 my-5">
-					<h3 className="gradient-text mb-3">Coming Soon</h3>
+					<h3 className="gradient-text mb-3">Not yet Implemented</h3>
 					<p className="text-secondary">
 						We're working on your personalized home feed. Check back soon!
 					</p>

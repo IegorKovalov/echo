@@ -41,7 +41,7 @@ const UserProfilePage = () => {
 		<Container className="py-5">
 			{/* Content will be added here */}
 			<div className="text-center py-5 my-5">
-				<h3 className="gradient-text mb-3">Coming Soon</h3>
+				<h3 className="gradient-text mb-3">Not yet Implemented</h3>
 				<p className="text-secondary">
 					We're working on your personalized profile. Check back soon!
 				</p>
