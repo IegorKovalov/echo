@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { FaInfoCircle, FaLock, FaUser, FaUserCog } from "react-icons/fa";
-import { useAuth } from "../../../contexts/AuthContext";
-import { useProfile } from "../../../contexts/ProfileContext";
-import UserService from "../../../services/user.service";
-import AccountSettingsTab from "./AccountSettingsTab";
-import ChangePasswordTab from "./ChangePasswordTab";
-import ProfileInformationTab from "./ProfileInformationTab";
-import ProfilePicture from "./profilePicture/ProfilePicture";
-import "./usersettings.css";
+import { useAuth } from "../../context/AuthContext";
+import { useProfile } from "../../context/ProfileContext";
+import UserService from "../../services/user.service";
 
-const UserSettings = () => {
+import AccountSettingsTab from "../../components/user/settings/AccountSettingsTab";
+import ChangePasswordTab from "../../components/user/settings/ChangePasswordTab";
+import ProfileInformationTab from "../../components/user/settings/ProfileInformationTab";
+import ProfilePicture from "../../components/user/settings/ProfilePicture";
+
+const UserSettingsPage = () => {
 	const { currentUser, setCurrentUser } = useAuth();
 	const { updateProfileImage } = useProfile();
 	const [loading, setLoading] = useState(false);
@@ -194,4 +194,4 @@ const UserSettings = () => {
 	);
 };
 
-export default UserSettings;
+export default UserSettingsPage;

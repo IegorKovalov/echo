@@ -2,9 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Button, Modal } from "react-bootstrap";
 import { FaCamera, FaTimes, FaTrash, FaUpload } from "react-icons/fa";
 import { toast } from "react-toastify";
-import UserService from "../../../../services/user.service";
-import UserAvatar from "../../shared/UserAvatar";
-import "./ProfilePicture.css";
+import UserService from "../../../services/user.service";
+import UserAvatar from "../../common/UserAvatar";
 
 const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 	const [showModal, setShowModal] = useState(false);

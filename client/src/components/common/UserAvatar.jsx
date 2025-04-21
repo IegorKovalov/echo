@@ -1,14 +1,6 @@
-import PropTypes from "prop-types";
 import { useEffect, useState } from "react";
-import { useProfile } from "../../../contexts/ProfileContext";
-import "./UserAvatar.css";
-
-const getInitials = (name) => {
-	if (!name) return "?";
-	const parts = name.split(" ");
-	if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-	return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-};
+import { useProfile } from "../../context/ProfileContext";
+import { getInitials } from "../../utils/avatarUtils";
 
 const UserAvatar = ({ fullName, src = null, variant = "default" }) => {
 	const { profileImage } = useProfile();
