@@ -1,7 +1,7 @@
 import React from "react";
-
+import Post from "../../Posts/Post";
 function UserProfile() {
-	return <div>UserProfile</div>;
+	return <Post />;
 }
 
 export default UserProfile;

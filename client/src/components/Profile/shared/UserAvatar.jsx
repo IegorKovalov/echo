@@ -1,4 +1,3 @@
-// src/components/Profile/shared/UserAvatar.jsx
 import React, { useEffect, useState } from "react";
 import { useProfile } from "../../../contexts/ProfileContext";
 import "../settings/usersettings.css";
@@ -17,6 +16,7 @@ const UserAvatar = ({ fullName, src = null, size = "md" }) => {
 
 	const imageSrc = src || profileImage || null;
 
+	// Updated sizes for better proportions
 	const sizeClasses = {
 		xs: "w-6 h-6 text-xs",
 		sm: "w-8 h-8 text-sm",
@@ -55,7 +55,12 @@ const UserAvatar = ({ fullName, src = null, size = "md" }) => {
 					src={avatarImage}
 					alt={`${fullName}'s avatar`}
 					className="img-fluid rounded-circle"
-					style={{ width: "100%", height: "100%", objectFit: "cover" }}
+					style={{
+						width: "100%",
+						height: "100%",
+						objectFit: "cover",
+						border: "2px solid rgba(255, 255, 255, 0.1)",
+					}}
 				/>
 			</div>
 		);

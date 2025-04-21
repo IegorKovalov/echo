@@ -35,8 +35,8 @@ const Login = () => {
 		<div className="min-h-screen bg-black text-white d-flex flex-column">
 			<div className="flex-grow-1 d-flex flex-column justify-content-center align-items-center p-4">
 				<div className="auth-card-container animate-fade-down">
-					<div className="text-center mb-4">
-						<h1 className="gradient-title mb-2">echo</h1>
+					<div className="text-center mb-3">
+						<h1 className="gradient-title mb-1">echo</h1>
 						<p className="text-secondary">
 							Where moments fade, memories remain
 						</p>
@@ -56,7 +56,7 @@ const Login = () => {
 								/>
 							</Form.Group>
 
-							<Form.Group className="mb-4">
+							<Form.Group className="mb-3">
 								<div className="d-flex justify-content-between align-items-center">
 									<Form.Label className="text-secondary">Password</Form.Label>
 									<Link to="/forgot-password" className="forgot-password-link">
@@ -83,7 +83,7 @@ const Login = () => {
 						</Form>
 
 						<div className="divider"></div>
-						<p className="text-center mt-4 text-secondary">
+						<p className="text-center mt-3 text-secondary">
 							Don't have an account?{" "}
 							<Link to="/register" className="signup-link">
 								Sign up
@@ -93,7 +93,7 @@ const Login = () => {
 				</div>
 			</div>
 
-			<footer className="py-3 text-center text-secondary">
+			<footer className="py-2 text-center text-secondary">
 				© 2025 Echo. All rights reserved.
 			</footer>
 		</div>

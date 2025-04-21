@@ -73,7 +73,7 @@ const Navbar = () => {
 							<div className="search-input-wrapper">
 								<Form.Control
 									type="search"
-									placeholder="Search for people, posts, or topics..."
+									placeholder="Search..."
 									className="search-input"
 									aria-label="Search"
 								/>
@@ -83,13 +83,13 @@ const Navbar = () => {
 							</div>
 						</div>
 
-						{/* User Menu */}
+						{/* User Menu - Modified for better proportions */}
 						<Nav className="ms-auto align-items-center">
 							<Dropdown align="end">
 								<Dropdown.Toggle as="div" className="user-menu-toggle">
 									<div className="d-flex align-items-center">
 										<div className="navbar-avatar">
-											<UserAvatar fullName={userFullName} size="navbar" />
+											<UserAvatar fullName={userFullName} size="sm" />
 										</div>
 										<span className="navbar-username d-none d-sm-block">
 											{userFullName}

@@ -60,7 +60,7 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 	};
 
 	return (
-		<div className="text-center mb-4 mt-3">
+		<div className="text-center mb-3 mt-2">
 			<div
 				className="profile-picture-container"
 				onClick={handleProfilePictureClick}
@@ -90,7 +90,7 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 					)}
 				</div>
 			</div>
-			<p className="text-muted small mt-2">
+			<p className="text-muted small mt-1">
 				Click to update your profile picture
 			</p>
 			<input

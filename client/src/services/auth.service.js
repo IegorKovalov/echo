@@ -22,7 +22,8 @@ const AuthService = {
 	},
 
 	logout: async () => {
-		await api.get(`${AUTH_URL}/logout`);
+		const response = await api.get(`${AUTH_URL}/logout`);
+		console.log(response);
 		localStorage.removeItem("token");
 		localStorage.removeItem("user");
 	},

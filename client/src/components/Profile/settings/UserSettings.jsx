@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-	FaInfoCircle,
-	FaLock,
-	FaShieldAlt,
-	FaUser,
-	FaUserCog,
-} from "react-icons/fa";
+import { FaInfoCircle, FaLock, FaUser, FaUserCog } from "react-icons/fa";
 import { useAuth } from "../../../contexts/AuthContext";
 import UserService from "../../../services/user.service";
 import AccountSettingsTab from "./AccountSettingsTab";
@@ -19,7 +13,8 @@ const UserSettings = () => {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState("");
-	const [activeTab, setActiveTab] = useState("account");
+
+	// We no longer need activeTab state since all sections will be visible
 
 	const [accountData, setAccountData] = useState({
 		username: currentUser?.username || "",
@@ -110,16 +105,23 @@ const UserSettings = () => {
 		setAccountData({ ...accountData, picture: pictureData });
 	};
 
+	// Function to scroll to a specific section
+	const scrollToSection = (sectionId) => {
+		const element = document.getElementById(sectionId);
+		if (element) {
+			element.scrollIntoView({ behavior: "smooth" });
+		}
+	};
+
 	return (
-		<div className="container py-5 settings-container">
+		<div className="container py-4 settings-container">
 			<div className="settings-card card shadow">
-				<div className="card-header bg-black py-4">
-					<div className="d-flex align-items-center justify-content-center mb-3">
+				<div className="card-header bg-black py-3">
+					<div className="d-flex align-items-center justify-content-center mb-2">
 						<h2 className="mb-0 fw-bold">Account Settings</h2>
 					</div>
 					<p className="text-center text-muted mb-0">
 						Manage your account information, profile details, and security
-						settings
 					</p>
 
 					<ProfilePicture
@@ -128,66 +130,37 @@ const UserSettings = () => {
 						onPictureUpdate={updatePicture}
 					/>
 
-					<ul className="nav settings-tabs">
-						<li className="nav-item">
-							<button
-								className={`nav-link ${
-									activeTab === "account" ? "active" : ""
-								}`}
-								onClick={() => setActiveTab("account")}
-							>
-								<FaUserCog />
-								<span>Account</span>
-							</button>
-						</li>
-						<li className="nav-item">
-							<button
-								className={`nav-link ${
-									activeTab === "profile" ? "active" : ""
-								}`}
-								onClick={() => setActiveTab("profile")}
-							>
-								<FaUser />
-								<span>Profile</span>
-							</button>
-						</li>
-						<li className="nav-item">
-							<button
-								className={`nav-link ${
-									activeTab === "password" ? "active" : ""
-								}`}
-								onClick={() => setActiveTab("password")}
-							>
-								<FaLock />
-								<span>Security</span>
-							</button>
-						</li>
-					</ul>
+					{/* Quick-jump navigation instead of tabs */}
+					<div className="settings-quick-nav">
+						<button
+							className="nav-pill"
+							onClick={() => scrollToSection("account-section")}
+						>
+							<FaUserCog className="me-1" />
+							<span>Account</span>
+						</button>
+						<button
+							className="nav-pill"
+							onClick={() => scrollToSection("profile-section")}
+						>
+							<FaUser className="me-1" />
+							<span>Profile</span>
+						</button>
+						<button
+							className="nav-pill"
+							onClick={() => scrollToSection("security-section")}
+						>
+							<FaLock className="me-1" />
+							<span>Security</span>
+						</button>
+					</div>
 				</div>
 
-				<div className="card-body p-4">
-					{error && (
-						<div
-							className="alert alert-danger d-flex align-items-center mb-4"
-							role="alert"
-						>
-							<FaInfoCircle className="me-2" />
-							<div>{error}</div>
-						</div>
-					)}
-
-					{success && (
-						<div
-							className="alert alert-success d-flex align-items-center mb-4"
-							role="alert"
-						>
-							<FaInfoCircle className="me-2" />
-							<div>{success}</div>
-						</div>
-					)}
-
-					<div className="tab-content">
-						{activeTab === "account" && (
+				<div className="card-body p-3">
+					{/* Scrollable sections content */}
+					<div className="settings-scrollable-content">
+						{/* Account Section */}
+						<div id="account-section" className="settings-section-container">
 							<AccountSettingsTab
 								accountData={accountData}
 								setAccountData={setAccountData}
@@ -196,11 +169,15 @@ const UserSettings = () => {
 								error={error}
 								success={success}
 							/>
-						)}
+						</div>
 
-						{activeTab === "profile" && <ProfileInformationTab />}
+						{/* Profile Section */}
+						<div id="profile-section" className="settings-section-container">
+							<ProfileInformationTab />
+						</div>
 
-						{activeTab === "password" && (
+						{/* Security Section */}
+						<div id="security-section" className="settings-section-container">
 							<ChangePasswordTab
 								passwordData={passwordData}
 								onSubmit={handlePasswordSubmit}
@@ -208,7 +185,7 @@ const UserSettings = () => {
 								error={error}
 								success={success}
 							/>
-						)}
+						</div>
 					</div>
 				</div>
 			</div>
