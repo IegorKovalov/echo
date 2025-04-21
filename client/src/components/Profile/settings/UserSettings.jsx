@@ -14,8 +14,6 @@ const UserSettings = () => {
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState("");
 
-	// We no longer need activeTab state since all sections will be visible
-
 	const [accountData, setAccountData] = useState({
 		username: currentUser?.username || "",
 		fullname: currentUser?.fullName || "",
