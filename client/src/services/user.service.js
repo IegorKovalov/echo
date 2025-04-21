@@ -82,6 +82,28 @@ const UserService = {
 		}
 	},
 
+	deleteProfilePicture: async () => {
+		try {
+			const token = localStorage.getItem("token");
+			const response = await api.delete(`${USER_URL}/delete-profile-picture`, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+			});
+
+			if (response.data.data.user) {
+				const currentUser = JSON.parse(localStorage.getItem("user"));
+				currentUser.profilePicture = null;
+				localStorage.setItem("user", JSON.stringify(currentUser));
+			}
+
+			return response.data;
+		} catch (error) {
+			console.error("Delete profile picture error:", error);
+			throw error;
+		}
+	},
+
 	updateUserInStorage: (userData) => {
 		const currentUser = JSON.parse(localStorage.getItem("user"));
 		const updatedUser = { ...currentUser, ...userData };

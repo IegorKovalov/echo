@@ -116,7 +116,6 @@ exports.updatePassword = async (req, res) => {
 	}
 };
 
-// Inside server/controllers/userController.js
 exports.updateProfilePicture = async (req, res) => {
 	try {
 		if (!req.file) {
@@ -222,6 +221,56 @@ exports.updateProfileInfo = async (req, res) => {
 			message:
 				"Something went wrong while updating profile information, try again later",
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
+		});
+	}
+};
+exports.deleteProfilePicture = async (req, res) => {
+	try {
+		const user = req.user;
+
+		// If user has a profile picture, delete it from Cloudinary
+		if (user.profilePicture) {
+			try {
+				const urlParts = user.profilePicture.split("/");
+				const publicIdIndex = urlParts.indexOf("profile") + 1;
+
+				if (publicIdIndex < urlParts.length) {
+					const publicIdWithExtension = urlParts[publicIdIndex];
+					const publicId = publicIdWithExtension.split(".")[0];
+
+					if (publicId) {
+						await cloudinary.uploader.destroy(
+							`users/${user._id}/profile/${publicId}`
+						);
+					}
+				}
+			} catch (deleteError) {
+				console.error(
+					"Error deleting profile picture from storage:",
+					deleteError
+				);
+			}
+		}
+
+		const updatedUser = await User.findByIdAndUpdate(
+			user._id,
+			{ profilePicture: null },
+			{ new: true, runValidators: true }
+		);
+
+		res.status(200).json({
+			status: "success",
+			message: "Profile picture removed successfully",
+			data: {
+				user: updatedUser,
+			},
+		});
+	} catch (error) {
+		return res.status(500).json({
+			status: "failed",
+			message: "Error removing profile picture",
+			error:
+				process.env.NODE_ENV === "development" ? error.message : "Server error",
 		});
 	}
 };

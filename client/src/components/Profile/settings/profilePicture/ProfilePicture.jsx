@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Button, Modal } from "react-bootstrap";
-import { FaCamera, FaTimes, FaUpload } from "react-icons/fa";
+import { FaCamera, FaTimes, FaTrash, FaUpload } from "react-icons/fa";
 import { toast } from "react-toastify";
+import UserService from "../../../../services/user.service";
 import UserAvatar from "../../shared/UserAvatar";
 import "./ProfilePicture.css";
 
 const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 	const [showModal, setShowModal] = useState(false);
+	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [previewImage, setPreviewImage] = useState(null);
+	const [selectedFile, setSelectedFile] = useState(null);
+	const [loading, setLoading] = useState(false);
 	const fileInputRef = useRef(null);
 
 	useEffect(() => {
@@ -17,28 +21,37 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 	const handleModalOpen = () => {
 		setShowModal(true);
 		setPreviewImage(picture);
+		setSelectedFile(null);
 	};
 
 	const handleModalClose = () => {
 		setShowModal(false);
 		setPreviewImage(picture);
+		setSelectedFile(null);
+		setShowDeleteConfirm(false);
 	};
 
 	const handleFileSelect = (e) => {
 		const file = e.target.files[0];
-		handleImageUpload(file);
+		if (file) {
+			handleImageUpload(file);
+		}
 	};
 
 	const handleImageUpload = (file) => {
 		if (!file) return;
+
 		if (!file.type.match("image.*")) {
 			toast.error("Please select an image file");
 			return;
 		}
+
 		if (file.size > 5 * 1024 * 1024) {
 			toast.error("File size should be less than 5MB");
 			return;
 		}
+
+		setSelectedFile(file);
 
 		const reader = new FileReader();
 		reader.onload = (e) => {
@@ -51,18 +64,73 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 		fileInputRef.current.click();
 	};
 
-	const handleSave = () => {
-		if (previewImage) {
-			onPictureUpdate(previewImage);
+	const handleSave = async () => {
+		if (!selectedFile && !previewImage) {
 			setShowModal(false);
-			toast.success("Profile picture updated successfully!");
+			return;
+		}
+
+		if (!selectedFile && previewImage === picture) {
+			setShowModal(false);
+			return;
+		}
+
+		setLoading(true);
+
+		try {
+			const formData = new FormData();
+			formData.append("profilePicture", selectedFile);
+
+			const response = await UserService.updateProfilePicture(formData);
+
+			if (
+				response.data &&
+				response.data.user &&
+				response.data.user.profilePicture
+			) {
+				onPictureUpdate(response.data.user.profilePicture);
+				toast.success("Profile picture updated successfully!");
+			} else {
+				throw new Error("No image URL returned from server");
+			}
+		} catch (error) {
+			console.error("Error updating profile picture:", error);
+			toast.error(
+				error.response?.data?.message || "Failed to update profile picture"
+			);
+		} finally {
+			setLoading(false);
+			setShowModal(false);
 		}
 	};
 
 	const handleRemove = () => {
 		setPreviewImage(null);
+		setSelectedFile(null);
 		if (fileInputRef.current) {
 			fileInputRef.current.value = "";
+		}
+	};
+
+	const handleDeleteProfilePicture = async () => {
+		setLoading(true);
+
+		try {
+			const response = await UserService.deleteProfilePicture();
+
+			if (response.status === "success") {
+				onPictureUpdate(null);
+				toast.success("Profile picture removed successfully");
+				handleModalClose();
+			}
+		} catch (error) {
+			console.error("Error deleting profile picture:", error);
+			toast.error(
+				error.response?.data?.message || "Failed to remove profile picture"
+			);
+		} finally {
+			setLoading(false);
+			setShowDeleteConfirm(false);
 		}
 	};
 
@@ -96,52 +164,123 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 					<Modal.Title>Update Profile Picture</Modal.Title>
 				</Modal.Header>
 				<Modal.Body>
-					<div className="picture-preview-container">
-						{previewImage ? (
-							<>
-								<img
-									src={previewImage}
-									alt="Preview"
-									className="profile-picture"
-								/>
-								<div className="profile-picture-remove" onClick={handleRemove}>
-									<FaTimes />
-								</div>
-							</>
-						) : (
-							<UserAvatar fullName={fullName} variant="settings" />
-						)}
-					</div>
+					{showDeleteConfirm ? (
+						<div className="text-center py-4">
+							<div className="mb-4">
+								<FaTrash className="text-danger mb-3" size={48} />
+								<h5 className="text-white">Remove Profile Picture?</h5>
+								<p className="text-secondary">
+									This will permanently remove your profile picture. You will be
+									represented by your initials until you upload a new image.
+								</p>
+							</div>
+							<div className="d-flex justify-content-center gap-3">
+								<Button
+									variant="outline-secondary"
+									onClick={() => setShowDeleteConfirm(false)}
+									disabled={loading}
+								>
+									Cancel
+								</Button>
+								<Button
+									variant="danger"
+									onClick={handleDeleteProfilePicture}
+									disabled={loading}
+								>
+									{loading ? (
+										<>
+											<span
+												className="spinner-border spinner-border-sm me-2"
+												role="status"
+												aria-hidden="true"
+											></span>
+											Removing...
+										</>
+									) : (
+										"Remove Photo"
+									)}
+								</Button>
+							</div>
+						</div>
+					) : (
+						<>
+							<div className="picture-preview-container">
+								{previewImage ? (
+									<>
+										<img
+											src={previewImage}
+											alt="Preview"
+											className="profile-picture"
+										/>
+										<div
+											className="profile-picture-remove"
+											onClick={handleRemove}
+										>
+											<FaTimes />
+										</div>
+									</>
+								) : (
+									<UserAvatar fullName={fullName} variant="settings" />
+								)}
+							</div>
 
-					<div className="upload-instructions">
-						Upload a new profile picture. The image should be at least 400x400
-						pixels.
-					</div>
+							<div className="upload-instructions">
+								Upload a new profile picture. The image should be at least
+								400x400 pixels.
+							</div>
 
-					<Button className="upload-button w-100" onClick={handleClickUpload}>
-						<FaUpload className="me-2" /> Select an Image
-					</Button>
+							<Button
+								className="upload-button w-100"
+								onClick={handleClickUpload}
+							>
+								<FaUpload className="me-2" /> Select an Image
+							</Button>
 
-					<input
-						type="file"
-						ref={fileInputRef}
-						onChange={handleFileSelect}
-						accept="image/*"
-						className="file-input"
-					/>
+							<input
+								type="file"
+								ref={fileInputRef}
+								onChange={handleFileSelect}
+								accept="image/*"
+								className="file-input"
+							/>
+
+							{picture && (
+								<Button
+									variant="outline-danger"
+									className="w-100 mt-3"
+									onClick={() => setShowDeleteConfirm(true)}
+								>
+									<FaTrash className="me-2" /> Remove Profile Picture
+								</Button>
+							)}
+						</>
+					)}
 				</Modal.Body>
-				<Modal.Footer>
-					<Button variant="outline-secondary" onClick={handleModalClose}>
-						Cancel
-					</Button>
-					<Button
-						className="gradient-button"
-						onClick={handleSave}
-						disabled={!previewImage}
-					>
-						Save Photo
-					</Button>
-				</Modal.Footer>
+				{!showDeleteConfirm && (
+					<Modal.Footer>
+						<Button variant="outline-secondary" onClick={handleModalClose}>
+							Cancel
+						</Button>
+						<Button
+							className="gradient-button"
+							onClick={handleSave}
+							disabled={loading || (!selectedFile && previewImage === picture)}
+						>
+							{loading ? (
+								<>
+									<span
+										className="spinner-border spinner-border-sm me-2"
+										role="status"
+										aria-hidden="true"
+									></span>
+									Uploading...
+								</>
+							) : (
+								"Save Photo"
+							)}
+						</Button>
+					</Modal.Footer>
+				)}
 			</Modal>
 		</>
 	);

@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import { useEffect, useState } from "react";
 import { useProfile } from "../../../contexts/ProfileContext";
-import "../settings/usersettings.css";
+import "./UserAvatar.css";
 
 const getInitials = (name) => {
 	if (!name) return "?";
@@ -76,12 +76,6 @@ const UserAvatar = ({ fullName, src = null, variant = "default" }) => {
 			{getInitials(fullName)}
 		</div>
 	);
-};
-
-UserAvatar.propTypes = {
-	fullName: PropTypes.string,
-	src: PropTypes.string,
-	variant: PropTypes.oneOf(["default", "navbar", "settings"]),
 };
 
 export default UserAvatar;

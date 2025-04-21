@@ -21,6 +21,7 @@ router.patch(
 	upload.single("profilePicture"),
 	userController.updateProfilePicture
 );
+router.delete("/delete-profile-picture", userController.deleteProfilePicture);
 router.patch("/updateProfileInfo", userController.updateProfileInfo);
 router.patch("/updateMe", userController.updateMe);
 module.exports = router;
