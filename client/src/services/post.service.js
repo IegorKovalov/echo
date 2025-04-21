@@ -4,48 +4,80 @@ const POSTS_URL = "/posts";
 
 const PostService = {
 	getAllPosts: async () => {
-		const response = await api.get(POSTS_URL);
+		const token = localStorage.getItem("token");
+		const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+		const response = await api.get(POSTS_URL, { headers });
 		return response.data;
 	},
 
 	getPost: async (id) => {
-		const response = await api.get(`${POSTS_URL}/${id}`);
+		const token = localStorage.getItem("token");
+		const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+		const response = await api.get(`${POSTS_URL}/${id}`, { headers });
 		return response.data;
 	},
 
 	createPost: async (postData) => {
-		const response = await api.post(POSTS_URL, postData);
+		const token = localStorage.getItem("token");
+		const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+		const response = await api.post(POSTS_URL, postData, { headers });
 		return response.data;
 	},
 
 	updatePost: async (id, postData) => {
-		const response = await api.patch(`${POSTS_URL}/${id}`, postData);
+		const token = localStorage.getItem("token");
+		const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+		const response = await api.patch(`${POSTS_URL}/${id}`, postData, {
+			headers,
+		});
 		return response.data;
 	},
 
 	deletePost: async (id) => {
-		const response = await api.delete(`${POSTS_URL}/${id}`);
+		const token = localStorage.getItem("token");
+		const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+		const response = await api.delete(`${POSTS_URL}/${id}`, { headers });
 		return response.data;
 	},
 
 	likePost: async (id) => {
-		const response = await api.post(`${POSTS_URL}/${id}/like`);
+		const token = localStorage.getItem("token");
+		const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+		const response = await api.post(`${POSTS_URL}/${id}/like`, {}, { headers });
 		return response.data;
 	},
 
 	unlikePost: async (id) => {
-		const response = await api.delete(`${POSTS_URL}/${id}/like`);
+		const token = localStorage.getItem("token");
+		const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+		const response = await api.delete(`${POSTS_URL}/${id}/like`, { headers });
 		return response.data;
 	},
 
 	addComment: async (id, comment) => {
-		const response = await api.post(`${POSTS_URL}/${id}/comments`, comment);
+		const token = localStorage.getItem("token");
+		const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+		const response = await api.post(`${POSTS_URL}/${id}/comments`, comment, {
+			headers,
+		});
 		return response.data;
 	},
 
 	deleteComment: async (postId, commentId) => {
+		const token = localStorage.getItem("token");
+		const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
 		const response = await api.delete(
-			`${POSTS_URL}/${postId}/comments/${commentId}`
+			`${POSTS_URL}/${postId}/comments/${commentId}`,
+			{ headers }
 		);
 		return response.data;
 	},
