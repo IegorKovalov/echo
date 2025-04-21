@@ -48,7 +48,7 @@ export function AuthProvider({ children }) {
 
 	const logout = async () => {
 		try {
-			const result = await AuthService.logout();
+			await AuthService.logout();
 			setCurrentUser(null);
 			return { success: true };
 		} catch (error) {
