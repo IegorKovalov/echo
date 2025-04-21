@@ -57,51 +57,6 @@
   color: #71717a !important;
 }
 
-/* Profile Picture Styles */
-.profile-picture-container {
-  
-  position: relative;
-  width: 100px;
-  height: 100px;
-  margin: 0 auto 1rem;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.3s ease;
-}
-
-.profile-picture-container:hover {
-  transform: translateY(-2px);
-}
-
-.profile-picture-container img {
-  background-color: rgba(0, 0, 0, 0.915);
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-.camera-icon-overlay {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  background-image: linear-gradient(to right, #9333ea, #ec4899);
-  color: white;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-.form-text
-.camera-icon-overlay:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-}
-
 /* Settings Tabs */
 .settings-tabs {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -355,7 +310,7 @@
   border-left: 4px solid #3b82f6;
 }
 
-/* User Avatar */
+
 .user-avatar {
   display: flex;
   align-items: center;
@@ -364,40 +319,50 @@
   color: white;
   font-weight: bold;
   border-radius: 50%;
-  width: 120px;
-  height: 120px;
-  font-size: 2.5rem;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-.user-avatar.w-6 {
-  width: 1.25rem;
-  height: 1.25rem;
-  font-size: 0.6rem;
+
+.user-avatar.avatar-default {
+  width: 50px;
+  height: 50px;
+  font-size: 1.25rem;
 }
 
-.user-avatar.w-8 {
-  width: 1.75rem;
-  height: 1.75rem;
-  font-size: 0.75rem;
-}
 
-.user-avatar.w-10 {
-  width: 2.25rem;
-  height: 2.25rem;
+.user-avatar.avatar-navbar {
+  width: 32px;
+  height: 32px;
   font-size: 0.875rem;
 }
 
-.user-avatar.w-24 {
-  width: 5rem;
-  height: 5rem;
-  font-size: 1.75rem;
+
+.user-avatar.avatar-settings {
+  width: 100px;
+  height: 100px;
+  font-size: 2.5rem;
 }
 
-.user-avatar.w-32 {
-  width: 6.5rem;
-  height: 6.5rem;
-  font-size: 2rem;
+
+.user-avatar-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-avatar-container.avatar-default {
+  width: 50px;
+  height: 50px;
+}
+
+.user-avatar-container.avatar-navbar {
+  width: 32px;
+  height: 32px;
+}
+
+.user-avatar-container.avatar-settings {
+  width: 100px;
+  height: 100px;
 }
 
 /* Animation */

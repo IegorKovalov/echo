@@ -10,23 +10,19 @@ const getInitials = (name) => {
 	return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 };
 
-const UserAvatar = ({ fullName, src = null, size = "md" }) => {
+const UserAvatar = ({ fullName, src = null, variant = "default" }) => {
 	const { profileImage } = useProfile();
 	const [avatarImage, setAvatarImage] = useState(null);
 	const [imageLoaded, setImageLoaded] = useState(false);
 
 	const imageSrc = src || profileImage || null;
 
-	const sizeClasses = {
-		xs: "w-6 h-6 text-xs",
-		sm: "w-8 h-8 text-sm",
-		md: "w-10 h-10 text-base",
-		lg: "w-24 h-24 text-2xl",
-		xl: "w-32 h-32 text-3xl",
-		navbar: "w-full h-full text-base",
-	};
-
-	const avatarSize = sizeClasses[size] || sizeClasses.md;
+	const avatarVariant =
+		variant === "navbar"
+			? "avatar-navbar"
+			: variant === "settings"
+			? "avatar-settings"
+			: "avatar-default";
 
 	useEffect(() => {
 		if (!imageSrc) {
@@ -59,7 +55,7 @@ const UserAvatar = ({ fullName, src = null, size = "md" }) => {
 
 	if (avatarImage && imageLoaded) {
 		return (
-			<div className={`user-avatar-container ${avatarSize}`}>
+			<div className={`user-avatar-container ${avatarVariant}`}>
 				<img
 					src={avatarImage}
 					alt={`${fullName || "User"}'s avatar`}
@@ -76,14 +72,16 @@ const UserAvatar = ({ fullName, src = null, size = "md" }) => {
 	}
 
 	return (
-		<div className={`user-avatar ${avatarSize}`}>{getInitials(fullName)}</div>
+		<div className={`user-avatar ${avatarVariant}`}>
+			{getInitials(fullName)}
+		</div>
 	);
 };
 
 UserAvatar.propTypes = {
 	fullName: PropTypes.string,
 	src: PropTypes.string,
-	size: PropTypes.oneOf(["xs", "sm", "md", "lg", "xl", "navbar"]),
+	variant: PropTypes.oneOf(["default", "navbar", "settings"]),
 };
 
 export default UserAvatar;

@@ -9,7 +9,7 @@ const UserMenu = ({ fullName, onLogout }) => (
 		<Dropdown.Toggle as="div" className="navbar-user-toggle">
 			<div className="d-flex align-items-center">
 				<div className="navbar-avatar">
-					<UserAvatar fullName={fullName} size="navbar" />
+					<UserAvatar fullName={fullName} variant="navbar" />
 				</div>
 				<span className="navbar-username">{fullName}</span>
 			</div>

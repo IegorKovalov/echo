@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
 import { FaCamera } from "react-icons/fa";
 import { toast } from "react-toastify";
-import { useProfile } from "../../../contexts/ProfileContext";
-import UserService from "../../../services/user.service";
-import UserAvatar from "../shared/UserAvatar";
+import { useProfile } from "../../../../contexts/ProfileContext";
+import UserService from "../../../../services/user.service";
+import UserAvatar from "../../shared/UserAvatar";
+import "./ProfilePicture.css";
 
 const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 	const fileInputRef = useRef(null);
@@ -76,7 +77,9 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 						className="shadow"
 					/>
 				) : (
-					<UserAvatar fullName={fullName || "User"} size="lg" />
+					<div className="w-100 h-100">
+						<UserAvatar fullName={fullName || "User"} variant="settings" />
+					</div>
 				)}
 				<div className="camera-icon-overlay">
 					{uploading ? (
@@ -90,9 +93,7 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 					)}
 				</div>
 			</div>
-			<p className="text-muted small mt-1">
-				Click to update your profile picture
-			</p>
+
 			<input
 				type="file"
 				accept="image/*"

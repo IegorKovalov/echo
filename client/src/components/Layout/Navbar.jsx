@@ -159,7 +159,7 @@ const Navbar = () => {
 							<Dropdown.Toggle as="div" className="user-menu-toggle">
 								<div className="d-flex align-items-center">
 									<div className="navbar-avatar">
-										<UserAvatar fullName={userFullName} size="sm" />
+										<UserAvatar fullName={userFullName} variant="navbar" />
 									</div>
 									<span className="navbar-username d-none d-sm-block">
 										{userFullName}

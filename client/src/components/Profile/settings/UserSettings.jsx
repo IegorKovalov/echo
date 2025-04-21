@@ -5,7 +5,7 @@ import UserService from "../../../services/user.service";
 import AccountSettingsTab from "./AccountSettingsTab";
 import ChangePasswordTab from "./ChangePasswordTab";
 import ProfileInformationTab from "./ProfileInformationTab";
-import ProfilePicture from "./ProfilePicture";
+import ProfilePicture from "./profilePicture/ProfilePicture";
 import "./usersettings.css";
 
 const UserSettings = () => {

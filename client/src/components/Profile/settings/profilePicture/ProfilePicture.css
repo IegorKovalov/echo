@@ -1,0 +1,46 @@
+/* Profile Picture Styles */
+.profile-picture-container {
+  
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 1rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+  }
+  
+  .profile-picture-container:hover {
+    transform: translateY(-2px);
+  }
+  
+  .profile-picture-container img {
+    background-color: rgba(0, 0, 0, 0.915);
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .camera-icon-overlay {
+    position: relative;
+    bottom: 0;
+    right: 0;
+    background-image: linear-gradient(to right, #9333ea, #ec4899);
+    color: white;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+  
+  .form-text
+  .camera-icon-overlay:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  }
+  
