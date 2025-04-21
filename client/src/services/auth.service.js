@@ -1,6 +1,6 @@
 import api from "./api";
 
-const AUTH_URL = "http://www.localhost:8000/api/v1/users";
+const AUTH_URL = "http://localhost:8000/api/v1/users";
 
 const AuthService = {
 	register: async (userData) => {
@@ -22,10 +22,16 @@ const AuthService = {
 	},
 
 	logout: async () => {
-		const response = await api.get(`${AUTH_URL}/logout`);
-		console.log(response);
-		localStorage.removeItem("token");
-		localStorage.removeItem("user");
+		try {
+			const response = await api.get(`${AUTH_URL}/logout`, {
+				withCredentials: true,
+			});
+			localStorage.removeItem("token");
+			localStorage.removeItem("user");
+			return true;
+		} catch (error) {
+			throw error;
+		}
 	},
 
 	forgotPassword: async (email) => {

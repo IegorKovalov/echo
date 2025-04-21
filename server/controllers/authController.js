@@ -77,8 +77,10 @@ exports.logout = (req, res) => {
 	const cookieOptions = {
 		expires: new Date(0),
 		httpOnly: true,
+		path: "/",
+		sameSite: "strict",
 	};
-	res.cookie("jwt", "", cookieOptions);
+	res.clearCookie("jwt", cookieOptions);
 	res.status(200).json({
 		status: "success",
 		message: "logout successful",
