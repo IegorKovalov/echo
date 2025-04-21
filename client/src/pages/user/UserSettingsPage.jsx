@@ -121,7 +121,7 @@ const UserSettingsPage = () => {
 					<div className="d-flex align-items-center justify-content-center mb-2">
 						<h2 className="mb-0 fw-bold">Account Settings</h2>
 					</div>
-					<p className="text-center text-muted mb-0">
+					<p className="text-center text mb-0">
 						Manage your account information, profile details, and security
 					</p>
 

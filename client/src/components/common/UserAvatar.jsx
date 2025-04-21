@@ -63,9 +63,29 @@ const UserAvatar = ({ fullName, src = null, variant = "default" }) => {
 		);
 	}
 
+	let fontSize;
+	if (variant === "navbar") {
+		fontSize = "0.875rem";
+	} else if (variant === "settings") {
+		fontSize = "2.5rem";
+	} else {
+		fontSize = "1.25rem";
+	}
+
 	return (
 		<div className={`user-avatar ${avatarVariant}`}>
-			{getInitials(fullName)}
+			<span
+				style={{
+					fontSize: fontSize,
+					lineHeight: 1,
+					position: "absolute",
+					top: "50%",
+					left: "50%",
+					transform: "translate(-50%, -50%)",
+				}}
+			>
+				{getInitials(fullName)}
+			</span>
 		</div>
 	);
 };
