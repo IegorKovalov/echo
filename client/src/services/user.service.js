@@ -56,27 +56,30 @@ const UserService = {
 	},
 
 	updateProfilePicture: async (formData) => {
-		const token = localStorage.getItem("token");
-		const headers = token
-			? {
-					Authorization: `Bearer ${token}`,
-					"Content-Type": "multipart/form-data",
-			  }
-			: { "Content-Type": "multipart/form-data" };
+		try {
+			const token = localStorage.getItem("token");
+			const response = await api.patch(
+				`${USER_URL}/update-profile-picture`,
+				formData,
+				{
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "multipart/form-data",
+					},
+				}
+			);
 
-		const response = await api.patch(
-			`${USER_URL}/update-profile-picture`,
-			formData,
-			{ headers }
-		);
+			if (response.data.data.user) {
+				const currentUser = JSON.parse(localStorage.getItem("user"));
+				currentUser.profilePicture = response.data.data.user.profilePicture;
+				localStorage.setItem("user", JSON.stringify(currentUser));
+			}
 
-		if (response.data.data.user) {
-			const currentUser = JSON.parse(localStorage.getItem("user"));
-			currentUser.profilePicture = response.data.data.user.profilePicture;
-			localStorage.setItem("user", JSON.stringify(currentUser));
+			return response.data;
+		} catch (error) {
+			console.error("Update profile picture error:", error);
+			throw error;
 		}
-
-		return response.data;
 	},
 
 	updateUserInStorage: (userData) => {

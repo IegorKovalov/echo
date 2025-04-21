@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FaInfoCircle, FaLock, FaUser, FaUserCog } from "react-icons/fa";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useProfile } from "../../../contexts/ProfileContext";
 import UserService from "../../../services/user.service";
 import AccountSettingsTab from "./AccountSettingsTab";
 import ChangePasswordTab from "./ChangePasswordTab";
@@ -10,6 +11,7 @@ import "./usersettings.css";
 
 const UserSettings = () => {
 	const { currentUser, setCurrentUser } = useAuth();
+	const { updateProfileImage } = useProfile();
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState("");
@@ -101,6 +103,7 @@ const UserSettings = () => {
 
 	const updatePicture = (pictureData) => {
 		setAccountData({ ...accountData, picture: pictureData });
+		updateProfileImage(pictureData);
 	};
 
 	// Function to scroll to a specific section
