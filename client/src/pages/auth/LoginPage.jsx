@@ -2,12 +2,14 @@ import { useState } from "react";
 import { Button, Form } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import CustomToast from "../../components/common/CustomToast";
 import { useAuth } from "../../context/AuthContext";
-
 const LoginPage = () => {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [loading, setLoading] = useState(false);
+	const [showErrorToast, setShowErrorToast] = useState(false);
+	const [errorMessage, setErrorMessage] = useState("");
 
 	const { login } = useAuth();
 	const navigate = useNavigate();
@@ -27,10 +29,11 @@ const LoginPage = () => {
 			}
 		} catch (err) {
 			console.error("Login error:", err);
-			const errorMessage =
+			setErrorMessage(
 				err?.response?.data?.message ||
-				"Failed to log in. Please check your credentials.";
-			toast.error(errorMessage);
+					"Failed to log in. Please check your credentials."
+			);
+			setShowErrorToast(true);
 			return false;
 		} finally {
 			setLoading(false);
@@ -40,6 +43,7 @@ const LoginPage = () => {
 
 	return (
 		<div className="min-h-screen bg-black text-white d-flex flex-column">
+			{showErrorToast && <CustomToast message={errorMessage} variant="error" />}
 			<div className="flex-grow-1 d-flex flex-column justify-content-center align-items-center p-4">
 				<div className="auth-card-container animate-fade-down">
 					<div className="text-center mb-3">
@@ -48,7 +52,6 @@ const LoginPage = () => {
 							Where moments fade, memories remain
 						</p>
 					</div>
-
 					<div className="space-y-6">
 						<Form noValidate onSubmit={handleSubmit} className="space-y-4">
 							<Form.Group className="mb-3">
@@ -101,7 +104,6 @@ const LoginPage = () => {
 					</div>
 				</div>
 			</div>
-
 			<footer className="py-2 text-center text-secondary">
 				© 2025 Echo. All rights reserved.
 			</footer>

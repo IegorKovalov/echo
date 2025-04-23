@@ -14,10 +14,38 @@ const AppRoutes = ({ isAuthenticated }) => {
 	return (
 		<Routes>
 			{/* Auth Routes */}
-			<Route path="/login" element={<LoginPage />} />
-			<Route path="/register" element={<RegisterPage />} />
-			<Route path="/forgot-password" element={<ForgotPasswordPage />} />
-			<Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+			<Route
+				path="/login"
+				element={
+					isAuthenticated ? <Navigate to="/home" replace /> : <LoginPage />
+				}
+			/>
+			<Route
+				path="/register"
+				element={
+					isAuthenticated ? <Navigate to="/home" replace /> : <RegisterPage />
+				}
+			/>
+			<Route
+				path="/forgot-password"
+				element={
+					isAuthenticated ? (
+						<Navigate to="/home" replace />
+					) : (
+						<ForgotPasswordPage />
+					)
+				}
+			/>
+			<Route
+				path="/reset-password/:token"
+				element={
+					isAuthenticated ? (
+						<Navigate to="/home" replace />
+					) : (
+						<ResetPasswordPage />
+					)
+				}
+			/>
 
 			{/* Protected Routes */}
 			<Route element={<ProtectedRoute />}>

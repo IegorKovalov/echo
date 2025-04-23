@@ -1,5 +1,6 @@
 import "./auth.css";
 import "./avatar.css";
+import "./custom-toast.css";
 import "./global.css";
 import "./navigation.css";
 import "./profile-picture.css";
