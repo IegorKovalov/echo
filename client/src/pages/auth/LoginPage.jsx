@@ -43,7 +43,7 @@ const LoginPage = () => {
 
 	return (
 		<div className="min-h-screen bg-black text-white d-flex flex-column">
-			{showErrorToast && <CustomToast message={errorMessage} variant="error" />}
+			{showErrorToast && <CustomToast message={errorMessage} />}
 			<div className="flex-grow-1 d-flex flex-column justify-content-center align-items-center p-4">
 				<div className="auth-card-container animate-fade-down">
 					<div className="text-center mb-3">

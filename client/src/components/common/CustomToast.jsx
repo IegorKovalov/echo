@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Toast from "react-bootstrap/Toast";
 import { FaBell } from "react-icons/fa";
 
-function CustomToast({ message, variant = "info", onClose }) {
+function CustomToast({ message }) {
 	const [show, setShow] = useState(true);
 	const [timestamp, setTimestamp] = useState("just now");
 	const createdAtRef = useRef(Date.now());
@@ -30,16 +30,11 @@ function CustomToast({ message, variant = "info", onClose }) {
 
 	const handleClose = () => {
 		setShow(false);
-		if (onClose) onClose();
 	};
 
 	return (
 		<div aria-live="polite" aria-atomic="true" className="toast-container">
-			<Toast
-				onClose={handleClose}
-				show={show}
-				className={`echo-toast echo-toast-${variant}`}
-			>
+			<Toast onClose={handleClose} show={show} className={`echo-toast`}>
 				<Toast.Header className="echo-toast-header">
 					<span className="toast-icon">
 						<FaBell />
