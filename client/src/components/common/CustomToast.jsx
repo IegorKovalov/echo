@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Toast from "react-bootstrap/Toast";
 import { FaBell } from "react-icons/fa";
 
-function CustomToast({ message }) {
+function CustomToast({ message, onClose, toastType }) {
 	const [show, setShow] = useState(true);
 	const [timestamp, setTimestamp] = useState("just now");
 	const createdAtRef = useRef(Date.now());
@@ -30,21 +30,28 @@ function CustomToast({ message }) {
 
 	const handleClose = () => {
 		setShow(false);
+		if (onClose) onClose();
 	};
 
+	const shouldAutohide = toastType === "error" || toastType === "success";
+
 	return (
-		<div aria-live="polite" aria-atomic="true" className="toast-container">
-			<Toast onClose={handleClose} show={show} className={`echo-toast`}>
-				<Toast.Header className="echo-toast-header">
-					<span className="toast-icon">
-						<FaBell />
-					</span>
-					<strong className="me-auto gradient-text">echo</strong>
-					<small className="gradient-text">{timestamp}</small>
-				</Toast.Header>
-				<Toast.Body>{message}</Toast.Body>
-			</Toast>
-		</div>
+		<Toast
+			onClose={handleClose}
+			show={show}
+			autohide={shouldAutohide}
+			delay={6000}
+			className="echo-toast"
+		>
+			<Toast.Header className="echo-toast-header">
+				<span className="toast-icon">
+					<FaBell />
+				</span>
+				<strong className="me-auto gradient-text">echo</strong>
+				<small className="gradient-text">{timestamp}</small>
+			</Toast.Header>
+			<Toast.Body>{message}</Toast.Body>
+		</Toast>
 	);
 }
 

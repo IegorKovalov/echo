@@ -1,17 +1,17 @@
 import { useState } from "react";
 import { Button, Form } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-import CustomToast from "../../components/common/CustomToast";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
+0;
+
 const LoginPage = () => {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [loading, setLoading] = useState(false);
-	const [showErrorToast, setShowErrorToast] = useState(false);
-	const [errorMessage, setErrorMessage] = useState("");
 
 	const { login } = useAuth();
+	const { showToast } = useToast();
 	const navigate = useNavigate();
 
 	const handleSubmit = async (e) => {
@@ -22,18 +22,18 @@ const LoginPage = () => {
 			setLoading(true);
 			const response = await login(email, password);
 			if (response && response.data && response.data.user) {
-				toast.success("Login successful!");
+				showToast("Login successful!", "success");
 				navigate("/profile");
 			} else {
-				toast.error("Login failed. Unexpected response format.");
+				showToast("Login failed. Unexpected response format.", "error");
 			}
 		} catch (err) {
 			console.error("Login error:", err);
-			setErrorMessage(
+			showToast(
 				err?.response?.data?.message ||
-					"Failed to log in. Please check your credentials."
+					"Failed to log in. Please check your credentials.",
+				"error"
 			);
-			setShowErrorToast(true);
 			return false;
 		} finally {
 			setLoading(false);
@@ -43,7 +43,6 @@ const LoginPage = () => {
 
 	return (
 		<div className="min-h-screen bg-black text-white d-flex flex-column">
-			{showErrorToast && <CustomToast message={errorMessage} />}
 			<div className="flex-grow-1 d-flex flex-column justify-content-center align-items-center p-4">
 				<div className="auth-card-container animate-fade-down">
 					<div className="text-center mb-3">

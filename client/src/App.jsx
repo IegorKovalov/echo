@@ -5,6 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Navbar from "./components/layout/Navbar";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ProfileProvider } from "./context/ProfileContext";
+import { ToastProvider } from "./context/ToastContext";
 import { AppRoutes } from "./routes";
 
 import "./styles";
@@ -25,12 +26,14 @@ function AppLayout() {
 function App() {
 	return (
 		<Router>
-			<AuthProvider>
-				<ProfileProvider>
-					<AppLayout />
-					<ToastContainer position="bottom-right" />
-				</ProfileProvider>
-			</AuthProvider>
+			<ToastProvider>
+				<AuthProvider>
+					<ProfileProvider>
+						<AppLayout />
+						<ToastContainer position="bottom-right" />
+					</ProfileProvider>
+				</AuthProvider>
+			</ToastProvider>
 		</Router>
 	);
 }
