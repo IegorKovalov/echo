@@ -33,20 +33,24 @@
   
   /* Navigation items */
   .nav-item {
-    color: rgba(255, 255, 255, 0.7);
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.5rem;
+    color: rgba(255, 255, 255, 0.8);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin: 0.25rem 0;
     transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
+    border: none;
   }
   
-  .nav-item:hover, .nav-item.active {
-    background-color: rgba(255, 255, 255, 0.333);
+  .nav-item:hover{
+    background-color: rgba(39, 39, 42, 0.5);
     color: white;
-    transform: translateY(-2px);
   }
 
+  .nav-item.active {
+    background-color: rgba(147, 51, 234, 0.2);
+    color: white !important;
+    font-weight: 500;
+  }
   .mobile-nav-item {
     padding: 0.75rem 1rem;
     border-radius: 0.5rem;

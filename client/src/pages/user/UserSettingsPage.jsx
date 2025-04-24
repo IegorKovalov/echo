@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { FaInfoCircle, FaLock, FaUser, FaUserCog } from "react-icons/fa";
+import { Card, Col, Container, Nav, Row, Tab } from "react-bootstrap";
+import {
+	FaChevronRight,
+	FaLock,
+	FaUserCircle,
+	FaUserCog,
+} from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
 import { useProfile } from "../../context/ProfileContext";
 import UserService from "../../services/user.service";
@@ -15,6 +21,7 @@ const UserSettingsPage = () => {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState("");
+	const [activeTab, setActiveTab] = useState("account");
 
 	const [accountData, setAccountData] = useState({
 		username: currentUser?.username || "",
@@ -106,91 +113,107 @@ const UserSettingsPage = () => {
 		updateProfileImage(pictureData);
 	};
 
-	// Function to scroll to a specific section
-	const scrollToSection = (sectionId) => {
-		const element = document.getElementById(sectionId);
-		if (element) {
-			element.scrollIntoView({ behavior: "smooth" });
-		}
-	};
-
 	return (
-		<div className="container py-4 settings-container">
-			<div className="settings-card card shadow">
-				<div className="card-header bg-black py-3">
-					<div className="d-flex align-items-center justify-content-center mb-2">
-						<h2 className="mb-0 fw-bold">Account Settings</h2>
-					</div>
-					<p className="text-center text mb-0">
-						Manage your account information, profile details, and security
-					</p>
+		<Container className="py-4">
+			<h2 className="mb-4 text-white">Settings</h2>
 
-					<ProfilePicture
-						picture={accountData.picture}
-						fullName={accountData.fullname}
-						onPictureUpdate={updatePicture}
-					/>
+			<Tab.Container activeKey={activeTab} onSelect={(k) => setActiveTab(k)}>
+				<Row>
+					<Col lg={3} md={4} className="mb-4">
+						<Card className="settings-sidebar border-0">
+							<Card.Body className="p-0">
+								<div className="user-profile-summary p-3 text-center">
+									<div className="mb-3">
+										<ProfilePicture
+											picture={accountData.picture}
+											fullName={accountData.fullname}
+											onPictureUpdate={updatePicture}
+										/>
+									</div>
+									<h5 className="mb-1">{accountData.fullname}</h5>
+									<p className="text-secondary mb-0">@{accountData.username}</p>
+								</div>
 
-					{/* Quick-jump navigation instead of tabs */}
-					<div className="settings-quick-nav">
-						<button
-							className="nav-pill"
-							onClick={() => scrollToSection("account-section")}
-						>
-							<FaUserCog className="me-1" />
-							<span>Account</span>
-						</button>
-						<button
-							className="nav-pill"
-							onClick={() => scrollToSection("profile-section")}
-						>
-							<FaUser className="me-1" />
-							<span>Profile</span>
-						</button>
-						<button
-							className="nav-pill"
-							onClick={() => scrollToSection("security-section")}
-						>
-							<FaLock className="me-1" />
-							<span>Security</span>
-						</button>
-					</div>
-				</div>
+								<Nav variant="pills" className="flex-column settings-nav">
+									<Nav.Item>
+										<Nav.Link
+											eventKey="account"
+											className="d-flex justify-content-between align-items-center"
+										>
+											<div>
+												<FaUserCog className="me-2" />
+												Account
+											</div>
+											<FaChevronRight className="nav-chevron" />
+										</Nav.Link>
+									</Nav.Item>
+									<Nav.Item>
+										<Nav.Link
+											eventKey="profile"
+											className="d-flex justify-content-between align-items-center"
+										>
+											<div>
+												<FaUserCircle className="me-2" />
+												Profile
+											</div>
+											<FaChevronRight className="nav-chevron" />
+										</Nav.Link>
+									</Nav.Item>
+									<Nav.Item>
+										<Nav.Link
+											eventKey="security"
+											className="d-flex justify-content-between align-items-center"
+										>
+											<div>
+												<FaLock className="me-2" />
+												Security
+											</div>
+											<FaChevronRight className="nav-chevron" />
+										</Nav.Link>
+									</Nav.Item>
+								</Nav>
+							</Card.Body>
+						</Card>
+					</Col>
 
-				<div className="card-body p-3">
-					{/* Scrollable sections content */}
-					<div className="settings-scrollable-content">
-						{/* Account Section */}
-						<div id="account-section" className="settings-section-container">
-							<AccountSettingsTab
-								accountData={accountData}
-								setAccountData={setAccountData}
-								onSubmit={handleAccountSubmit}
-								loading={loading}
-								error={error}
-								success={success}
-							/>
-						</div>
+					<Col lg={9} md={8}>
+						<Card className="settings-content-card border-0">
+							<Card.Body>
+								<Tab.Content>
+									<Tab.Pane eventKey="account">
+										<h3 className="text-white mb-4">Account Settings</h3>
+										<AccountSettingsTab
+											accountData={accountData}
+											setAccountData={setAccountData}
+											onSubmit={handleAccountSubmit}
+											loading={loading}
+											error={error}
+											success={success}
+										/>
+									</Tab.Pane>
 
-						{/* Profile Section */}
-						<div id="profile-section" className="settings-section-container">
-							<ProfileInformationTab />
-						</div>
+									<Tab.Pane eventKey="profile">
+										<h3 className="text-white mb-4">Profile Information</h3>
+										<ProfileInformationTab />
+									</Tab.Pane>
 
-						{/* Security Section */}
-						<div id="security-section" className="settings-section-container">
-							<ChangePasswordTab
-								passwordData={passwordData}
-								onSubmit={handlePasswordSubmit}
-								loading={loading}
-								error={error}
-								success={success}
-							/>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
+									<Tab.Pane eventKey="security">
+										<h3 className="text-white mb-4">Security Settings</h3>
+										<ChangePasswordTab
+											passwordData={passwordData}
+											onSubmit={handlePasswordSubmit}
+											loading={loading}
+											error={error}
+											success={success}
+										/>
+									</Tab.Pane>
+								</Tab.Content>
+							</Card.Body>
+						</Card>
+					</Col>
+				</Row>
+			</Tab.Container>
+		</Container>
 	);
 };
 
