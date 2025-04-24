@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button, Form } from "react-bootstrap";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { toast } from "react-toastify";
+import { useToast } from "../../context/ToastContext";
 import AuthService from "../../services/auth.service";
 
 const ResetPasswordPage = () => {
@@ -12,6 +12,7 @@ const ResetPasswordPage = () => {
 	const [tokenValid, setTokenValid] = useState(true);
 
 	const { token } = useParams();
+	const { showToast } = useToast();
 	const navigate = useNavigate();
 
 	useEffect(() => {
@@ -34,7 +35,7 @@ const ResetPasswordPage = () => {
 
 			await AuthService.resetPassword(token, password, passwordConfirm);
 
-			toast.success("Password has been reset successfully!");
+			showToast("Password has been reset successfully!", "success");
 			navigate("/login");
 		} catch (err) {
 			setError(
@@ -42,7 +43,7 @@ const ResetPasswordPage = () => {
 					"Failed to reset password. The token may be invalid or expired."
 			);
 			setTimeout(() => {
-				toast.error(error || "An error occurred");
+				showToast(error || "An error occurred", "error");
 			}, 1000);
 		} finally {
 			setLoading(false);

@@ -3,7 +3,6 @@ import { Button, Form } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
-0;
 
 const LoginPage = () => {
 	const [email, setEmail] = useState("");

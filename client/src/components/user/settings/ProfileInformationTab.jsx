@@ -8,7 +8,7 @@ import {
 	FaMapMarkerAlt,
 	FaUser,
 } from "react-icons/fa";
-import { toast } from "react-toastify";
+import { useToast } from "../../../context/ToastContext";
 import UserService from "../../../services/user.service";
 
 const ProfileInformationTab = () => {
@@ -24,7 +24,7 @@ const ProfileInformationTab = () => {
 	const [validationErrors, setValidationErrors] = useState({});
 	const [success, setSuccess] = useState("");
 	const [error, setError] = useState("");
-
+	const { showToast } = useToast();
 	const MAX_BIO_LENGTH = 160;
 
 	useEffect(() => {
@@ -61,8 +61,9 @@ const ProfileInformationTab = () => {
 			});
 		} catch (err) {
 			console.error("Error fetching profile data:", err);
-			toast.error(
-				"Failed to load profile information. Please try again later."
+			showToast(
+				"Failed to load profile information. Please try again later.",
+				"error"
 			);
 		} finally {
 			setLoading(false);
@@ -111,7 +112,7 @@ const ProfileInformationTab = () => {
 		e.preventDefault();
 
 		if (!validateForm()) {
-			toast.error("Please fix the validation errors before submitting");
+			showToast("Please fix the validation errors before submitting", "error");
 			return;
 		}
 
@@ -122,12 +123,12 @@ const ProfileInformationTab = () => {
 		try {
 			await UserService.updateProfileInfo(formData);
 			setSuccess("Profile information updated successfully!");
-			toast.success("Profile information updated!");
+			showToast("Profile information updated!", "success");
 		} catch (err) {
 			setError(
 				err.response?.data?.message || "Failed to update profile information."
 			);
-			toast.error("Failed to update profile information.");
+			showToast(error, "error");
 		} finally {
 			setLoading(false);
 		}

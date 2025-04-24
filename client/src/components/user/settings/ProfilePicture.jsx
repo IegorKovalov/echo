@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button, Modal } from "react-bootstrap";
 import { FaCamera, FaTimes, FaTrash, FaUpload } from "react-icons/fa";
-import { toast } from "react-toastify";
+import { useToast } from "../../../context/ToastContext";
 import UserService from "../../../services/user.service";
 import UserAvatar from "../../common/UserAvatar";
 
@@ -11,6 +11,7 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 	const [previewImage, setPreviewImage] = useState(null);
 	const [selectedFile, setSelectedFile] = useState(null);
 	const [loading, setLoading] = useState(false);
+	const { showToast } = useToast();
 	const fileInputRef = useRef(null);
 
 	useEffect(() => {
@@ -41,12 +42,12 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 		if (!file) return;
 
 		if (!file.type.match("image.*")) {
-			toast.error("Please select an image file");
+			showToast("Please select an image file", "error");
 			return;
 		}
 
 		if (file.size > 5 * 1024 * 1024) {
-			toast.error("File size should be less than 5MB");
+			showToast("File size should be less than 5MB", "error");
 			return;
 		}
 
@@ -88,14 +89,15 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 				response.data.user.profilePicture
 			) {
 				onPictureUpdate(response.data.user.profilePicture);
-				toast.success("Profile picture updated successfully!");
+				showToast("Profile picture updated successfully!", "success");
 			} else {
 				throw new Error("No image URL returned from server");
 			}
 		} catch (error) {
 			console.error("Error updating profile picture:", error);
-			toast.error(
-				error.response?.data?.message || "Failed to update profile picture"
+			showToast(
+				error.response?.data?.message || "Failed to update profile picture",
+				"error"
 			);
 		} finally {
 			setLoading(false);
@@ -119,13 +121,14 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 
 			if (response.status === "success") {
 				onPictureUpdate(null);
-				toast.success("Profile picture removed successfully");
+				showToast("Profile picture removed successfully", "success");
 				handleModalClose();
 			}
 		} catch (error) {
 			console.error("Error deleting profile picture:", error);
-			toast.error(
-				error.response?.data?.message || "Failed to remove profile picture"
+			showToast(
+				error.response?.data?.message || "Failed to remove profile picture",
+				"error"
 			);
 		} finally {
 			setLoading(false);

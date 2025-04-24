@@ -22,7 +22,7 @@ export function ToastProvider({ children }) {
 			{children}
 
 			<div aria-live="polite" aria-atomic="true" className="position-relative">
-				<ToastContainer className="p-3" position="top-end">
+				<ToastContainer className="p-3">
 					{toasts.map((toast) => (
 						<CustomToast
 							key={toast.id}

@@ -40,7 +40,7 @@ function CustomToast({ message, onClose, toastType }) {
 			onClose={handleClose}
 			show={show}
 			autohide={shouldAutohide}
-			delay={6000}
+			delay={3000}
 			className="echo-toast"
 		>
 			<Toast.Header className="echo-toast-header">

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { FaEnvelope, FaIdCard, FaUser } from "react-icons/fa";
-import { toast } from "react-toastify";
+import { useToast } from "../../../context/ToastContext";
 
 const AccountSettingsTab = ({
 	accountData,
@@ -11,6 +11,7 @@ const AccountSettingsTab = ({
 	const [formData, setFormData] = useState({ ...accountData });
 	const [validationErrors, setValidationErrors] = useState({});
 	const [hasChanges, setHasChanges] = useState(false);
+	const { showToast } = useToast();
 
 	useEffect(() => {
 		const isDifferent =
@@ -50,7 +51,6 @@ const AccountSettingsTab = ({
 		const { name, value } = e.target;
 		setFormData({ ...formData, [name]: value });
 
-		// Clear validation error for this field when user types
 		if (validationErrors[name]) {
 			setValidationErrors({
 				...validationErrors,
@@ -63,7 +63,7 @@ const AccountSettingsTab = ({
 		e.preventDefault();
 
 		if (!validateForm()) {
-			toast.error("Please fix the validation errors before submitting");
+			showToast("Please fix the validation errors before submitting", "error");
 			return;
 		}
 
@@ -71,16 +71,16 @@ const AccountSettingsTab = ({
 
 		if (result.success) {
 			setAccountData(formData);
-			toast.success("Account settings updated!");
+			showToast("Account settings updated!", "success");
 		} else {
-			toast.error("Failed to update account settings.");
+			showToast("Failed to update account settings.", "error");
 		}
 	};
 
 	const handleReset = () => {
 		setFormData({ ...accountData });
 		setValidationErrors({});
-		toast.info("Changes reset to saved values");
+		showToast("Changes reset to saved values", "success");
 	};
 
 	return (

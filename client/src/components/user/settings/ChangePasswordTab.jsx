@@ -7,8 +7,7 @@ import {
 	FaShieldAlt,
 	FaTimes,
 } from "react-icons/fa";
-import { toast } from "react-toastify";
-
+import { useToast } from "../../../context/ToastContext";
 const ChangePasswordTab = ({ passwordData, onSubmit, loading }) => {
 	const [formData, setFormData] = useState({
 		passwordCurrent: passwordData?.passwordCurrent || "",
@@ -23,6 +22,8 @@ const ChangePasswordTab = ({ passwordData, onSubmit, loading }) => {
 		new: false,
 		confirm: false,
 	});
+
+	const { showToast } = useToast();
 
 	// Password requirements
 	const requirements = [
@@ -114,7 +115,7 @@ const ChangePasswordTab = ({ passwordData, onSubmit, loading }) => {
 		e.preventDefault();
 
 		if (!validateForm()) {
-			toast.error("Please fix the validation errors before submitting");
+			showToast("Please fix the validation errors before submitting", "error");
 			return;
 		}
 
@@ -134,9 +135,9 @@ const ChangePasswordTab = ({ passwordData, onSubmit, loading }) => {
 				number: false,
 				special: false,
 			});
-			toast.success("Password updated successfully!");
+			showToast("Password updated successfully!", "success");
 		} else {
-			toast.error("Failed to update password");
+			showToast("Failed to update password", "error");
 		}
 	};
 

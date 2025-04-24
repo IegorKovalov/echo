@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Button, Form } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 
 const RegisterPage = () => {
 	const [formData, setFormData] = useState({
@@ -15,6 +15,7 @@ const RegisterPage = () => {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 	const { register } = useAuth();
+	const { showToast } = useToast();
 	const navigate = useNavigate();
 
 	const handleChange = (e) => {
@@ -35,13 +36,13 @@ const RegisterPage = () => {
 		try {
 			setLoading(true);
 			await register(formData);
-			toast.success("Registration successful!");
+			showToast("Registration successful!", "success");
 			navigate("/profile");
 		} catch (err) {
 			const errorMessage =
 				err.response?.data?.message ||
 				"Failed to create an account. Please try again.";
-			toast.error(errorMessage || error);
+			showToast(errorMessage || error, "error");
 		} finally {
 			setLoading(false);
 			setError("");

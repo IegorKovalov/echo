@@ -30,7 +30,6 @@ function App() {
 				<AuthProvider>
 					<ProfileProvider>
 						<AppLayout />
-						<ToastContainer position="bottom-right" />
 					</ProfileProvider>
 				</AuthProvider>
 			</ToastProvider>

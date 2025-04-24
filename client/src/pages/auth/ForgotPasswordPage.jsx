@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { Button, Form } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import { toast } from "react-toastify";
+import { useToast } from "../../context/ToastContext";
 import AuthService from "../../services/auth.service";
 
 const ForgotPasswordPage = () => {
 	const [email, setEmail] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [sent, setSent] = useState(false);
+
+	const { showToast } = useToast();
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
@@ -16,12 +18,15 @@ const ForgotPasswordPage = () => {
 			setLoading(true);
 			await AuthService.forgotPassword(email);
 			setSent(true);
-			toast.success("Password reset email sent. Please check your inbox.");
+			showToast(
+				"Password reset email sent. Please check your inbox.",
+				"success"
+			);
 		} catch (err) {
 			const errorMessage =
 				err.response?.data?.message ||
 				"Failed to send password reset email. Please try again.";
-			toast.error(errorMessage);
+			showToast(errorMessage, "error");
 		} finally {
 			setLoading(false);
 		}

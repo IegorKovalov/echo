@@ -17,12 +17,13 @@ import {
 	FaUsers,
 } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 import UserAvatar from "../common/UserAvatar";
 
 const Navbar = () => {
 	const { currentUser, logout } = useAuth();
+	const { showToast } = useToast();
 	const navigate = useNavigate();
 	const location = useLocation();
 	const userFullName = currentUser ? currentUser.fullName || "User" : "User";
@@ -30,7 +31,6 @@ const Navbar = () => {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-	// Handle scrolling effect
 	useEffect(() => {
 		const handleScroll = () => {
 			const isScrolled = window.scrollY > 10;
@@ -43,7 +43,6 @@ const Navbar = () => {
 		return () => window.removeEventListener("scroll", handleScroll);
 	}, [scrolled]);
 
-	// Close mobile menu when route changes
 	useEffect(() => {
 		setIsMobileMenuOpen(false);
 	}, [location.pathname]);
@@ -52,20 +51,15 @@ const Navbar = () => {
 		try {
 			await logout();
 			navigate("/login");
-			toast.success("Successfully logged out");
+			showToast("Successfully logged out", "success");
 		} catch (error) {
 			console.error("Logout error:", error);
-			toast.error("Logout failed. Please try again later.");
+			showToast("Logout failed. Please try again later.", "error");
 		}
 	};
 
 	const handleSearch = (e) => {
 		e.preventDefault();
-		// Implement search functionality
-		if (searchQuery.trim()) {
-			toast.info(`Searching for: ${searchQuery}`);
-			// navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-		}
 	};
 
 	const navItems = [
