@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Card, Dropdown } from "react-bootstrap";
+import { Card, Dropdown, Form } from "react-bootstrap";
 import { FaComment, FaEllipsisV, FaHeart, FaRegHeart } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
 import UserAvatar from "../common/UserAvatar";
@@ -8,7 +8,8 @@ const PostItem = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 	const { currentUser } = useAuth();
 	const [showComments, setShowComments] = useState(false);
 	const [isLiked, setIsLiked] = useState(false);
-
+	const [isEdit, setIsEdit] = useState(false);
+	const [newContent, setNewContent] = useState("");
 	const handleLikeClick = () => {
 		if (isLiked) {
 			setIsLiked(false);
@@ -18,32 +19,33 @@ const PostItem = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 			onLike(post._id);
 		}
 	};
+	const handelEditClick = () => {
+		setNewContent(post.content);
+		setIsEdit(true);
+	};
+
+	const handleNewContent = (e) => {
+		setNewContent(e.target.value);
+	};
 	return (
 		<Card className="post-card mb-3">
-			<Card.Header className="post-header">
+			<Card.Header className="d-flex justify-content-between align-items-center">
 				<div className="d-flex align-items-center">
 					<div className="post-avatar">
-						<UserAvatar
-							src={post.user.profilePicture}
-							fullName={post.user.fullName}
-							variant="post"
-						/>
+						<UserAvatar fullName={post.user.fullName} variant="navbar" />
 					</div>
-
-					<div className="ms-2">
-						<h6 className="mb-0">{post.user.fullName}</h6>
+					<div className="ms-1">
+						<h6 className="mb-1">{post.user.fullName}</h6>
 						<small className="text-secondary">@{post.user.username}</small>
 					</div>
 				</div>
 				{post.user._id === currentUser?._id && (
-					<Dropdown align="end">
-						<Dropdown.Toggle variant="link" className="p-0 text-light">
+					<Dropdown align="start">
+						<Dropdown.Toggle variant="link" className="p-0 text-dark">
 							<FaEllipsisV />
 						</Dropdown.Toggle>
 						<Dropdown.Menu>
-							<Dropdown.Item onClick={() => onEdit(post._id)}>
-								Edit
-							</Dropdown.Item>
+							<Dropdown.Item onClick={handelEditClick}>Edit</Dropdown.Item>
 							<Dropdown.Item
 								onClick={() => onDelete(post._id)}
 								className="text-danger"
@@ -55,7 +57,37 @@ const PostItem = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 				)}
 			</Card.Header>
 			<Card.Body>
-				<Card.Text>{post.content}</Card.Text>
+				{isEdit ? (
+					<>
+						<Form.Control
+							as="textarea"
+							rows={3}
+							value={newContent}
+							onChange={handleNewContent}
+							className="mb-2"
+						/>
+						<div>
+							<button
+								className="btn btn-success btn-sm me-2"
+								onClick={() => {
+									onEdit(post._id, newContent);
+									setIsEdit(false);
+								}}
+							>
+								Save
+							</button>
+							<button
+								className="btn btn-secondary btn-sm"
+								onClick={() => setIsEdit(false)}
+							>
+								Cancel
+							</button>
+						</div>
+					</>
+				) : (
+					<Card.Text>{post.content}</Card.Text>
+				)}
+
 				<small className="text-secondary d-block mt-2">
 					{new Date(post.createdAt).toLocaleString()}
 				</small>

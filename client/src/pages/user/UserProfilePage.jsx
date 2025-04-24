@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Container } from "react-bootstrap";
 import UserAvatar from "../../components/common/UserAvatar";
+import PostList from "../../components/posts/PostList";
 import { useAuth } from "../../context/AuthContext";
 import { useProfile } from "../../context/ProfileContext";
 import UserService from "../../services/user.service";
@@ -16,7 +17,7 @@ const UserProfilePage = () => {
 			try {
 				setLoading(true);
 				const response = await UserService.getProfile();
-				setUserData(response.data.data.user);
+				setUserData(response.data.user);
 			} catch (error) {
 				console.error("Error fetching user data:", error);
 			} finally {
@@ -39,13 +40,7 @@ const UserProfilePage = () => {
 
 	return (
 		<Container className="py-5">
-			{/* Content will be added here */}
-			<div className="text-center py-5 my-5">
-				<h3 className="gradient-text mb-3">Not yet Implemented</h3>
-				<p className="text-secondary">
-					We're working on your personalized profile. Check back soon!
-				</p>
-			</div>
+			<PostList />
 		</Container>
 	);
 };
