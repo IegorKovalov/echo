@@ -1,5 +1,6 @@
 import React from "react";
-import { Form } from "react-bootstrap";
+import { Button, Form, InputGroup, ListGroup } from "react-bootstrap";
+import { FaPaperPlane } from "react-icons/fa";
 
 function CommentSection({
 	postComments,
@@ -8,26 +9,46 @@ function CommentSection({
 	submitComment,
 }) {
 	return (
-		<div className="post-comments mt-3">
+		<div className="mt-3">
 			{postComments.length > 0 && (
-				<div>
+				<ListGroup className="mb-3">
 					{postComments.map((comment) => (
-						<p key={comment._id}>{comment.content}</p>
+						<ListGroup.Item
+							key={comment._id}
+							className="d-flex justify-content-between align-items-start"
+						>
+							<div className="ms-2 me-auto">
+								<div className="fw-bold">
+									@{comment.user?.username || "anonymous"}
+								</div>
+								{comment.content}
+							</div>
+							<small className="text-muted">
+								{new Date(comment.createdAt).toLocaleTimeString()}
+							</small>
+						</ListGroup.Item>
 					))}
-				</div>
+				</ListGroup>
 			)}
-			<>
+
+			{/* Comment Form */}
+			<InputGroup className="mb-3">
 				<Form.Control
 					as="textarea"
-					rows={1}
+					rows={2}
 					value={newCommentText}
 					onChange={onNewCommentChange}
-					className="mb-2"
+					placeholder="Write a comment..."
+					aria-label="Comment input"
 				/>
-				<button className="btn btn-success btn-sm me-2" onClick={submitComment}>
-					Post comment
-				</button>
-			</>
+				<Button
+					variant="outline-success"
+					onClick={submitComment}
+					disabled={!newCommentText.trim()}
+				>
+					<FaPaperPlane />
+				</Button>
+			</InputGroup>
 		</div>
 	);
 }

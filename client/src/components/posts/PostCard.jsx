@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Card, Dropdown, Form } from "react-bootstrap";
-import { FaComment, FaEllipsisV, FaHeart, FaRegHeart } from "react-icons/fa";
+import { Badge, Card, Dropdown, Form } from "react-bootstrap";
+import { FaEllipsisV, FaHeart, FaRegHeart } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
 import UserAvatar from "../common/UserAvatar";
 import CommentSection from "./CommentSection";
@@ -122,7 +122,12 @@ const PostCard = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 						className="btn btn-link post-action-btn"
 						onClick={() => setCommentsVisible(!commentsVisible)}
 					>
-						<FaComment /> {post.comments.length}
+						{postComments.length > 0 && (
+							<Badge bg="secondary" className="mb-2">
+								{postComments.length}{" "}
+								{postComments.length === 1 ? "Comment" : "Comments"}
+							</Badge>
+						)}
 					</button>
 				</div>
 
