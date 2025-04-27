@@ -9,6 +9,12 @@
   color: white;
   backdrop-filter: blur(10px);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
 }
 
 .post-card:hover {
@@ -28,6 +34,9 @@
   background-color: rgba(35, 35, 45, 0.7);
   border-top: 1px solid rgba(255, 255, 255, 0.02);
   border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .post-card .card-text {
@@ -35,6 +44,8 @@
   line-height: 1.5;
   margin-bottom: 1rem;
   color: rgba(255, 255, 255, 0.95);
+  flex: 1;
+  min-height: 80px;
 }
 
 .post-card .card-footer {
@@ -270,10 +281,21 @@
 }
 
 /* Media queries for responsive design */
+@media (max-width: 768px) {
+  .post-card {
+    max-width: 90%;
+  }
+}
+
 @media (max-width: 576px) {
   .post-avatar {
     width: 40px !important;
     height: 40px !important;
+  }
+  
+  .post-card {
+    max-width: 100%;
+    min-height: 180px;
   }
   
   .post-card .card-body,
