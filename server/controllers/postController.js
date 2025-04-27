@@ -154,11 +154,7 @@ exports.deletePost = async (req, res) => {
 
 exports.likePost = async (req, res) => {
 	try {
-		const post = await Post.findByIdAndUpdate(
-			req.params.id,
-			{ $inc: { likes: 1 } },
-			{ new: true }
-		);
+		const post = await Post.findById(req.params.id);
 
 		if (!post) {
 			return res.status(404).json({
@@ -166,6 +162,15 @@ exports.likePost = async (req, res) => {
 				message: "Post not found",
 			});
 		}
+		if (post.likedBy.includes(req.user._id)) {
+			return res.status(400).json({
+				status: "failed",
+				message: "You have already liked this post",
+			});
+		}
+		post.likedBy.push(req.user._id);
+		post.likes = post.likedBy.length;
+		await post.save();
 
 		res.status(200).json({
 			status: "success",
@@ -193,7 +198,17 @@ exports.deleteLike = async (req, res) => {
 			});
 		}
 
-		post.likes = Math.max(0, post.likes - 1);
+		if (!post.likedBy.includes(req.user._id)) {
+			return res.status(400).json({
+				status: "failed",
+				message: "You have not liked this post",
+			});
+		}
+
+		post.likedBy = post.likedBy.filter(
+			(userId) => userId.toString() !== req.user._id.toString()
+		);
+		post.likes = post.likedBy.length;
 		await post.save();
 
 		res.status(200).json({
