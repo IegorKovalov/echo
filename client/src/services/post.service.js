@@ -61,13 +61,17 @@ const PostService = {
 		return response.data;
 	},
 
-	addComment: async (id, comment) => {
+	addComment: async (id, commentContent) => {
 		const token = localStorage.getItem("token");
 		const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-		const response = await api.post(`${POSTS_URL}/${id}/comments`, comment, {
-			headers,
-		});
+		const response = await api.post(
+			`${POSTS_URL}/${id}/comments`,
+			commentContent,
+			{
+				headers,
+			}
+		);
 		return response.data;
 	},
 

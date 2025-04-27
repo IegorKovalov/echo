@@ -28,6 +28,9 @@ const PostItem = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 
 	const handleNewContent = (e) => setNewContent(e.target.value);
 	const handleNewComment = (e) => setNewComment(e.target.value);
+	const handleCommentPost = async () => {
+		await onComment(post._id, newComment);
+	};
 	return (
 		<Card className="post-card mb-3">
 			<Card.Header className="d-flex justify-content-between align-items-center">
@@ -126,7 +129,7 @@ const PostItem = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 							/>
 							<button
 								className="btn btn-success btn-sm me-2"
-								onClick={onComment}
+								onClick={handleCommentPost}
 							>
 								Post comment
 							</button>

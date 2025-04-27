@@ -47,12 +47,9 @@ function PostList() {
 	};
 	const handleOnComment = async (postId, newComment) => {
 		try {
-			const post = posts.find((post) => post._id === postId);
-			const updatedPost = {
-				...post,
-				comments: [...post.comments, newComment],
-			};
-			const response = await PostService.addComment(postId, updatedPost);
+			const response = await PostService.addComment(postId, {
+				commentContent: newComment,
+			});
 			setPosts(
 				posts.map((post) => (post._id === postId ? response.data.post : post))
 			);

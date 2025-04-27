@@ -209,12 +209,12 @@ exports.deleteLike = async (req, res) => {
 
 exports.addComment = async (req, res) => {
 	try {
-		const { text } = req.body;
-
-		if (!text || text.trim() === "") {
+		const { commentContent } = req.body;
+		console.log(commentContent);
+		if (!commentContent || commentContent.trim() === "") {
 			return res.status(400).json({
 				status: "failed",
-				message: "Comment text is required",
+				message: "Comment Content is required",
 			});
 		}
 
@@ -229,13 +229,12 @@ exports.addComment = async (req, res) => {
 
 		const newComment = {
 			user: req.user._id,
-			text: text.trim(),
+			content: commentContent.trim(),
 		};
 
 		post.comments.push(newComment);
 		await post.save();
 
-		// Repopulate comments after adding
 		await post.populate({
 			path: "comments.user",
 			select: "username fullName profilePicture",
