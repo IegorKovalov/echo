@@ -7,9 +7,11 @@ import UserAvatar from "../common/UserAvatar";
 const PostItem = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 	const { currentUser } = useAuth();
 	const [showComments, setShowComments] = useState(false);
+	const [newComment, setNewComment] = useState("");
 	const [isLiked, setIsLiked] = useState(false);
 	const [isEdit, setIsEdit] = useState(false);
 	const [newContent, setNewContent] = useState("");
+
 	const handleLikeClick = () => {
 		if (isLiked) {
 			setIsLiked(false);
@@ -19,14 +21,13 @@ const PostItem = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 			onLike(post._id);
 		}
 	};
-	const handelEditClick = () => {
+	const handleEditClick = () => {
 		setNewContent(post.content);
 		setIsEdit(true);
 	};
 
-	const handleNewContent = (e) => {
-		setNewContent(e.target.value);
-	};
+	const handleNewContent = (e) => setNewContent(e.target.value);
+	const handleNewComment = (e) => setNewComment(e.target.value);
 	return (
 		<Card className="post-card mb-3">
 			<Card.Header className="d-flex justify-content-between align-items-center">
@@ -41,11 +42,11 @@ const PostItem = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 				</div>
 				{post.user._id === currentUser?._id && (
 					<Dropdown align="start">
-						<Dropdown.Toggle variant="link" className="p-0 text-dark">
+						<Dropdown.Toggle variant="link" className="p-0 text-black">
 							<FaEllipsisV />
 						</Dropdown.Toggle>
 						<Dropdown.Menu>
-							<Dropdown.Item onClick={handelEditClick}>Edit</Dropdown.Item>
+							<Dropdown.Item onClick={handleEditClick}>Edit</Dropdown.Item>
 							<Dropdown.Item
 								onClick={() => onDelete(post._id)}
 								className="text-danger"
@@ -115,7 +116,21 @@ const PostItem = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 				{showComments && (
 					<div className="post-comments mt-3">
 						{/* Comment list will go here */}
-						{/* Comment form will go here */}
+						<>
+							<Form.Control
+								as="textarea"
+								rows={1}
+								value={newComment}
+								onChange={handleNewComment}
+								className="mb-2"
+							/>
+							<button
+								className="btn btn-success btn-sm me-2"
+								onClick={onComment}
+							>
+								Post comment
+							</button>
+						</>
 					</div>
 				)}
 			</Card.Footer>

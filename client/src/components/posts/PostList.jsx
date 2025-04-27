@@ -19,26 +19,62 @@ function PostList() {
 	}, []);
 	const handleOnLike = (postId) => {};
 	const handleOnUnlike = (postId) => {};
-	const handelOnComment = (postId) => {};
-	const handelOnDelete = async (postId) => {
+	const handleOnDelete = async (postId) => {
 		try {
 			await PostService.deletePost(postId);
+			setPosts(posts.filter((post) => post._id !== postId));
+			showToast("Post deleted successfully", "success");
 		} catch (err) {
 			showToast(err.response?.data?.message || "Failed to delete post.");
 		}
 	};
-	const handelOnEdit = (postId) => {};
+
+	const handleOnEdit = async (postId, newContent) => {
+		try {
+			const post = posts.find((post) => post._id === postId);
+			const updatedPost = { ...post, content: newContent };
+			const response = await PostService.updatePost(postId, updatedPost);
+			setPosts(
+				posts.map((post) => (post._id === postId ? response.data.post : post))
+			);
+			showToast("Post updated successfully", "success");
+		} catch (err) {
+			showToast(
+				err.response?.data?.message || "Failed to update post.",
+				"error"
+			);
+		}
+	};
+	const handleOnComment = async (postId, newComment) => {
+		try {
+			const post = posts.find((post) => post._id === postId);
+			const updatedPost = {
+				...post,
+				comments: [...post.comments, newComment],
+			};
+			const response = await PostService.addComment(postId, updatedPost);
+			setPosts(
+				posts.map((post) => (post._id === postId ? response.data.post : post))
+			);
+		} catch (err) {
+			showToast(
+				err.response?.data?.message || "Failed to add comment.",
+				"error"
+			);
+		}
+	};
+
 	return (
 		<>
 			{posts.map((post) => (
 				<PostItem
-					key={post.id}
+					key={post._id}
 					post={post}
 					onLike={handleOnLike}
 					onUnlike={handleOnUnlike}
-					onComment={handelOnComment}
-					onEdit={handelOnEdit}
-					onDelete={handelOnDelete}
+					onComment={handleOnComment}
+					onEdit={handleOnEdit}
+					onDelete={handleOnDelete}
 				/>
 			))}
 		</>
