@@ -35,6 +35,10 @@ exports.getAllPosts = async (req, res) => {
 				path: "user",
 				select: "username fullName profilePicture",
 			})
+			.populate({
+				path: "comments.user",
+				select: "username fullName profilePicture",
+			})
 			.sort({ createdAt: -1 });
 
 		res.status(200).json({
@@ -210,7 +214,6 @@ exports.deleteLike = async (req, res) => {
 exports.addComment = async (req, res) => {
 	try {
 		const { commentContent } = req.body;
-		console.log(commentContent);
 		if (!commentContent || commentContent.trim() === "") {
 			return res.status(400).json({
 				status: "failed",
@@ -239,7 +242,6 @@ exports.addComment = async (req, res) => {
 			path: "comments.user",
 			select: "username fullName profilePicture",
 		});
-		console.log(post);
 		res.status(201).json({
 			status: "success",
 			data: {
@@ -257,8 +259,7 @@ exports.addComment = async (req, res) => {
 
 exports.deleteComment = async (req, res) => {
 	try {
-		const post = await Post.findById(req.params.postId);
-
+		const post = await Post.findById(req.params.id);
 		if (!post) {
 			return res.status(404).json({
 				status: "failed",

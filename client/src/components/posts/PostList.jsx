@@ -45,6 +45,29 @@ function PostList() {
 			);
 		}
 	};
+	const handleDeleteComment = async (postId, commentId) => {
+		try {
+			await PostService.deleteComment(postId, commentId);
+			setPosts(
+				posts.map((post) => {
+					if (post._id === postId) {
+						return {
+							...post,
+							comments: post.comments.filter(
+								(comment) => comment._id !== commentId
+							),
+						};
+					}
+					return post;
+				})
+			);
+
+			showToast("Comment deleted successfully", "success");
+		} catch (error) {
+			showToast("Failed to delete comment", "error");
+			console.error("Delete comment error:", error);
+		}
+	};
 	const handleOnComment = async (postId, newComment) => {
 		try {
 			const response = await PostService.addComment(postId, {
@@ -53,11 +76,14 @@ function PostList() {
 			setPosts(
 				posts.map((post) => (post._id === postId ? response.data.post : post))
 			);
+
+			return response;
 		} catch (err) {
 			showToast(
 				err.response?.data?.message || "Failed to add comment.",
 				"error"
 			);
+			throw err;
 		}
 	};
 
@@ -72,6 +98,7 @@ function PostList() {
 					onComment={handleOnComment}
 					onEdit={handleOnEdit}
 					onDelete={handleOnDelete}
+					onDeleteComment={handleDeleteComment}
 				/>
 			))}
 		</>

@@ -5,7 +5,15 @@ import { useAuth } from "../../context/AuthContext";
 import UserAvatar from "../common/UserAvatar";
 import CommentSection from "./CommentSection";
 
-const PostCard = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
+const PostCard = ({
+	post,
+	onLike,
+	onUnlike,
+	onComment,
+	onDelete,
+	onEdit,
+	onDeleteComment,
+}) => {
 	const { currentUser } = useAuth();
 
 	const [commentsVisible, setCommentsVisible] = useState(false);
@@ -13,6 +21,7 @@ const PostCard = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 	const [newCommentText, setNewCommentText] = useState("");
 	const [isLiked, setIsLiked] = useState(false);
 	const [isEditing, setIsEditing] = useState(false);
+	const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 	const [editedContent, setEditedContent] = useState(post.content);
 
 	useEffect(() => {
@@ -38,9 +47,25 @@ const PostCard = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 
 	const onNewCommentChange = (e) => setNewCommentText(e.target.value);
 
+	const handleCommentDelete = (commentId) => {
+		onDeleteComment(post._id, commentId);
+	};
+
 	const submitComment = async () => {
-		await onComment(post._id, newCommentText);
-		setNewCommentText("");
+		if (!newCommentText.trim()) return;
+
+		setIsSubmittingComment(true);
+		try {
+			const result = await onComment(post._id, newCommentText);
+			setNewCommentText("");
+			if (result && result.data && result.data.post) {
+				setPostComments(result.data.post.comments);
+			}
+		} catch (error) {
+			console.error("Submit comment error:", error);
+		} finally {
+			setIsSubmittingComment(false);
+		}
 	};
 
 	return (
@@ -122,12 +147,10 @@ const PostCard = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 						className="btn btn-link post-action-btn"
 						onClick={() => setCommentsVisible(!commentsVisible)}
 					>
-						{postComments.length > 0 && (
-							<Badge bg="secondary" className="mb-2">
-								{postComments.length}{" "}
-								{postComments.length === 1 ? "Comment" : "Comments"}
-							</Badge>
-						)}
+						<Badge bg="secondary" className="mb-2">
+							{postComments.length}{" "}
+							{postComments.length === 1 ? "Comment" : "Comments"}
+						</Badge>
 					</button>
 				</div>
 
@@ -137,6 +160,8 @@ const PostCard = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 						newCommentText={newCommentText}
 						onNewCommentChange={onNewCommentChange}
 						submitComment={submitComment}
+						deleteComment={handleCommentDelete}
+						isSubmitting={isSubmittingComment}
 					/>
 				)}
 			</Card.Footer>
