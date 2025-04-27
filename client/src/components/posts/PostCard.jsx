@@ -1,18 +1,24 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, Dropdown, Form } from "react-bootstrap";
 import { FaComment, FaEllipsisV, FaHeart, FaRegHeart } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
 import UserAvatar from "../common/UserAvatar";
 
-const PostItem = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
+const PostCard = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 	const { currentUser } = useAuth();
-	const [showComments, setShowComments] = useState(false);
-	const [newComment, setNewComment] = useState("");
-	const [isLiked, setIsLiked] = useState(false);
-	const [isEdit, setIsEdit] = useState(false);
-	const [newContent, setNewContent] = useState("");
 
-	const handleLikeClick = () => {
+	const [commentsVisible, setCommentsVisible] = useState(false);
+	const [postComments, setPostComments] = useState(post.comments);
+	const [newCommentText, setNewCommentText] = useState("");
+	const [isLiked, setIsLiked] = useState(false);
+	const [isEditing, setIsEditing] = useState(false);
+	const [editedContent, setEditedContent] = useState(post.content);
+
+	useEffect(() => {
+		setPostComments(post.comments);
+	}, [post]);
+
+	const toggleLike = () => {
 		if (isLiked) {
 			setIsLiked(false);
 			onUnlike(post._id);
@@ -21,16 +27,21 @@ const PostItem = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 			onLike(post._id);
 		}
 	};
-	const handleEditClick = () => {
-		setNewContent(post.content);
-		setIsEdit(true);
+
+	const startEditing = () => {
+		setEditedContent(post.content);
+		setIsEditing(true);
 	};
 
-	const handleNewContent = (e) => setNewContent(e.target.value);
-	const handleNewComment = (e) => setNewComment(e.target.value);
-	const handleCommentPost = async () => {
-		await onComment(post._id, newComment);
+	const onEditedContentChange = (e) => setEditedContent(e.target.value);
+
+	const onNewCommentChange = (e) => setNewCommentText(e.target.value);
+
+	const submitComment = async () => {
+		await onComment(post._id, newCommentText);
+		setNewCommentText("");
 	};
+
 	return (
 		<Card className="post-card mb-3">
 			<Card.Header className="d-flex justify-content-between align-items-center">
@@ -49,7 +60,7 @@ const PostItem = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 							<FaEllipsisV />
 						</Dropdown.Toggle>
 						<Dropdown.Menu>
-							<Dropdown.Item onClick={handleEditClick}>Edit</Dropdown.Item>
+							<Dropdown.Item onClick={startEditing}>Edit</Dropdown.Item>
 							<Dropdown.Item
 								onClick={() => onDelete(post._id)}
 								className="text-danger"
@@ -60,29 +71,30 @@ const PostItem = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 					</Dropdown>
 				)}
 			</Card.Header>
+
 			<Card.Body>
-				{isEdit ? (
+				{isEditing ? (
 					<>
 						<Form.Control
 							as="textarea"
 							rows={3}
-							value={newContent}
-							onChange={handleNewContent}
+							value={editedContent}
+							onChange={onEditedContentChange}
 							className="mb-2"
 						/>
 						<div>
 							<button
 								className="btn btn-success btn-sm me-2"
 								onClick={() => {
-									onEdit(post._id, newContent);
-									setIsEdit(false);
+									onEdit(post._id, editedContent);
+									setIsEditing(false);
 								}}
 							>
 								Save
 							</button>
 							<button
 								className="btn btn-secondary btn-sm"
-								onClick={() => setIsEdit(false)}
+								onClick={() => setIsEditing(false)}
 							>
 								Cancel
 							</button>
@@ -91,45 +103,48 @@ const PostItem = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 				) : (
 					<Card.Text>{post.content}</Card.Text>
 				)}
-
 				<small className="text-secondary d-block mt-2">
 					{new Date(post.createdAt).toLocaleString()}
 				</small>
 			</Card.Body>
+
 			<Card.Footer className="post-footer">
 				<div className="d-flex justify-content-between">
-					{/* Like button */}
 					<button
 						className={`btn btn-link post-action-btn ${isLiked ? "liked" : ""}`}
-						onClick={handleLikeClick}
+						onClick={toggleLike}
 					>
 						{isLiked ? <FaHeart /> : <FaRegHeart />} {post.likes}
 					</button>
 
-					{/* Comment button */}
 					<button
 						className="btn btn-link post-action-btn"
-						onClick={() => setShowComments(!showComments)}
+						onClick={() => setCommentsVisible(!commentsVisible)}
 					>
 						<FaComment /> {post.comments.length}
 					</button>
 				</div>
 
-				{/* Expandable comments section */}
-				{showComments && (
+				{commentsVisible && (
 					<div className="post-comments mt-3">
-						{/* Comment list will go here */}
+						{postComments.length > 0 && (
+							<div>
+								{postComments.map((comment) => (
+									<p key={comment._id}>{comment.content}</p>
+								))}
+							</div>
+						)}
 						<>
 							<Form.Control
 								as="textarea"
 								rows={1}
-								value={newComment}
-								onChange={handleNewComment}
+								value={newCommentText}
+								onChange={onNewCommentChange}
 								className="mb-2"
 							/>
 							<button
 								className="btn btn-success btn-sm me-2"
-								onClick={handleCommentPost}
+								onClick={submitComment}
 							>
 								Post comment
 							</button>
@@ -141,4 +156,4 @@ const PostItem = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 	);
 };
 
-export default PostItem;
+export default PostCard;

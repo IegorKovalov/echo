@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useToast } from "../../context/ToastContext";
 import PostService from "../../services/post.service";
-import PostItem from "./PostItem";
+import PostCard from "./PostCard";
 
 function PostList() {
 	const { showToast } = useToast();
@@ -64,7 +64,7 @@ function PostList() {
 	return (
 		<>
 			{posts.map((post) => (
-				<PostItem
+				<PostCard
 					key={post._id}
 					post={post}
 					onLike={handleOnLike}
