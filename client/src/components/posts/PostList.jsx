@@ -17,7 +17,15 @@ function PostList() {
 		};
 		fetchPostData();
 	}, []);
-	const handleOnLike = (postId) => {};
+
+	const handleOnLike = async (postId) => {
+		try {
+			await PostService.likePost(postId);
+		} catch (err) {
+			showToast(err.response?.data.message || "Failed to like post.", "error");
+		}
+	};
+
 	const handleOnUnlike = (postId) => {};
 	const handleOnDelete = async (postId) => {
 		try {
@@ -25,7 +33,10 @@ function PostList() {
 			setPosts(posts.filter((post) => post._id !== postId));
 			showToast("Post deleted successfully", "success");
 		} catch (err) {
-			showToast(err.response?.data?.message || "Failed to delete post.");
+			showToast(
+				err.response?.data?.message || "Failed to delete post.",
+				"error"
+			);
 		}
 	};
 
@@ -63,9 +74,11 @@ function PostList() {
 			);
 
 			showToast("Comment deleted successfully", "success");
-		} catch (error) {
-			showToast("Failed to delete comment", "error");
-			console.error("Delete comment error:", error);
+		} catch (err) {
+			showToast(
+				err.response?.data?.message || "Failed to delete comment",
+				"error"
+			);
 		}
 	};
 	const handleOnComment = async (postId, newComment) => {
