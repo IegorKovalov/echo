@@ -18,9 +18,7 @@ function CommentSection({
 							className="d-flex justify-content-between align-items-start"
 						>
 							<div className="ms-2 me-auto">
-								<div className="fw-bold">
-									@{comment.user?.username || "anonymous"}
-								</div>
+								<div className="fw-bold">@{comment.user.username}</div>
 								{comment.content}
 							</div>
 							<small className="text-muted">
@@ -30,8 +28,6 @@ function CommentSection({
 					))}
 				</ListGroup>
 			)}
-
-			{/* Comment Form */}
 			<InputGroup className="mb-3">
 				<Form.Control
 					as="textarea"

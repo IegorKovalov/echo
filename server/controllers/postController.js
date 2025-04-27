@@ -239,7 +239,7 @@ exports.addComment = async (req, res) => {
 			path: "comments.user",
 			select: "username fullName profilePicture",
 		});
-
+		console.log(post);
 		res.status(201).json({
 			status: "success",
 			data: {
