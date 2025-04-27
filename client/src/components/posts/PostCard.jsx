@@ -3,6 +3,7 @@ import { Card, Dropdown, Form } from "react-bootstrap";
 import { FaComment, FaEllipsisV, FaHeart, FaRegHeart } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
 import UserAvatar from "../common/UserAvatar";
+import CommentSection from "./CommentSection";
 
 const PostCard = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 	const { currentUser } = useAuth();
@@ -126,30 +127,12 @@ const PostCard = ({ post, onLike, onUnlike, onComment, onDelete, onEdit }) => {
 				</div>
 
 				{commentsVisible && (
-					<div className="post-comments mt-3">
-						{postComments.length > 0 && (
-							<div>
-								{postComments.map((comment) => (
-									<p key={comment._id}>{comment.content}</p>
-								))}
-							</div>
-						)}
-						<>
-							<Form.Control
-								as="textarea"
-								rows={1}
-								value={newCommentText}
-								onChange={onNewCommentChange}
-								className="mb-2"
-							/>
-							<button
-								className="btn btn-success btn-sm me-2"
-								onClick={submitComment}
-							>
-								Post comment
-							</button>
-						</>
-					</div>
+					<CommentSection
+						postComments={postComments}
+						newCommentText={newCommentText}
+						onNewCommentChange={onNewCommentChange}
+						submitComment={submitComment}
+					/>
 				)}
 			</Card.Footer>
 		</Card>
