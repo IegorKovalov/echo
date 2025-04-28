@@ -19,18 +19,55 @@ function PostList() {
 	}, []);
 
 	const handleOnLike = async (postId) => {
+		const postIndex = posts.findIndex((p) => p._id === postId);
+		if (postIndex === -1) return;
+		const updatedPosts = [...posts];
+		const originalPost = { ...updatedPosts[postIndex] };
+		updatedPosts[postIndex] = {
+			...updatedPosts[postIndex],
+			likes: updatedPosts[postIndex].likes + 1,
+		};
+		setPosts(updatedPosts);
 		try {
-			await PostService.likePost(postId);
+			const response = await PostService.likePost(postId);
+			setPosts((currentPosts) =>
+				currentPosts.map((post) =>
+					post._id === postId ? response.data.data.post : post
+				)
+			);
 		} catch (err) {
+			setPosts((currentPosts) =>
+				currentPosts.map((post) => (post._id === postId ? originalPost : post))
+			);
 			showToast(err.response?.data.message || "Failed to like post.", "error");
 		}
 	};
 
 	const handleOnUnlike = async (postId) => {
+		const postIndex = posts.findIndex((p) => p._id === postId);
+		if (postIndex === -1) return;
+		const updatedPosts = [...posts];
+		const originalPost = { ...updatedPosts[postIndex] };
+		updatedPosts[postIndex] = {
+			...updatedPosts[postIndex],
+			likes: Math.max(0, updatedPosts[postIndex].likes - 1),
+		};
+		setPosts(updatedPosts);
 		try {
-			await PostService.unlikePost(postId);
+			const response = await PostService.unlikePost(postId);
+			setPosts((currentPosts) =>
+				currentPosts.map((post) =>
+					post._id === postId ? response.data.data.post : post
+				)
+			);
 		} catch (err) {
-			showToast(err.response?.data.message || "Failed to like post.", "error");
+			setPosts((currentPosts) =>
+				currentPosts.map((post) => (post._id === postId ? originalPost : post))
+			);
+			showToast(
+				err.response?.data.message || "Failed to unlike post.",
+				"error"
+			);
 		}
 	};
 	const handleOnDelete = async (postId) => {

@@ -23,7 +23,7 @@ const PostCard = ({
 	const [isEditing, setIsEditing] = useState(false);
 	const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 	const [editedContent, setEditedContent] = useState(post.content);
-	
+
 	useEffect(() => {
 		setPostComments(post.comments);
 		setIsLiked(post.likedBy?.includes(currentUser._id) || false);
@@ -32,10 +32,10 @@ const PostCard = ({
 	const toggleLike = () => {
 		if (isLiked) {
 			setIsLiked(false);
-			onUnlike(post._id);
+			onUnlike(post._id, currentUser._id);
 		} else {
 			setIsLiked(true);
-			onLike(post._id);
+			onLike(post._id, currentUser._id);
 		}
 	};
 
