@@ -26,7 +26,13 @@ function PostList() {
 		}
 	};
 
-	const handleOnUnlike = (postId) => {};
+	const handleOnUnlike = async (postId) => {
+		try {
+			await PostService.unlikePost(postId);
+		} catch (err) {
+			showToast(err.response?.data.message || "Failed to like post.", "error");
+		}
+	};
 	const handleOnDelete = async (postId) => {
 		try {
 			await PostService.deletePost(postId);
