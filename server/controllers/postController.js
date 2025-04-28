@@ -1,5 +1,17 @@
 const Post = require("../models/postModel");
 
+const populatePostFields = (query) => {
+	return query
+		.populate({
+			path: "user",
+			select: "username fullName profilePicture",
+		})
+		.populate({
+			path: "comments.user",
+			select: "username fullName profilePicture",
+		});
+};
+
 exports.createPost = async (req, res) => {
 	try {
 		const { content } = req.body;
@@ -30,16 +42,7 @@ exports.createPost = async (req, res) => {
 
 exports.getAllPosts = async (req, res) => {
 	try {
-		const posts = await Post.find()
-			.populate({
-				path: "user",
-				select: "username fullName profilePicture",
-			})
-			.populate({
-				path: "comments.user",
-				select: "username fullName profilePicture",
-			})
-			.sort({ createdAt: -1 });
+		const posts = await populatePostFields(Post.find()).sort({ createdAt: -1 });
 
 		res.status(200).json({
 			status: "success",
@@ -59,15 +62,8 @@ exports.getAllPosts = async (req, res) => {
 
 exports.getPost = async (req, res) => {
 	try {
-		const post = await Post.findById(req.params.id)
-			.populate({
-				path: "user",
-				select: "username fullName profilePicture",
-			})
-			.populate({
-				path: "comments.user",
-				select: "username fullName profilePicture",
-			});
+		const post = await populatePostFields(Post.findById(req.params.id));
+
 		if (!post) {
 			return res.status(404).json({
 				status: "failed",
@@ -100,19 +96,13 @@ exports.updatePost = async (req, res) => {
 			});
 		}
 
-		const updatedPost = await Post.findOneAndUpdate(
-			{ _id: req.params.id, user: req.user._id },
-			{ content },
-			{ new: true, runValidators: true }
-		)
-			.populate({
-				path: "user",
-				select: "username fullName profilePicture",
-			})
-			.populate({
-				path: "comments.user",
-				select: "username fullName profilePicture",
-			});
+		const updatedPost = await populatePostFields(
+			Post.findOneAndUpdate(
+				{ _id: req.params.id, user: req.user._id },
+				{ content },
+				{ new: true, runValidators: true }
+			)
+		);
 
 		if (!updatedPost) {
 			return res.status(404).json({
@@ -138,12 +128,20 @@ exports.updatePost = async (req, res) => {
 
 exports.deletePost = async (req, res) => {
 	try {
-		await Post.findByIdAndDelete(req.params.id);
+		const post = await Post.findById(req.params.id);
+		if (!post) return sendError(res, 404, "Post not found");
+
+		if (post.user.toString() !== req.user._id.toString()) {
+			return sendError(res, 403, "You're not authorized to delete this post");
+		}
+
+		await post.deleteOne();
 		res.status(200).json({
 			status: "success",
 			message: "Post deleted successfully",
 		});
 	} catch (error) {
+		console.log(error);
 		res.status(500).json({
 			status: "failed",
 			message: "Error deleting post",
@@ -154,11 +152,7 @@ exports.deletePost = async (req, res) => {
 
 exports.likePost = async (req, res) => {
 	try {
-		const post = await Post.findByIdAndUpdate(
-			req.params.id,
-			{ $inc: { likes: 1 } },
-			{ new: true }
-		);
+		let post = await Post.findById(req.params.id);
 
 		if (!post) {
 			return res.status(404).json({
@@ -166,6 +160,19 @@ exports.likePost = async (req, res) => {
 				message: "Post not found",
 			});
 		}
+
+		if (post.likedBy.includes(req.user._id)) {
+			return res.status(400).json({
+				status: "failed",
+				message: "You have already liked this post",
+			});
+		}
+
+		post.likedBy.push(req.user._id);
+		post.likes = post.likedBy.length;
+		await post.save();
+
+		post = await populatePostFields(Post.findById(post._id));
 
 		res.status(200).json({
 			status: "success",
@@ -184,7 +191,7 @@ exports.likePost = async (req, res) => {
 
 exports.deleteLike = async (req, res) => {
 	try {
-		const post = await Post.findById(req.params.id);
+		let post = await Post.findById(req.params.id);
 
 		if (!post) {
 			return res.status(404).json({
@@ -193,8 +200,20 @@ exports.deleteLike = async (req, res) => {
 			});
 		}
 
-		post.likes = Math.max(0, post.likes - 1);
+		if (!post.likedBy.includes(req.user._id)) {
+			return res.status(400).json({
+				status: "failed",
+				message: "You have not liked this post",
+			});
+		}
+
+		post.likedBy = post.likedBy.filter(
+			(userId) => userId.toString() !== req.user._id.toString()
+		);
+		post.likes = post.likedBy.length;
 		await post.save();
+
+		post = await populatePostFields(Post.findById(post._id));
 
 		res.status(200).json({
 			status: "success",
@@ -221,7 +240,7 @@ exports.addComment = async (req, res) => {
 			});
 		}
 
-		const post = await Post.findById(req.params.id);
+		let post = await Post.findById(req.params.id);
 
 		if (!post) {
 			return res.status(404).json({
@@ -238,10 +257,8 @@ exports.addComment = async (req, res) => {
 		post.comments.push(newComment);
 		await post.save();
 
-		await post.populate({
-			path: "comments.user",
-			select: "username fullName profilePicture",
-		});
+		post = await populatePostFields(Post.findById(post._id));
+
 		res.status(201).json({
 			status: "success",
 			data: {
@@ -259,7 +276,7 @@ exports.addComment = async (req, res) => {
 
 exports.deleteComment = async (req, res) => {
 	try {
-		const post = await Post.findById(req.params.id);
+		let post = await Post.findById(req.params.id);
 		if (!post) {
 			return res.status(404).json({
 				status: "failed",
@@ -282,6 +299,8 @@ exports.deleteComment = async (req, res) => {
 
 		post.comments.splice(commentIndex, 1);
 		await post.save();
+
+		post = await populatePostFields(Post.findById(post._id));
 
 		res.status(200).json({
 			status: "success",

@@ -50,7 +50,7 @@ const PostService = {
 		const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
 		const response = await api.post(`${POSTS_URL}/${id}/like`, {}, { headers });
-		return response.data;
+		return response;
 	},
 
 	unlikePost: async (id) => {
@@ -58,7 +58,7 @@ const PostService = {
 		const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
 		const response = await api.delete(`${POSTS_URL}/${id}/like`, { headers });
-		return response.data;
+		return response;
 	},
 
 	addComment: async (id, commentContent) => {

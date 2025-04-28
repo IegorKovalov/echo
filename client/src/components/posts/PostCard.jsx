@@ -26,15 +26,16 @@ const PostCard = ({
 
 	useEffect(() => {
 		setPostComments(post.comments);
+		setIsLiked(post.likedBy?.includes(currentUser._id) || false);
 	}, [post]);
 
 	const toggleLike = () => {
 		if (isLiked) {
 			setIsLiked(false);
-			onUnlike(post._id);
+			onUnlike(post._id, currentUser._id);
 		} else {
 			setIsLiked(true);
-			onLike(post._id);
+			onLike(post._id, currentUser._id);
 		}
 	};
 
