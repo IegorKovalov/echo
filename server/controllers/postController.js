@@ -40,6 +40,30 @@ exports.createPost = async (req, res) => {
 	}
 };
 
+exports.getUserPosts = async (req, res) => {
+	try {
+		const userId = req.params.userId;
+
+		const posts = await populatePostFields(Post.find({ user: userId })).sort({
+			createdAt: -1,
+		});
+
+		res.status(200).json({
+			status: "success",
+			results: posts.length,
+			data: {
+				posts,
+			},
+		});
+	} catch (error) {
+		res.status(500).json({
+			status: "failed",
+			message: "Error retrieving user posts",
+			error: process.env.NODE_ENV === "development" ? error.message : undefined,
+		});
+	}
+};
+
 exports.getAllPosts = async (req, res) => {
 	try {
 		const posts = await populatePostFields(Post.find()).sort({ createdAt: -1 });
