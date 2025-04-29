@@ -3,19 +3,25 @@ import api from "./api";
 const POSTS_URL = "/posts";
 
 const PostService = {
-	getAllPosts: async () => {
+	getAllPosts: async (includeExpired = false) => {
 		const token = localStorage.getItem("token");
 		const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-		const response = await api.get(POSTS_URL, { headers });
+		const response = await api.get(POSTS_URL, {
+			headers,
+			params: { includeExpired },
+		});
 		return response.data;
 	},
 
-	getUserPosts: async (userId) => {
+	getUserPosts: async (userId, includeExpired = false) => {
 		const token = localStorage.getItem("token");
 		const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-		const response = await api.get(`${POSTS_URL}/user/${userId}`, { headers });
+		const response = await api.get(`${POSTS_URL}/user/${userId}`, {
+			headers,
+			params: { includeExpired },
+		});
 		return response.data;
 	},
 
@@ -89,6 +95,18 @@ const PostService = {
 
 		const response = await api.delete(
 			`${POSTS_URL}/${postId}/comments/${commentId}`,
+			{ headers }
+		);
+		return response.data;
+	},
+
+	renewPost: async (id, hours = 24) => {
+		const token = localStorage.getItem("token");
+		const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+		const response = await api.post(
+			`${POSTS_URL}/${id}/renew`,
+			{ hours },
 			{ headers }
 		);
 		return response.data;

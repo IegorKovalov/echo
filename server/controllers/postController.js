@@ -14,21 +14,38 @@ const populatePostFields = (query) => {
 
 exports.createPost = async (req, res) => {
 	try {
-		const { content } = req.body;
+		const { content, expirationTime } = req.body;
 		if (!content) {
 			return res.status(400).json({
 				status: "failed",
 				message: "Post content is required",
 			});
 		}
-		const newPost = await Post.create({
-			content,
-			user: req.user._id,
-		});
+
+		const postData = { content, user: req.user._id };
+
+		if (expirationTime) {
+			const hours = parseFloat(expirationTime);
+			if (isNaN(hours) || hours <= 0 || hours > 168) {
+				return res.status(400).json({
+					status: "failed",
+					message:
+						"Expiration time must be between 1 hour and 168 hours (1 week)",
+				});
+			}
+
+			const now = new Date();
+			postData.expiresAt = new Date(now.getTime() + hours * 60 * 60 * 1000);
+		}
+
+		const newPost = await Post.create(postData);
+
+		const populatedPost = await populatePostFields(Post.findById(newPost._id));
+
 		res.status(201).json({
 			status: "success",
 			data: {
-				post: newPost,
+				post: populatedPost,
 			},
 		});
 	} catch (error) {
@@ -43,16 +60,32 @@ exports.createPost = async (req, res) => {
 exports.getUserPosts = async (req, res) => {
 	try {
 		const userId = req.params.userId;
+		const { includeExpired } = req.query;
 
-		const posts = await populatePostFields(Post.find({ user: userId })).sort({
+		let query = Post.find({ user: userId });
+
+		if (includeExpired === "true") {
+			query = query.where({ includeExpired: true });
+		}
+
+		const posts = await populatePostFields(query).sort({
 			createdAt: -1,
+		});
+
+		const enhancedPosts = posts.map((post) => {
+			const postObj = post.toObject({ virtuals: true });
+
+			postObj.isExpired = post.isExpired;
+			postObj.remainingTime = post.remainingTime;
+			postObj.expirationProgress = post.expirationProgress;
+			return postObj;
 		});
 
 		res.status(200).json({
 			status: "success",
-			results: posts.length,
+			results: enhancedPosts.length,
 			data: {
-				posts,
+				posts: enhancedPosts,
 			},
 		});
 	} catch (error) {
@@ -66,13 +99,29 @@ exports.getUserPosts = async (req, res) => {
 
 exports.getAllPosts = async (req, res) => {
 	try {
-		const posts = await populatePostFields(Post.find()).sort({ createdAt: -1 });
+		const { includeExpired } = req.query;
+
+		let query = Post.find();
+
+		if (includeExpired === "true") {
+			query = query.where({ includeExpired: true });
+		}
+
+		const posts = await populatePostFields(query).sort({ createdAt: -1 });
+
+		const enhancedPosts = posts.map((post) => {
+			const postObj = post.toObject({ virtuals: true });
+			postObj.isExpired = post.isExpired;
+			postObj.remainingTime = post.remainingTime;
+			postObj.expirationProgress = post.expirationProgress;
+			return postObj;
+		});
 
 		res.status(200).json({
 			status: "success",
-			results: posts.length,
+			results: enhancedPosts.length,
 			data: {
-				posts,
+				posts: enhancedPosts,
 			},
 		});
 	} catch (error) {
@@ -86,7 +135,10 @@ exports.getAllPosts = async (req, res) => {
 
 exports.getPost = async (req, res) => {
 	try {
-		const post = await populatePostFields(Post.findById(req.params.id));
+		// Use includeExpired to potentially see expired posts
+		const post = await populatePostFields(
+			Post.findById(req.params.id).where({ includeExpired: true })
+		);
 
 		if (!post) {
 			return res.status(404).json({
@@ -95,10 +147,16 @@ exports.getPost = async (req, res) => {
 			});
 		}
 
+		// Add virtual properties
+		const postObj = post.toObject({ virtuals: true });
+		postObj.isExpired = post.isExpired;
+		postObj.remainingTime = post.remainingTime;
+		postObj.expirationProgress = post.expirationProgress;
+
 		res.status(200).json({
 			status: "success",
 			data: {
-				post,
+				post: postObj,
 			},
 		});
 	} catch (error) {
@@ -334,6 +392,66 @@ exports.deleteComment = async (req, res) => {
 		res.status(500).json({
 			status: "failed",
 			message: "Error deleting comment",
+			error: process.env.NODE_ENV === "development" ? error.message : undefined,
+		});
+	}
+};
+exports.renewPost = async (req, res) => {
+	try {
+		const post = await Post.findOne({
+			_id: req.params.id,
+			user: req.user._id,
+			includeExpired: true,
+		});
+
+		if (!post) {
+			return res.status(404).json({
+				status: "failed",
+				message: "Post not found or you're not authorized to renew it",
+			});
+		}
+
+		if (post.renewalCount >= 3) {
+			return res.status(400).json({
+				status: "failed",
+				message: "Post has reached the maximum number of renewals (3)",
+			});
+		}
+
+		const { hours } = req.body;
+		const renewalHours = hours ? parseFloat(hours) : 24;
+
+		if (isNaN(renewalHours) || renewalHours <= 0 || renewalHours > 168) {
+			return res.status(400).json({
+				status: "failed",
+				message: "Renewal time must be between 1 hour and 168 hours (1 week)",
+			});
+		}
+
+		const now = new Date();
+		post.expiresAt = new Date(now.getTime() + renewalHours * 60 * 60 * 1000);
+		post.renewalCount += 1;
+		post.renewedAt = now;
+
+		await post.save();
+
+		const updatedPost = await populatePostFields(Post.findById(post._id));
+		const postObj = updatedPost.toObject({ virtuals: true });
+		postObj.isExpired = updatedPost.isExpired;
+		postObj.remainingTime = updatedPost.remainingTime;
+		postObj.expirationProgress = updatedPost.expirationProgress;
+
+		res.status(200).json({
+			status: "success",
+			message: "Post renewed successfully",
+			data: {
+				post: postObj,
+			},
+		});
+	} catch (error) {
+		res.status(500).json({
+			status: "failed",
+			message: "Error renewing post",
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
