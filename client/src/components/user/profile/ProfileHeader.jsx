@@ -6,7 +6,7 @@ import {
 	FaLink,
 	FaMapMarkerAlt,
 } from "react-icons/fa";
-import Link from "react-router-dom";
+import { Link } from "react-router-dom";
 import UserAvatar from "../../common/UserAvatar";
 
 const ProfileHeader = ({ user, isCurrentUser }) => {
