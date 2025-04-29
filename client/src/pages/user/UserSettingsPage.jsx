@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, Col, Container, Nav, Row, Tab } from "react-bootstrap";
 import {
 	FaChevronRight,
@@ -10,6 +10,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useProfile } from "../../context/ProfileContext";
 import UserService from "../../services/user.service";
 
+import { useLocation } from "react-router-dom";
 import AccountSettingsTab from "../../components/user/settings/AccountSettingsTab";
 import ChangePasswordTab from "../../components/user/settings/ChangePasswordTab";
 import ProfileInformationTab from "../../components/user/settings/ProfileInformationTab";
@@ -18,6 +19,7 @@ import ProfilePicture from "../../components/user/settings/ProfilePicture";
 const UserSettingsPage = () => {
 	const { currentUser, setCurrentUser } = useAuth();
 	const { updateProfileImage } = useProfile();
+	const location = useLocation();
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState("");
@@ -35,6 +37,13 @@ const UserSettingsPage = () => {
 		password: "",
 		passwordConfirm: "",
 	});
+
+	useEffect(() => {
+		const hash = location.hash.replace("#", "");
+		if (hash) {
+			setActiveTab(hash);
+		}
+	}, [location.hash]);
 
 	const handleAccountSubmit = async (formData) => {
 		setLoading(true);
@@ -138,6 +147,7 @@ const UserSettingsPage = () => {
 									<Nav.Item>
 										<Nav.Link
 											eventKey="account"
+											href="#account"
 											className="d-flex justify-content-between align-items-center"
 										>
 											<div>
@@ -150,6 +160,7 @@ const UserSettingsPage = () => {
 									<Nav.Item>
 										<Nav.Link
 											eventKey="profile"
+											href="#profile"
 											className="d-flex justify-content-between align-items-center"
 										>
 											<div>
@@ -162,6 +173,7 @@ const UserSettingsPage = () => {
 									<Nav.Item>
 										<Nav.Link
 											eventKey="security"
+											href="#security"
 											className="d-flex justify-content-between align-items-center"
 										>
 											<div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, Container, InputGroup } from "react-bootstrap";
 import PostForm from "../../components/posts/PostForm";
 import PostList from "../../components/posts/PostList";
+import ProfileHeader from "../../components/user/profile/ProfileHeader";
 import { useAuth } from "../../context/AuthContext";
 import { useProfile } from "../../context/ProfileContext";
 import { useToast } from "../../context/ToastContext";
@@ -193,6 +194,7 @@ const UserProfilePage = () => {
 
 	return (
 		<Container className="py-5">
+			<ProfileHeader user={userData} isCurrentUser={true} />
 			<Card className="post-card mb-3">
 				<PostForm
 					onPostCreated={(newPost) => {
