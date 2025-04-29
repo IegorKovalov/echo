@@ -12,6 +12,27 @@ function CommentSection({
 	isSubmitting,
 }) {
 	const { currentUser } = useAuth();
+
+	const formatTimestamp = (createdAt) => {
+		const commentDate = new Date(createdAt);
+		const now = new Date();
+		const secondsAgo = Math.floor((now - commentDate) / 1000);
+
+		if (secondsAgo < 5) {
+			return "just now";
+		} else if (secondsAgo < 60) {
+			return `${secondsAgo} sec ago`;
+		} else if (secondsAgo < 3600) {
+			const mins = Math.floor(secondsAgo / 60);
+			return `${mins} min${mins > 1 ? "s" : ""} ago`;
+		} else if (secondsAgo < 86400) {
+			const hours = Math.floor(secondsAgo / 3600);
+			return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+		} else {
+			return commentDate.toLocaleDateString("en-GB");
+		}
+	};
+
 	return (
 		<div className="mt-3">
 			{postComments.length > 0 && (
@@ -31,19 +52,21 @@ function CommentSection({
 								<div className="comment-content">{comment.content}</div>
 							</div>
 							<div>
-								<small className="text-muted">
-									{new Date(comment.createdAt).toLocaleTimeString()}
-								</small>
-								{currentUser && currentUser._id === comment.user?._id && (
-									<Button
-										variant="link"
-										size="sm"
-										className="text-danger p-0 mt-1 comment-delete"
-										onClick={() => deleteComment(comment._id)}
-									>
-										<FaTrash size={12} />
-									</Button>
-								)}
+								<div className="d-flex align-items-center">
+									<small className="text-muted">
+										{formatTimestamp(comment.createdAt)}
+									</small>
+									{currentUser && currentUser._id === comment.user?._id && (
+										<Button
+											variant="link"
+											size="sm"
+											className="text-danger p-0 mt-1 comment-delete"
+											onClick={() => deleteComment(comment._id)}
+										>
+											<FaTrash size={12} />
+										</Button>
+									)}
+								</div>
 							</div>
 						</ListGroup.Item>
 					))}

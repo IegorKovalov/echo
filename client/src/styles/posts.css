@@ -17,11 +17,6 @@
   flex-direction: column;
 }
 
-.post-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(147, 51, 234, 0.2);
-}
-
 .post-card .card-header {
   background-color: rgba(30, 30, 42, 0.8);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -240,16 +235,13 @@
 }
 
 .btn-success {
-  background-color: #10b981;
-  border-color: #10b981;
+  background-image: linear-gradient(to right, #9333ea, #ec4899) !important;
+  border: none;
   transition: all 0.2s ease;
 }
 
 .btn-success:hover {
-  background-color: #059669;
-  border-color: #059669;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .btn-secondary {

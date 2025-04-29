@@ -10,6 +10,8 @@ router
 	.post(postController.createPost)
 	.get(postController.getAllPosts);
 
+router.get("/user/:userId", postController.getUserPosts);
+
 router
 	.route("/:id")
 	.get(postController.getPost)

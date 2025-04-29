@@ -11,6 +11,14 @@ const PostService = {
 		return response.data;
 	},
 
+	getUserPosts: async (userId) => {
+		const token = localStorage.getItem("token");
+		const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+		const response = await api.get(`${POSTS_URL}/user/${userId}`, { headers });
+		return response.data;
+	},
+
 	getPost: async (id) => {
 		const token = localStorage.getItem("token");
 		const headers = token ? { Authorization: `Bearer ${token}` } : {};

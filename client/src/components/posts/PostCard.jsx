@@ -27,14 +27,12 @@ const PostCard = ({
 	useEffect(() => {
 		setPostComments(post.comments);
 		setIsLiked(post.likedBy?.includes(currentUser._id) || false);
-	}, [post]);
+	}, [post, currentUser]);
 
 	const toggleLike = () => {
 		if (isLiked) {
-			setIsLiked(false);
 			onUnlike(post._id, currentUser._id);
 		} else {
-			setIsLiked(true);
 			onLike(post._id, currentUser._id);
 		}
 	};
@@ -131,7 +129,7 @@ const PostCard = ({
 					<Card.Text>{post.content}</Card.Text>
 				)}
 				<small className="text-secondary d-block mt-2">
-					{new Date(post.createdAt).toLocaleString()}
+					{new Date(post.createdAt).toLocaleString("en-GB")}
 				</small>
 			</Card.Body>
 
