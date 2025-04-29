@@ -206,6 +206,300 @@
     margin: 0.25rem 0;
   }
   
+  /* Notifications Dropdown Styling */
+  .notifications-toggle {
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    position: relative;
+    margin-right: 1rem;
+  }
+  
+  .notifications-toggle:hover {
+    background-color: rgba(39, 39, 42, 0.5);
+  }
+  
+  .notifications-icon {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.25rem;
+    transition: all 0.2s ease;
+  }
+  
+  .notifications-toggle:hover .notifications-icon {
+    color: white;
+    transform: scale(1.1);
+  }
+  
+  .notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: linear-gradient(45deg, #9333ea, #ec4899);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.35rem;
+    border-radius: 50%;
+    min-width: 18px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+  }
+  
+  .notifications-dropdown {
+    background-color: rgba(24, 24, 27, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(39, 39, 42, 0.5);
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    min-width: 300px;
+    max-width: 350px;
+    max-height: 400px;
+    overflow-y: auto;
+    animation: fadeIn 0.2s ease-out;
+  }
+  
+  .notifications-header {
+    padding: 0.75rem 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 600;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .mark-all-read {
+    color: rgba(147, 51, 234, 0.8);
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+  
+  .mark-all-read:hover {
+    color: rgba(147, 51, 234, 1);
+  }
+  
+  .notification-item {
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    margin: 0.25rem 0;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  
+  .notification-item:hover {
+    background-color: rgba(39, 39, 42, 0.5);
+  }
+  
+  .notification-item.unread {
+    background-color: rgba(147, 51, 234, 0.1);
+  }
+  
+  .notification-item.unread:hover {
+    background-color: rgba(147, 51, 234, 0.15);
+  }
+  
+  .notification-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .notification-message {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+  
+  .notification-time {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.8rem;
+  }
+  
+  /* Messenger Dropdown Styling */
+  .messenger-toggle {
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    position: relative;
+    margin-right: 1rem;
+  }
+  
+  .messenger-toggle:hover {
+    background-color: rgba(39, 39, 42, 0.5);
+  }
+  
+  .messenger-icon {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.25rem;
+    transition: all 0.2s ease;
+  }
+  
+  .messenger-toggle:hover .messenger-icon {
+    color: white;
+    transform: scale(1.1);
+  }
+  
+  .message-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: linear-gradient(45deg, #9333ea, #ec4899);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.35rem;
+    border-radius: 50%;
+    min-width: 18px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    animation: pulse 2s infinite;
+  }
+  
+  .messenger-dropdown {
+    background-color: rgba(24, 24, 27, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(39, 39, 42, 0.5);
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    min-width: 300px;
+    max-width: 350px;
+    max-height: 400px;
+    overflow-y: auto;
+    animation: fadeIn 0.2s ease-out;
+  }
+  
+  .messenger-header {
+    padding: 0.75rem 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 600;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .new-message {
+    color: rgba(147, 51, 234, 0.8);
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+  
+  .new-message:hover {
+    color: rgba(147, 51, 234, 1);
+  }
+  
+  .messenger-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem 1rem;
+  }
+  
+  .messenger-placeholder-icon {
+    font-size: 3rem;
+    color: rgba(147, 51, 234, 0.5);
+  }
+  
+  .messenger-placeholder h5 {
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+  }
+  
+  /* Messenger Sidebar Styling */
+  .messenger-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    padding: 1rem;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    z-index: 1000;
+  }
+
+  .messenger-card {
+    background-color: rgba(24, 24, 27, 0.6);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    height: calc(100vh - 2rem);
+    overflow: hidden;
+  }
+
+  .messenger-header {
+    background-color: rgba(24, 24, 27, 0.8);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .new-message-btn {
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .new-message-btn:hover {
+    background-color: rgba(39, 39, 42, 0.5);
+  }
+
+  .messenger-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: calc(100% - 60px);
+  }
+
+  .messenger-placeholder-icon {
+    font-size: 3rem;
+    color: rgba(147, 51, 234, 0.5);
+  }
+
+  .unread-badge {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(45deg, #9333ea, #ec4899);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+        transform: translateX(-50%) scale(1);
+    }
+    50% {
+        transform: translateX(-50%) scale(1.05);
+    }
+    100% {
+        transform: translateX(-50%) scale(1);
+    }
+  }
+
   /* Mobile Responsive */
   @media (max-width: 991.98px) {
     .search-container {
@@ -236,5 +530,27 @@
       padding: 1rem;
       border-radius: 0.75rem;
       border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .notifications-toggle {
+      margin-right: 0.5rem;
+    }
+    
+    .notifications-dropdown {
+      min-width: 280px;
+      max-width: 100%;
+    }
+    
+    .messenger-toggle {
+      margin-right: 0.5rem;
+    }
+    
+    .messenger-dropdown {
+      min-width: 280px;
+      max-width: 100%;
+    }
+
+    .messenger-sidebar {
+      display: none;
     }
   }
