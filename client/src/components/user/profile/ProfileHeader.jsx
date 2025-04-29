@@ -23,9 +23,8 @@ const ProfileHeader = ({ user, isCurrentUser }) => {
 	return (
 		<Card className="profile-header-card mb-4">
 			<Card.Body>
-				<Row>
-					{/* Left column - Avatar */}
-					<Col md={3} className="text-center">
+				<div className="profile-header-content">
+					<div className="profile-left-section">
 						<div className="profile-avatar-container">
 							{isCurrentUser ? (
 								<Link to="/settings" className="profile-avatar-link">
@@ -46,70 +45,58 @@ const ProfileHeader = ({ user, isCurrentUser }) => {
 								/>
 							)}
 						</div>
-					</Col>
-
-					{/* Right column - User Info */}
-					<Col md={9}>
-						<div className="profile-header-content">
-							<h2 className="mb-1">{user?.fullName}</h2>
-							<h6 className="text-secondary mb-3">@{user?.username}</h6>
-
-							{user?.bio && <p className="profile-bio mb-3">{user?.bio}</p>}
-
-							<div className="profile-details">
-								{user?.location && (
-									<div className="profile-detail-item">
-										<FaMapMarkerAlt className="profile-detail-icon" />
-										<span>{user.location}</span>
-									</div>
-								)}
-
-								{user?.website && (
-									<div className="profile-detail-item">
-										<FaLink className="profile-detail-icon" />
-										<a
-											href={
-												user.website.startsWith("http")
-													? user.website
-													: `https://${user.website}`
-											}
-											target="_blank"
-											rel="noopener noreferrer"
-											className="profile-website-link"
-										>
-											{user.website.replace(/^https?:\/\//, "")}
-										</a>
-									</div>
-								)}
-
-								{user?.occupation && (
-									<div className="profile-detail-item">
-										<FaBriefcase className="profile-detail-icon" />
-										<span>{user.occupation}</span>
-									</div>
-								)}
-
-								{user?.birthday && (
-									<div className="profile-detail-item">
-										<FaBirthdayCake className="profile-detail-icon" />
-										<span>Born {formatDate(user.birthday)}</span>
-									</div>
-								)}
-							</div>
-
-							{isCurrentUser && (
-								<div className="mt-3">
-									<Link
-										to="/settings#profile"
-										className="btn btn-outline-primary profile-edit-button"
-									>
-										Edit Profile
-									</Link>
-								</div>
-							)}
+						<div className="profile-main-info">
+							<h2 className="profile-name mb-1">{user?.fullName}</h2>
+							<h6 className="profile-username text-secondary mb-0">@{user?.username}</h6>
 						</div>
-					</Col>
-				</Row>
+					</div>
+					<div className="profile-right-section">
+						{user?.bio && <p className="profile-bio mb-0">{user?.bio}</p>}
+					</div>
+				</div>
+				<div className="profile-header-bottom">
+					<div className="profile-details">
+						{user?.location && (
+							<div className="profile-detail-item">
+								<FaMapMarkerAlt className="profile-detail-icon" />
+								<span>{user.location}</span>
+							</div>
+						)}
+						{user?.website && (
+							<div className="profile-detail-item">
+								<FaLink className="profile-detail-icon" />
+								<a
+									href={user.website.startsWith("http") ? user.website : `https://${user.website}`}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="profile-website-link"
+								>
+									{user.website.replace(/^https?:\/\//, "")}
+								</a>
+							</div>
+						)}
+						{user?.occupation && (
+							<div className="profile-detail-item">
+								<FaBriefcase className="profile-detail-icon" />
+								<span>{user.occupation}</span>
+							</div>
+						)}
+						{user?.birthday && (
+							<div className="profile-detail-item">
+								<FaBirthdayCake className="profile-detail-icon" />
+								<span>Born {formatDate(user.birthday)}</span>
+							</div>
+						)}
+					</div>
+					{isCurrentUser && (
+						<Link
+							to="/settings#profile"
+							className="btn btn-outline-primary profile-edit-button"
+						>
+							Edit Profile
+						</Link>
+					)}
+				</div>
 			</Card.Body>
 		</Card>
 	);
