@@ -4,7 +4,6 @@ import PostForm from "../../components/posts/PostForm";
 import PostList from "../../components/posts/PostList";
 import ProfileHeader from "../../components/user/profile/ProfileHeader";
 import { useAuth } from "../../context/AuthContext";
-import { useProfile } from "../../context/ProfileContext";
 import { useToast } from "../../context/ToastContext";
 import PostService from "../../services/post.service";
 import UserService from "../../services/user.service";
@@ -12,7 +11,6 @@ import UserService from "../../services/user.service";
 const UserProfilePage = () => {
 	const { currentUser } = useAuth();
 	const { showToast } = useToast();
-	const { profileImage } = useProfile();
 	const [userData, setUserData] = useState(null);
 	const [posts, setPosts] = useState([]);
 	const [userLoading, setUserLoading] = useState(true);
