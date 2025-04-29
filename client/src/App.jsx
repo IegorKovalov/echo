@@ -3,6 +3,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import Navbar from "./components/layout/Navbar";
+import Messenger from "./components/layout/Messenger";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ProfileProvider } from "./context/ProfileContext";
 import { ToastProvider } from "./context/ToastContext";
@@ -16,6 +17,7 @@ function AppLayout() {
 	return (
 		<div className="app-container">
 			{currentUser && <Navbar />}
+			{currentUser && <Messenger />}
 			<main className="main-content">
 				<AppRoutes isAuthenticated={isAuthenticated()} />
 			</main>

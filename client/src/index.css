@@ -28,5 +28,13 @@ body {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
+    margin-left: 25%; /* Account for messenger sidebar */
+    padding: 1rem;
+  }
+
+  @media (max-width: 991.98px) {
+    .main-content {
+      margin-left: 0;
+    }
   }
   
