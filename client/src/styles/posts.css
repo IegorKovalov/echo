@@ -9,10 +9,10 @@
   color: white;
   backdrop-filter: blur(10px);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  max-width: 900px;
+  max-width: 680px;
   margin-left: auto;
   margin-right: auto;
-  min-height: 200px;
+  min-height: 180px;
   display: flex;
   flex-direction: column;
 }
@@ -20,12 +20,15 @@
 .post-card .card-header {
   background-color: rgba(30, 30, 42, 0.8);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .post-card .card-body {
-  padding: 1.25rem;
+  padding: 1rem;
   background-color: rgba(35, 35, 45, 0.7);
   border-top: 1px solid rgba(255, 255, 255, 0.02);
   border-bottom: 1px solid rgba(255, 255, 255, 0.02);
@@ -35,12 +38,13 @@
 }
 
 .post-card .card-text {
-  font-size: 1.05rem;
+  font-size: 1rem;
   line-height: 1.5;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   color: rgba(255, 255, 255, 0.95);
   flex: 1;
-  min-height: 80px;
+  min-height: 60px;
+  word-break: break-word;
 }
 
 .post-card .card-footer {
@@ -49,9 +53,10 @@
   padding: 0.75rem 1rem;
 }
 
+/* Post Header Elements */
 .post-avatar {
-  width: 48px !important;
-  height: 48px !important;
+  width: 40px !important;
+  height: 40px !important;
   margin-right: 0.75rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 50%;
@@ -62,6 +67,30 @@
   background-color: rgba(39, 39, 42, 0.5);
 }
 
+.post-header-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.post-header-info h6 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.post-header-info small {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.post-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 /* Post Actions */
 .post-action-btn {
   color: rgba(255, 255, 255, 0.7);
@@ -70,6 +99,9 @@
   padding: 0.5rem 0.75rem;
   border-radius: 8px;
   background-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .post-action-btn:hover {
@@ -81,14 +113,11 @@
   color: #ec4899;
 }
 
-.post-footer {
-  color: white;
-}
-
 /* Comment Section */
 .comment-section {
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   padding-top: 1rem;
+  margin-top: 1rem;
 }
 
 .list-group-item {
@@ -99,6 +128,7 @@
   color: white !important;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   transition: transform 0.15s ease;
+  padding: 0.75rem;
 }
 
 .list-group-item:hover {
@@ -147,6 +177,7 @@
   border-radius: 8px 0 0 8px !important;
   resize: none;
   transition: all 0.2s ease;
+  padding: 0.5rem;
 }
 
 .comment-input:focus {
@@ -165,6 +196,7 @@
   color: white;
   border-radius: 0 8px 8px 0 !important;
   transition: all 0.2s ease;
+  padding: 0.5rem 1rem;
 }
 
 .comment-submit:hover:not(:disabled) {
@@ -183,11 +215,13 @@
   border: none;
   font-weight: 500;
   padding: 0.35em 0.65em;
+  font-size: 0.75rem;
 }
 
 /* Dropdown styling */
 .dropdown-toggle.text-black {
   color: rgba(255, 255, 255, 0.7) !important;
+  padding: 0.25rem;
 }
 
 .dropdown-toggle.text-black:hover {
@@ -208,6 +242,7 @@
   border-radius: 6px;
   padding: 0.5rem 0.75rem;
   transition: all 0.2s ease;
+  font-size: 0.9rem;
 }
 
 .dropdown-item:hover {
@@ -226,6 +261,7 @@
   color: white !important;
   border-radius: 8px !important;
   transition: all 0.2s ease;
+  padding: 0.75rem;
 }
 
 .form-control:focus {
@@ -238,6 +274,7 @@
   background-image: linear-gradient(to right, #9333ea, #ec4899) !important;
   border: none;
   transition: all 0.2s ease;
+  padding: 0.5rem 1rem;
 }
 
 .btn-success:hover {
@@ -248,6 +285,7 @@
   background-color: #6b7280;
   border-color: #6b7280;
   transition: all 0.2s ease;
+  padding: 0.5rem 1rem;
 }
 
 .btn-secondary:hover {
@@ -275,29 +313,41 @@
 /* Media queries for responsive design */
 @media (max-width: 768px) {
   .post-card {
-    max-width: 90%;
+    max-width: 95%;
+  }
+  
+  .post-card .card-header,
+  .post-card .card-body,
+  .post-card .card-footer {
+    padding: 0.75rem;
   }
 }
 
 @media (max-width: 576px) {
   .post-avatar {
-    width: 40px !important;
-    height: 40px !important;
+    width: 36px !important;
+    height: 36px !important;
+  }
+  
+  .post-header-info h6 {
+    font-size: 0.9rem;
+  }
+  
+  .post-header-info small {
+    font-size: 0.75rem;
   }
   
   .post-card {
     max-width: 100%;
-    min-height: 180px;
+    min-height: 160px;
   }
   
-  .post-card .card-body,
-  .post-card .card-header,
-  .post-card .card-footer {
-    padding: 0.75rem;
+  .post-card .card-text {
+    font-size: 0.95rem;
   }
   
   .comment-username {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
   }
   
   .comment-handle {

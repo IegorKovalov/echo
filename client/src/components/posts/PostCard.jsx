@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Badge, Card, Dropdown, Form } from "react-bootstrap";
 import { FaEllipsisV, FaHeart, FaRegHeart } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
+import CountdownTimer from "../common/CountdownTimer";
 import UserAvatar from "../common/UserAvatar";
 import CommentSection from "./CommentSection";
 
@@ -13,6 +14,7 @@ const PostCard = ({
 	onDelete,
 	onEdit,
 	onDeleteComment,
+	onRenew,
 }) => {
 	const { currentUser } = useAuth();
 
@@ -67,34 +69,58 @@ const PostCard = ({
 		}
 	};
 
+	const handleRenew = () => {
+		if (onRenew) {
+			onRenew(post._id);
+		}
+	};
+
+	const isNearExpiration = post.expirationProgress > 75;
+
 	return (
-		<Card className="post-card mb-3">
+		<Card
+			className={`post-card mb-3 ${isNearExpiration ? "expiring-post" : ""}`}
+		>
 			<Card.Header className="d-flex justify-content-between align-items-center">
 				<div className="d-flex align-items-center">
 					<div className="post-avatar">
 						<UserAvatar fullName={post.user.fullName} variant="navbar" />
 					</div>
-					<div className="ms-1">
-						<h6 className="mb-1">{post.user.fullName}</h6>
-						<small className="text-secondary">@{post.user.username}</small>
+					<div className="post-header-info">
+						<h6>{post.user.fullName}</h6>
+						<small>@{post.user.username}</small>
 					</div>
 				</div>
-				{post.user._id === currentUser?._id && (
-					<Dropdown align="start">
-						<Dropdown.Toggle variant="link" className="p-0 text-black">
-							<FaEllipsisV />
-						</Dropdown.Toggle>
-						<Dropdown.Menu>
-							<Dropdown.Item onClick={startEditing}>Edit</Dropdown.Item>
-							<Dropdown.Item
-								onClick={() => onDelete(post._id)}
-								className="text-danger"
-							>
-								Delete
-							</Dropdown.Item>
-						</Dropdown.Menu>
-					</Dropdown>
-				)}
+				<div className="post-header-actions">
+					{post.expiresAt && !post.isExpired && (
+						<CountdownTimer
+							expiresAt={post.expiresAt}
+							expirationProgress={post.expirationProgress}
+							renewalCount={post.renewalCount || 0}
+							onRenew={handleRenew}
+							canRenew={
+								post.user._id === currentUser?._id && post.renewalCount < 3
+							}
+						/>
+					)}
+					{post.user._id === currentUser?._id && (
+						<Dropdown align="start">
+							<Dropdown.Toggle variant="link" className="p-0 text-black">
+								<FaEllipsisV />
+							</Dropdown.Toggle>
+							<Dropdown.Menu>
+								<Dropdown.Item onClick={startEditing}>Edit</Dropdown.Item>
+								<Dropdown.Item onClick={handleRenew}>Renew</Dropdown.Item>
+								<Dropdown.Item
+									onClick={() => onDelete(post._id)}
+									className="text-danger"
+								>
+									Delete
+								</Dropdown.Item>
+							</Dropdown.Menu>
+						</Dropdown>
+					)}
+				</div>
 			</Card.Header>
 
 			<Card.Body>

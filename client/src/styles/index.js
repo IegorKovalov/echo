@@ -3,6 +3,7 @@ import "./avatar.css";
 import "./custom-toast.css";
 import "./global.css";
 import "./navigation.css";
+import "./post-expiration.css";
 import "./posts.css";
 import "./profile-picture.css";
 import "./profile.css";

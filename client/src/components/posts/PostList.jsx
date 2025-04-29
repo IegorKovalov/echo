@@ -9,6 +9,7 @@ function PostList({
 	onEdit,
 	onDelete,
 	onDeleteComment,
+	onRenew,
 }) {
 	return (
 		<>
@@ -22,6 +23,7 @@ function PostList({
 					onEdit={onEdit}
 					onDelete={onDelete}
 					onDeleteComment={onDeleteComment}
+					onRenew={onRenew}
 				/>
 			))}
 		</>

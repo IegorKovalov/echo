@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, Container, InputGroup } from "react-bootstrap";
+import { Card, Container } from "react-bootstrap";
 import PostForm from "../../components/posts/PostForm";
 import PostList from "../../components/posts/PostList";
 import ProfileHeader from "../../components/user/profile/ProfileHeader";
@@ -107,6 +107,7 @@ const UserProfilePage = () => {
 			);
 		}
 	};
+
 	const handleOnDelete = async (postID) => {
 		try {
 			await PostService.deletePost(postID);
@@ -136,6 +137,7 @@ const UserProfilePage = () => {
 			);
 		}
 	};
+
 	const handleDeleteComment = async (postID, commentId) => {
 		try {
 			await PostService.deleteComment(postID, commentId);
@@ -161,6 +163,7 @@ const UserProfilePage = () => {
 			);
 		}
 	};
+
 	const handleOnComment = async (postID, newComment) => {
 		try {
 			const response = await PostService.addComment(postID, {
@@ -177,6 +180,26 @@ const UserProfilePage = () => {
 				"error"
 			);
 			throw err;
+		}
+	};
+
+	const handleOnRenew = async (postID, hours = 24) => {
+		try {
+			const response = await PostService.renewPost(postID, hours);
+
+			if (response.data && response.data.data && response.data.data.post) {
+				setPosts(
+					posts.map((post) =>
+						post._id === postID ? response.data.data.post : post
+					)
+				);
+				showToast("Post renewed successfully", "success");
+			}
+		} catch (err) {
+			showToast(
+				err.response?.data?.message || "Failed to renew post.",
+				"error"
+			);
 		}
 	};
 
@@ -225,6 +248,7 @@ const UserProfilePage = () => {
 					onEdit={handleOnEdit}
 					onDelete={handleOnDelete}
 					onDeleteComment={handleDeleteComment}
+					onRenew={handleOnRenew}
 				/>
 			)}
 		</Container>
