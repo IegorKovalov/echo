@@ -5,8 +5,8 @@ import "./global.css";
 import "./navigation.css";
 import "./posts.css";
 import "./profile-picture.css";
+import "./profile.css";
 import "./settings-tabs.css";
 import "./settings.css";
 import "./theme.css";
-
 export * from "../utils/avatarUtils";
