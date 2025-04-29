@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Card, Container } from "react-bootstrap";
+import { Card, Col, Container, Row } from "react-bootstrap";
+import { FaClock, FaComment, FaHeart, FaUser } from "react-icons/fa";
 import PostForm from "../../components/posts/PostForm";
 import PostList from "../../components/posts/PostList";
 import ProfileHeader from "../../components/user/profile/ProfileHeader";
@@ -203,6 +204,31 @@ const UserProfilePage = () => {
 		}
 	};
 
+	const totalInteractions = posts.reduce((acc, post) => {
+		return acc + (post.likes || 0) + (post.comments?.length || 0);
+	}, 0);
+
+	const activeEchoes = posts.filter((post) => {
+		if (post.expiresAt) {
+			return new Date(post.expiresAt) > new Date();
+		}
+		return true;
+	}).length;
+
+	const getTimeSinceLastEcho = () => {
+		if (posts.length === 0) return "Never";
+
+		const lastEcho = posts[0];
+		const lastEchoDate = new Date(lastEcho.createdAt);
+		const now = new Date();
+		const diffInHours = Math.floor((now - lastEchoDate) / (1000 * 60 * 60));
+
+		if (diffInHours < 1) return "Just now";
+		if (diffInHours < 24) return `${diffInHours}h ago`;
+		const diffInDays = Math.floor(diffInHours / 24);
+		return `${diffInDays}d ago`;
+	};
+
 	if (userLoading) {
 		return (
 			<Container className="py-5 text-center text-white">
@@ -214,43 +240,104 @@ const UserProfilePage = () => {
 	}
 
 	return (
-		<Container className="py-5">
-			<ProfileHeader user={userData} isCurrentUser={true} />
-			<Card className="post-card mb-3">
-				<PostForm
-					onPostCreated={(newPost) => {
-						setPosts([newPost, ...posts]);
-					}}
-				/>
-			</Card>
-
-			{postsLoading ? (
-				<div className="text-center py-4">
-					<div
-						className="spinner-border spinner-border-sm text-primary"
-						role="status"
-					>
-						<span className="visually-hidden">Loading posts...</span>
+		<Container className="py-4 px-4">
+			<Row className="justify-content-center">
+				<Col lg={11} xl={9}>
+					{/* Profile Overview */}
+					<div className="profile-overview mb-4">
+						<ProfileHeader user={userData} isCurrentUser={true} />
 					</div>
-					<p className="text-muted mt-2">Loading posts...</p>
-				</div>
-			) : posts.length === 0 ? (
-				<div className="text-center py-5 my-5">
-					<h3 className="gradient-text mb-3">No posts created yet</h3>
-					<p className="text-secondary">Start by creating your first post.</p>
-				</div>
-			) : (
-				<PostList
-					posts={posts}
-					onLike={handleOnLike}
-					onUnlike={handleOnUnlike}
-					onComment={handleOnComment}
-					onEdit={handleOnEdit}
-					onDelete={handleOnDelete}
-					onDeleteComment={handleDeleteComment}
-					onRenew={handleOnRenew}
-				/>
-			)}
+
+					{/* Activity Overview */}
+					<Row className="mb-4 g-3">
+						<Col md={4}>
+							<Card className="stat-card">
+								<Card.Body className="text-center">
+									<FaUser className="stat-icon" />
+									<h3 className="stat-number">{activeEchoes}</h3>
+									<p className="stat-label">Active Echoes</p>
+								</Card.Body>
+							</Card>
+						</Col>
+						<Col md={4}>
+							<Card className="stat-card">
+								<Card.Body className="text-center">
+									<FaHeart className="stat-icon" />
+									<h3 className="stat-number">{totalInteractions}</h3>
+									<p className="stat-label">Total Engagement</p>
+								</Card.Body>
+							</Card>
+						</Col>
+						<Col md={4}>
+							<Card className="stat-card">
+								<Card.Body className="text-center">
+									<FaClock className="stat-icon" />
+									<h3 className="stat-number" data-type="time">
+										{getTimeSinceLastEcho()}
+									</h3>
+									<p className="stat-label">Recent Activity</p>
+								</Card.Body>
+							</Card>
+						</Col>
+					</Row>
+
+					{/* Create Echo Section */}
+					<Card className="echo-card mb-4">
+						<Card.Body>
+							<div className="echo-form-header">
+								<h5 className="mb-0">Create Echo</h5>
+								<small className="text-muted">
+									Echoes automatically expire after 24 hours
+								</small>
+							</div>
+							<PostForm
+								onPostCreated={(newPost) => {
+									setPosts([newPost, ...posts]);
+								}}
+							/>
+						</Card.Body>
+					</Card>
+
+					{/* Echoes Feed */}
+					<Card className="echoes-feed">
+						<Card.Body>
+							<div className="echoes-header">
+								<h5 className="mb-0">Your Echoes</h5>
+								<small className="text-muted">Recent and active echoes</small>
+							</div>
+							{postsLoading ? (
+								<div className="text-center py-4">
+									<div
+										className="spinner-border spinner-border-sm text-primary"
+										role="status"
+									>
+										<span className="visually-hidden">Loading echoes...</span>
+									</div>
+									<p className="text-muted mt-2">Loading echoes...</p>
+								</div>
+							) : posts.length === 0 ? (
+								<div className="text-center py-5 my-5">
+									<h3 className="gradient-text mb-3">No Echoes</h3>
+									<p className="text-secondary">
+										Create your first echo to begin
+									</p>
+								</div>
+							) : (
+								<PostList
+									posts={posts}
+									onLike={handleOnLike}
+									onUnlike={handleOnUnlike}
+									onComment={handleOnComment}
+									onEdit={handleOnEdit}
+									onDelete={handleOnDelete}
+									onDeleteComment={handleDeleteComment}
+									onRenew={handleOnRenew}
+								/>
+							)}
+						</Card.Body>
+					</Card>
+				</Col>
+			</Row>
 		</Container>
 	);
 };
