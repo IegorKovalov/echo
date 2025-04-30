@@ -134,9 +134,10 @@
   }
   
   .navbar-avatar {
-    width: 32px !important;
-    height: 32px !important;
-    margin-right: 0.5rem;
+    width: 36px !important;
+    height: 36px !important;
+    margin-right: 0.75rem;
+    transition: all 0.2s ease;
     border: 1px solid rgba(39, 39, 42, 0.5);
     border-radius: 50%;
     overflow: hidden;

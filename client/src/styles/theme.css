@@ -1,50 +1,104 @@
-/* Theme variables and colors */
+/* 
+ * THEME CONSISTENCY FIXES
+ * Standardizing dark theme implementation and ensuring consistent use of color variables
+ */
+
+/* Update theme.css to ensure variables are consistently applied */
 :root {
-    /* Color palette */
-    --color-primary: #9333ea;
-    --color-secondary: #ec4899;
-    --color-accent: #f97316;
-    
-    /* Background colors */
-    --bg-dark: #000;
-    --bg-card: rgba(0, 0, 0, 0.6);
-    --bg-input: #18181b;
-    --bg-input-hover: #27272a;
-    
-    /* Border colors */
-    --border-light: rgba(255, 255, 255, 0.05);
-    --border-input: #27272a;
-    
-    /* Text colors */
-    --text-primary: #fff;
-    --text-secondary: #71717a;
-    
-    /* Status colors */
-    --color-success: #10b981;
-    --color-error: #ef4444;
-    --color-warning: #f59e0b;
-    --color-info: #3b82f6;
-    
-    /* Gradients */
-    --gradient-primary: linear-gradient(to right, #9333ea, #ec4899);
-    --gradient-hover: linear-gradient(to right, #7e22ce, #db2777);
-    --gradient-text: linear-gradient(to right, #9333ea, #ec4899, #f97316);
-    --gradient-overlay: linear-gradient(to right, rgba(147, 51, 234, 0.2), rgba(236, 72, 153, 0.2));
-    
-    /* Shadows */
-    --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4);
-    --shadow-button: 0 4px 12px rgba(236, 72, 153, 0.3);
-    
-    /* Border radius */
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --radius-full: 9999px;
-    
-    /* Transitions */
-    --transition-fast: 0.2s ease;
-    --transition-normal: 0.3s ease;
-  }
+  /* Core colors - kept from original theme */
+  --color-primary: #9333ea;
+  --color-secondary: #ec4899;
+  --color-accent: #f97316;
+  
+  /* Enhanced background hierarchy */
+  --bg-base: #000000;
+  --bg-surface: rgba(18, 18, 20, 0.95);
+  --bg-surface-raised: rgba(24, 24, 27, 0.8);
+  --bg-surface-overlay: rgba(35, 35, 45, 0.7);
+  --bg-input: rgba(24, 24, 27, 0.6);
+  --bg-input-focus: rgba(24, 24, 27, 0.8);
+  
+  /* Border colors */
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-light: rgba(255, 255, 255, 0.1);
+  --border-input: rgba(39, 39, 42, 0.7);
+  --border-input-focus: rgba(147, 51, 234, 0.5);
+  
+  /* Text colors */
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-tertiary: rgba(255, 255, 255, 0.5);
+  --text-muted: rgba(113, 113, 122, 1);
+  
+  /* Status colors remain the same */
+  --color-success: #10b981;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.4);
+  --shadow-highlight: 0 4px 12px rgba(236, 72, 153, 0.3);
+}
+
+/* Global background application */
+body, .bg-black {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+}
+
+/* Card and container styles */
+.post-card, 
+.auth-card-container, 
+.settings-content-card,
+.settings-sidebar,
+.profile-header-card,
+.messenger-card,
+.echo-card,
+.echoes-feed,
+.stat-card {
+  background-color: var(--bg-surface-raised);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(10px);
+}
+
+/* Updated form elements */
+.form-control,
+.search-input,
+.custom-input {
+  background-color: var(--bg-input) !important;
+  border-color: var(--border-input) !important;
+  color: var(--text-primary) !important;
+}
+
+.form-control:focus,
+.search-input:focus,
+.custom-input:focus {
+  background-color: var(--bg-input-focus) !important;
+  border-color: var(--border-input-focus) !important;
+  box-shadow: 0 0 0 0.25rem rgba(147, 51, 234, 0.25) !important;
+}
+
+/* Text color consistency */
+.text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+.text-muted {
+  color: var(--text-tertiary) !important;
+}
+
+.text-white {
+  color: var(--text-primary) !important;
+}
+
+/* Refined gradient texts */
+.gradient-text {
+  background: linear-gradient(to right, var(--color-primary), var(--color-secondary), var(--color-accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

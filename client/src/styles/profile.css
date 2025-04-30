@@ -127,12 +127,14 @@
 
 .profile-detail-item {
     display: flex;
+    padding: 0.5rem 0.75rem;
+    background-color: rgba(24, 24, 27, 0.3);
+    border-radius: 0.75rem;
     align-items: center;
-    gap: 0.75rem;
     color: rgba(255, 255, 255, 0.7);
     font-size: 0.95rem;
     letter-spacing: 0.3px;
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
 }
 
 .profile-detail-item:hover {
@@ -143,6 +145,7 @@
 .profile-detail-icon {
     color: rgba(147, 51, 234, 0.9);
     font-size: 1.2rem;
+    margin-right: 0.5rem;
     transition: all 0.2s ease;
 }
 

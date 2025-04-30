@@ -1,6 +1,36 @@
 /* Global styles for the entire application */
 
-/* General utility classes */
+.btn {
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.25s ease;
+}
+
+.gradient-button,
+.btn-primary {
+  background-image: linear-gradient(to right, var(--color-primary), var(--color-secondary)) !important;
+  border: none !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.gradient-button:hover,
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);
+}
+
+.btn-outline-secondary {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: transparent;
+  color: var(--text-secondary);
+}
+
+.btn-outline-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  border-color: rgba(147, 51, 234, 0.3);
+}
 .min-h-screen {
     min-height: 100vh;
   }
@@ -56,3 +86,4 @@
     text-align: center;
     color: #71717a;
   }
+
