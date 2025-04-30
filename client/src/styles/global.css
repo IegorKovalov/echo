@@ -1,5 +1,61 @@
 /* Global styles for the entire application */
 
+/* Layout */
+.min-h-screen {
+  min-height: 100vh;
+}
+
+/* Footer styles */
+.app-footer {
+  padding: var(--spacing-md) 0;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-surface);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-secondary);
+}
+
+/* Selection styles */
+::selection {
+  background: var(--color-primary);
+  color: var(--text-primary);
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white;
+    color: black;
+  }
+}
+
 .btn {
   border-radius: 0.75rem;
   padding: 0.75rem 1.5rem;
@@ -31,59 +87,56 @@
   color: var(--text-primary);
   border-color: rgba(147, 51, 234, 0.3);
 }
-.min-h-screen {
-    min-height: 100vh;
+
+.bg-black {
+  background-color: #000;
+}
+
+.text-white {
+  color: #fff;
+}
+
+.text-secondary {
+  color: #71717a !important;
+}
+
+/* Animation utilities */
+.animate-fade-down {
+  animation: fadeDown 0.5s ease-out forwards;
+}
+
+@keyframes fadeDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
   }
-  
-  .bg-black {
-    background-color: #000;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  .text-white {
-    color: #fff;
-  }
-  
-  .text-secondary {
-    color: #71717a !important;
-  }
-  
-  /* Animation utilities */
-  .animate-fade-down {
-    animation: fadeDown 0.5s ease-out forwards;
-  }
-  
-  @keyframes fadeDown {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  /* Spacing utilities */
-  .space-y-6 > * + * {
-    margin-top: 1.5rem;
-  }
-  
-  .space-y-4 > * + * {
-    margin-top: 1rem;
-  }
-  
-  /* Gradient text */
-  .gradient-text {
-    background: linear-gradient(to right, #9333ea, #ec4899, #f97316);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-  
-  /* Footer styles */
-  .app-footer {
-    padding: 0.75rem 0;
-    text-align: center;
-    color: #71717a;
-  }
+}
+
+/* Spacing utilities */
+.space-y-6 > * + * {
+  margin-top: 1.5rem;
+}
+
+.space-y-4 > * + * {
+  margin-top: 1rem;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(to right, #9333ea, #ec4899, #f97316);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Footer styles */
+.app-footer {
+  padding: 0.75rem 0;
+  text-align: center;
+  color: #71717a;
+}
 

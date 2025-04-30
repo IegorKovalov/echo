@@ -10,17 +10,26 @@ import { ToastProvider } from "./context/ToastContext";
 import { AppRoutes } from "./routes";
 
 import "./styles";
+import "./styles/layout.css";
 
 function AppLayout() {
 	const { currentUser, isAuthenticated } = useAuth();
 
 	return (
-		<div className="app-container">
+		<div className="app-layout">
 			{currentUser && <Navbar />}
-			{currentUser && <Messenger />}
-			<main className="main-content">
-				<AppRoutes isAuthenticated={isAuthenticated()} />
-			</main>
+			{currentUser ? (
+				<div className="app-body">
+					<Messenger />
+					<main className="main-content">
+						<AppRoutes isAuthenticated={isAuthenticated()} />
+					</main>
+				</div>
+			) : (
+				<main className="main-content">
+					<AppRoutes isAuthenticated={isAuthenticated()} />
+				</main>
+			)}
 		</div>
 	);
 }

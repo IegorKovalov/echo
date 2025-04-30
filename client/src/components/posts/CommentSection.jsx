@@ -1,5 +1,4 @@
 import React from "react";
-import { Button, Form, InputGroup, ListGroup } from "react-bootstrap";
 import { FaPaperPlane, FaTrash } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
 
@@ -34,71 +33,56 @@ function CommentSection({
 	};
 
 	return (
-		<div className="mt-3">
+		<div className="comment-section">
 			{postComments.length > 0 && (
-				<ListGroup className="mb-3">
+				<div>
 					{postComments.map((comment) => (
-						<ListGroup.Item
-							key={comment._id}
-							className="d-flex justify-content-between align-items-start"
-						>
-							<div className="ms-1 me-auto">
-								<div className="text-primary comment-username">
-									{comment.user.fullName}
-								</div>
-								<div className="text-secondary comment-handle">
-									@{comment.user.username}
-								</div>
-								<div className="comment-content">{comment.content}</div>
+						<div className="comment-item" key={comment._id}>
+							<div className="comment-header">
+								<span className="comment-username">{comment.user.fullName}</span>
+								<span className="comment-handle">@{comment.user.username}</span>
+								<span className="comment-timestamp">{formatTimestamp(comment.createdAt)}</span>
 							</div>
-							<div>
-								<div className="d-flex align-items-center">
-									<small className="text-muted">
-										{formatTimestamp(comment.createdAt)}
-									</small>
-									{currentUser && currentUser._id === comment.user?._id && (
-										<Button
-											variant="link"
-											size="sm"
-											className="text-danger p-0 mt-1 comment-delete"
-											onClick={() => deleteComment(comment._id)}
-										>
-											<FaTrash size={12} />
-										</Button>
-									)}
-								</div>
+							<div className="comment-content">{comment.content}</div>
+							<div className="comment-actions">
+								{currentUser && currentUser._id === comment.user?._id && (
+									<button
+										type="button"
+										className="comment-delete"
+										onClick={() => deleteComment(comment._id)}
+										title="Delete comment"
+									>
+										<FaTrash size={14} />
+									</button>
+								)}
 							</div>
-						</ListGroup.Item>
+						</div>
 					))}
-				</ListGroup>
+				</div>
 			)}
-			<InputGroup className="mb-3 comment-form">
-				<Form.Control
-					as="textarea"
+			<form className="comment-form" onSubmit={e => { e.preventDefault(); submitComment(); }}>
+				<textarea
+					className="comment-input"
 					rows={2}
 					value={newCommentText}
 					onChange={onNewCommentChange}
 					placeholder="Write a comment..."
 					aria-label="Comment input"
-					className="comment-input"
+					disabled={isSubmitting}
 				/>
-				<Button
-					variant="primary"
-					onClick={submitComment}
-					disabled={!newCommentText.trim() || isSubmitting}
+				<button
+					type="submit"
 					className="comment-submit"
+					disabled={!newCommentText.trim() || isSubmitting}
+					title="Post comment"
 				>
 					{isSubmitting ? (
-						<span
-							className="spinner-border spinner-border-sm"
-							role="status"
-							aria-hidden="true"
-						></span>
+						<span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
 					) : (
 						<FaPaperPlane />
 					)}
-				</Button>
-			</InputGroup>
+				</button>
+			</form>
 		</div>
 	);
 }

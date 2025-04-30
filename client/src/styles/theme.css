@@ -1,16 +1,15 @@
 /* 
  * THEME CONSISTENCY FIXES
- * Standardizing dark theme implementation and ensuring consistent use of color variables
+ * Single source of truth for all theme variables and base styles
  */
 
-/* Update theme.css to ensure variables are consistently applied */
 :root {
-  /* Core colors - kept from original theme */
+  /* Core colors */
   --color-primary: #9333ea;
   --color-secondary: #ec4899;
   --color-accent: #f97316;
   
-  /* Enhanced background hierarchy */
+  /* Background hierarchy */
   --bg-base: #000000;
   --bg-surface: rgba(18, 18, 20, 0.95);
   --bg-surface-raised: rgba(24, 24, 27, 0.8);
@@ -30,7 +29,7 @@
   --text-tertiary: rgba(255, 255, 255, 0.5);
   --text-muted: rgba(113, 113, 122, 1);
   
-  /* Status colors remain the same */
+  /* Status colors */
   --color-success: #10b981;
   --color-error: #ef4444;
   --color-warning: #f59e0b;
@@ -41,64 +40,125 @@
   --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.4);
   --shadow-highlight: 0 4px 12px rgba(236, 72, 153, 0.3);
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  
+  /* Border radius */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.25s ease;
+  --transition-slow: 0.3s ease;
 }
 
-/* Global background application */
-body, .bg-black {
+/* Base styles */
+body {
   background-color: var(--bg-base);
   color: var(--text-primary);
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
 }
 
-/* Card and container styles */
-.post-card, 
-.auth-card-container, 
-.settings-content-card,
-.settings-sidebar,
-.profile-header-card,
-.messenger-card,
-.echo-card,
-.echoes-feed,
-.stat-card {
+/* Typography */
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+.text-muted { color: var(--text-muted); }
+
+/* Backgrounds */
+.bg-base { background-color: var(--bg-base); }
+.bg-surface { background-color: var(--bg-surface); }
+.bg-surface-raised { background-color: var(--bg-surface-raised); }
+
+/* Buttons */
+.btn {
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-weight: 500;
+  transition: all var(--transition-normal);
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background-image: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-highlight);
+}
+
+.btn-outline-secondary {
+  border: 1px solid var(--border-light);
+  background-color: transparent;
+  color: var(--text-secondary);
+}
+
+.btn-outline-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  border-color: rgba(147, 51, 234, 0.3);
+}
+
+/* Forms */
+.form-control {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-input);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  transition: all var(--transition-fast);
+}
+
+.form-control:focus {
+  background-color: var(--bg-input-focus);
+  border-color: var(--border-input-focus);
+  box-shadow: 0 0 0 0.25rem rgba(147, 51, 234, 0.25);
+}
+
+/* Cards */
+.card {
   background-color: var(--bg-surface-raised);
   border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
   backdrop-filter: blur(10px);
 }
 
-/* Updated form elements */
-.form-control,
-.search-input,
-.custom-input {
-  background-color: var(--bg-input) !important;
-  border-color: var(--border-input) !important;
-  color: var(--text-primary) !important;
-}
-
-.form-control:focus,
-.search-input:focus,
-.custom-input:focus {
-  background-color: var(--bg-input-focus) !important;
-  border-color: var(--border-input-focus) !important;
-  box-shadow: 0 0 0 0.25rem rgba(147, 51, 234, 0.25) !important;
-}
-
-/* Text color consistency */
-.text-secondary {
-  color: var(--text-secondary) !important;
-}
-
-.text-muted {
-  color: var(--text-tertiary) !important;
-}
-
-.text-white {
-  color: var(--text-primary) !important;
-}
-
-/* Refined gradient texts */
+/* Utilities */
 .gradient-text {
   background: linear-gradient(to right, var(--color-primary), var(--color-secondary), var(--color-accent));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
+
+.animate-fade-down {
+  animation: fadeDown 0.5s ease-out forwards;
+}
+
+@keyframes fadeDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Spacing utilities */
+.space-y-4 > * + * { margin-top: var(--spacing-md); }
+.space-y-6 > * + * { margin-top: var(--spacing-lg); }
