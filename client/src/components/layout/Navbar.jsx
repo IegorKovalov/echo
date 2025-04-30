@@ -13,8 +13,8 @@ import {
 	FaHome,
 	FaSearch,
 	FaSignOutAlt,
-	FaUser,
 	FaUsers,
+	FaUser,
 } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -30,6 +30,30 @@ const Navbar = () => {
 	const [scrolled, setScrolled] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+	const [notifications, setNotifications] = useState([
+		{
+			id: 1,
+			type: "friend_request",
+			message: "John Doe sent you a friend request",
+			time: "2 minutes ago",
+			read: false,
+		},
+		{
+			id: 2,
+			type: "like",
+			message: "Jane Smith liked your post",
+			time: "1 hour ago",
+			read: false,
+		},
+		{
+			id: 3,
+			type: "comment",
+			message: "Mike Johnson commented on your post",
+			time: "3 hours ago",
+			read: true,
+		},
+	]);
+	const [showNotifications, setShowNotifications] = useState(false);
 
 	useEffect(() => {
 		const handleScroll = () => {
@@ -62,10 +86,20 @@ const Navbar = () => {
 		e.preventDefault();
 	};
 
+	const unreadNotifications = notifications.filter((n) => !n.read).length;
+
+	const handleNotificationClick = (notification) => {
+		// Mark notification as read
+		setNotifications(
+			notifications.map((n) =>
+				n.id === notification.id ? { ...n, read: true } : n
+			)
+		);
+	};
+
 	const navItems = [
 		{ icon: <FaHome />, label: "Home", path: "/home" },
 		{ icon: <FaUsers />, label: "Friends", path: "/friends" },
-		{ icon: <FaUser />, label: "Profile", path: "/profile" },
 	];
 
 	return (
@@ -146,8 +180,77 @@ const Navbar = () => {
 						))}
 					</Nav>
 
-					{/* User Menu */}
+					{/* Notifications */}
 					<Nav className="ms-auto align-items-center">
+						{/* Notifications Dropdown */}
+						<Dropdown
+							show={showNotifications}
+							onToggle={(nextShow) => setShowNotifications(nextShow)}
+							align="end"
+						>
+							<Dropdown.Toggle
+								as="div"
+								className="notifications-toggle"
+								onClick={() => setShowNotifications(!showNotifications)}
+							>
+								<div className="position-relative">
+									<FaBell className="notifications-icon" />
+									{unreadNotifications > 0 && (
+										<span className="notification-badge">
+											{unreadNotifications}
+										</span>
+									)}
+								</div>
+							</Dropdown.Toggle>
+
+							<Dropdown.Menu className="notifications-dropdown">
+								<Dropdown.Header className="notifications-header">
+									<div className="d-flex justify-content-between align-items-center">
+										<span>Notifications</span>
+										{unreadNotifications > 0 && (
+											<Button
+												variant="link"
+												className="mark-all-read p-0"
+												onClick={() =>
+													setNotifications(
+														notifications.map((n) => ({ ...n, read: true }))
+													)
+												}
+											>
+												Mark all as read
+											</Button>
+										)}
+									</div>
+								</Dropdown.Header>
+								<Dropdown.Divider />
+								{notifications.length > 0 ? (
+									notifications.map((notification) => (
+										<Dropdown.Item
+											key={notification.id}
+											className={`notification-item ${
+												!notification.read ? "unread" : ""
+											}`}
+											onClick={() => handleNotificationClick(notification)}
+										>
+											<div className="notification-content">
+												<p className="notification-message mb-0">
+													{notification.message}
+												</p>
+												<small className="notification-time">
+													{notification.time}
+												</small>
+											</div>
+										</Dropdown.Item>
+									))
+								) : (
+									<Dropdown.Item className="text-center py-3">
+										No notifications yet
+									</Dropdown.Item>
+								)}
+							</Dropdown.Menu>
+						</Dropdown>
+
+						{/* User Menu */}
 						<Dropdown align="end">
 							<Dropdown.Toggle as="div" className="user-menu-toggle">
 								<div className="d-flex align-items-center">

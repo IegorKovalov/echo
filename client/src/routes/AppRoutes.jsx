@@ -7,6 +7,7 @@ import HomePage from "../pages/home/HomePage";
 import NotFoundPage from "../pages/not-found/NotFoundPage";
 import UserProfilePage from "../pages/user/UserProfilePage";
 import UserSettingsPage from "../pages/user/UserSettingsPage";
+import FriendsPage from "../pages/friends/FriendsPage";
 
 import ProtectedRoute from "../components/layout/ProtectedRoute";
 
@@ -50,6 +51,7 @@ const AppRoutes = ({ isAuthenticated }) => {
 			{/* Protected Routes */}
 			<Route element={<ProtectedRoute />}>
 				<Route path="/home" element={<HomePage />} />
+				<Route path="/friends" element={<FriendsPage />} />
 				<Route path="/profile" element={<UserProfilePage />} />
 				<Route path="/settings" element={<UserSettingsPage />} />
 			</Route>
