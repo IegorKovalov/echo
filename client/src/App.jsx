@@ -1,46 +1,94 @@
-import { BrowserRouter as Router } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
-import Navbar from "./components/layout/Navbar";
-import Messenger from "./components/layout/Messenger";
+import {
+	Navigate,
+	Route,
+	BrowserRouter as Router,
+	Routes,
+} from "react-router-dom";
+import ProtectedRoute from "./components/layout/ProtectedRoute";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ProfileProvider } from "./context/ProfileContext";
 import { ToastProvider } from "./context/ToastContext";
-import { AppRoutes } from "./routes";
+import AppLayout from "./layouts/AppLayout";
+import AuthLayout from "./layouts/AuthLayout";
+
+import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
+import LoginPage from "./pages/auth/LoginPage";
+import RegisterPage from "./pages/auth/RegisterPage";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
+import FriendsPage from "./pages/friends/FriendsPage";
+import HomePage from "./pages/home/HomePage";
+import NotFoundPage from "./pages/not-found/NotFoundPage";
+import UserProfilePage from "./pages/user/UserProfilePage";
+import UserSettingsPage from "./pages/user/UserSettingsPage";
 
 import "./styles";
-import "./styles/layout.css";
-
-function AppLayout() {
-	const { currentUser, isAuthenticated } = useAuth();
-
-	return (
-		<div className="app-layout">
-			{currentUser && <Navbar />}
-			{currentUser ? (
-				<div className="app-body">
-					<Messenger />
-					<main className="main-content">
-						<AppRoutes isAuthenticated={isAuthenticated()} />
-					</main>
-				</div>
-			) : (
-				<main className="main-content">
-					<AppRoutes isAuthenticated={isAuthenticated()} />
-				</main>
-			)}
-		</div>
-	);
-}
 
 function App() {
+	const { isAuthenticated } = useAuth();
+
 	return (
 		<Router>
 			<ToastProvider>
 				<AuthProvider>
 					<ProfileProvider>
-						<AppLayout />
+						<Routes>
+							{/* Auth Routes with Auth Layout */}
+							<Route element={<AuthLayout />}>
+								<Route
+									path="/login"
+									element={
+										isAuthenticated ? <Navigate to="/home" /> : <LoginPage />
+									}
+								/>
+								<Route
+									path="/register"
+									element={
+										isAuthenticated ? <Navigate to="/home" /> : <RegisterPage />
+									}
+								/>
+								<Route
+									path="/forgot-password"
+									element={
+										isAuthenticated ? (
+											<Navigate to="/home" />
+										) : (
+											<ForgotPasswordPage />
+										)
+									}
+								/>
+								<Route
+									path="/reset-password/:token"
+									element={
+										isAuthenticated ? (
+											<Navigate to="/home" />
+										) : (
+											<ResetPasswordPage />
+										)
+									}
+								/>
+							</Route>
+
+							{/* Protected */}
+							<Route element={<ProtectedRoute />}>
+								<Route element={<AppLayout />}>
+									<Route path="/home" element={<HomePage />} />
+									<Route path="/profile" element={<UserProfilePage />} />
+									<Route path="/settings" element={<UserSettingsPage />} />
+									<Route path="/friends" element={<FriendsPage />} />
+								</Route>
+							</Route>
+
+							{/* Root redirect */}
+							<Route
+								path="/"
+								element={
+									<Navigate to={isAuthenticated ? "/home" : "/login"} replace />
+								}
+							/>
+
+							{/* Not Found route */}
+							<Route path="*" element={<NotFoundPage />} />
+						</Routes>
 					</ProfileProvider>
 				</AuthProvider>
 			</ToastProvider>
