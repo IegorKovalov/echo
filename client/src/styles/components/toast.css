@@ -1,0 +1,37 @@
+/* Toast notification styles */
+.toast-container {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: var(--z-toast);
+  max-width: 250px;
+}
+
+.echo-toast {
+  background-color: rgba(24, 24, 27, 0.95);
+  backdrop-filter: var(--backdrop-blur);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  color: var(--text-primary);
+  animation: toast-slide-in 0.3s ease-out forwards;
+}
+
+.echo-toast-header {
+  background: linear-gradient(to right, rgba(147, 51, 234, 0.1), rgba(236, 72, 153, 0.1));
+  border-bottom: 1px solid var(--border-light);
+  padding: 0.75rem 1rem;
+  color: var(--text-primary);
+}
+
+.echo-toast-body {
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+}
+
+.toast-icon {
+  margin-right: 0.75rem;
+  display: flex;
+  align-items: center;
+}

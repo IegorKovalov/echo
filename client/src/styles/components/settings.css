@@ -1,0 +1,90 @@
+/* Settings styles */
+.settings-content-card {
+  background-color: rgba(18, 18, 20, 0.6);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  height: 100%;
+}
+
+.user-profile-summary {
+  background-color: rgba(24, 24, 27, 0.4);
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 1.5rem;
+}
+
+.settings-section {
+  background-color: rgba(24, 24, 27, 0.2);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-light);
+}
+
+.settings-section-header {
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary) !important;
+}
+
+.settings-section-header .icon {
+  background-color: rgba(147, 51, 234, 0.1);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem;
+  margin: 0 0 1rem;
+  display: inline-flex;
+}
+
+/* Password tab */
+.password-input-group .btn {
+  background-color: var(--bg-input-hover);
+  border-color: var(--border-input);
+  color: var(--text-secondary);
+}
+
+.password-input-group .btn:hover {
+  background-color: #3f3f46;
+  color: var(--text-primary);
+}
+
+.password-requirements {
+  margin-top: 0.875rem;
+  padding: 0.875rem;
+  background-color: rgba(24, 24, 27, 0.8);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+}
+
+.password-requirement {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.375rem;
+}
+
+.password-requirement .icon {
+  min-width: 18px;
+}
+
+.progress-container {
+  margin-top: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.progress {
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: var(--bg-input-hover);
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+  .settings-sidebar {
+    margin-bottom: 1.5rem;
+  }
+
+  .user-profile-summary {
+    padding: 1rem;
+  }
+}
