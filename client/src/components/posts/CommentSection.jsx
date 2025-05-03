@@ -34,33 +34,29 @@ function CommentSection({
 	};
 
 	return (
-		<div className="mt-3">
+		<div className="mt-4">
 			{postComments.length > 0 && (
-				<ListGroup className="mb-3">
+				<div className="comment-list mb-4">
 					{postComments.map((comment) => (
-						<ListGroup.Item
-							key={comment._id}
-							className="d-flex justify-content-between align-items-start"
-						>
-							<div className="ms-1 me-auto">
-								<div className="text-primary comment-username">
-									{comment.user.fullName}
+						<div key={comment._id} className="comment-item mb-3">
+							<div className="d-flex justify-content-between align-items-start">
+								<div className="comment-content">
+									<div className="comment-author">
+										<span className="fw-medium">{comment.user.fullName}</span>
+										<span className="text-secondary ms-2 comment-handle">
+											@{comment.user.username}
+										</span>
+									</div>
+									<div className="comment-text mt-1">{comment.content}</div>
 								</div>
-								<div className="text-secondary comment-handle">
-									@{comment.user.username}
-								</div>
-								<div className="comment-content">{comment.content}</div>
-							</div>
-							<div>
-								<div className="d-flex align-items-center">
-									<small className="text-muted">
+								<div className="comment-meta d-flex align-items-center">
+									<small className="text-muted me-2">
 										{formatTimestamp(comment.createdAt)}
 									</small>
 									{currentUser && currentUser._id === comment.user?._id && (
 										<Button
 											variant="link"
-											size="sm"
-											className="text-danger p-0 mt-1 comment-delete"
+											className="text-danger p-0 comment-delete-btn"
 											onClick={() => deleteComment(comment._id)}
 										>
 											<FaTrash size={12} />
@@ -68,37 +64,39 @@ function CommentSection({
 									)}
 								</div>
 							</div>
-						</ListGroup.Item>
+						</div>
 					))}
-				</ListGroup>
+				</div>
 			)}
-			<InputGroup className="mb-3 comment-form">
-				<Form.Control
-					as="textarea"
-					rows={2}
-					value={newCommentText}
-					onChange={onNewCommentChange}
-					placeholder="Write a comment..."
-					aria-label="Comment input"
-					className="comment-input"
-				/>
-				<Button
-					variant="primary"
-					onClick={submitComment}
-					disabled={!newCommentText.trim() || isSubmitting}
-					className="comment-submit"
-				>
-					{isSubmitting ? (
-						<span
-							className="spinner-border spinner-border-sm"
-							role="status"
-							aria-hidden="true"
-						></span>
-					) : (
-						<FaPaperPlane />
-					)}
-				</Button>
-			</InputGroup>
+			<div className="comment-form-container">
+				<InputGroup>
+					<Form.Control
+						as="textarea"
+						rows={1}
+						value={newCommentText}
+						onChange={onNewCommentChange}
+						placeholder="Write a comment..."
+						aria-label="Comment input"
+						className="comment-input border-end-0"
+					/>
+					<Button
+						variant="light"
+						onClick={submitComment}
+						disabled={!newCommentText.trim() || isSubmitting}
+						className="comment-submit-btn"
+					>
+						{isSubmitting ? (
+							<span
+								className="spinner-border spinner-border-sm"
+								role="status"
+								aria-hidden="true"
+							></span>
+						) : (
+							<FaPaperPlane className="text-primary" />
+						)}
+					</Button>
+				</InputGroup>
+			</div>
 		</div>
 	);
 }

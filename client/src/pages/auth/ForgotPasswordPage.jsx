@@ -33,66 +33,79 @@ const ForgotPasswordPage = () => {
 	};
 
 	return (
-		<div className="min-h-screen bg-black text-white d-flex flex-column">
-			<div className="flex-grow-1 d-flex flex-column justify-content-center align-items-center p-4">
-				<div className="auth-card-container animate-fade-down">
+		<div className="auth-container d-flex flex-column min-vh-100 bg-light">
+			<div className="auth-content flex-grow-1 d-flex align-items-center justify-content-center py-5">
+				<div
+					className="auth-card bg-white rounded-4 shadow-sm p-4 p-md-5 mx-auto"
+					style={{ maxWidth: "450px" }}
+				>
 					<div className="text-center mb-4">
-						<h1 className="gradient-title mb-2">echo</h1>
+						<h1 className="display-5 fw-bold text-primary mb-2">echo</h1>
 						<p className="text-secondary">Reset your password</p>
 					</div>
 
-					<div className="space-y-6">
-						<Form onSubmit={handleSubmit} className="space-y-4">
-							<Form.Group className="mb-4">
-								<Form.Label className="text-secondary">
-									Email Address
-								</Form.Label>
-								<Form.Control
-									type="email"
-									value={email}
-									onChange={(e) => setEmail(e.target.value)}
-									required
-									className="custom-input"
-									placeholder="Enter your email"
-									disabled={sent}
-								/>
-								<Form.Text className="text-secondary mt-2 d-block">
-									We'll send you an email with instructions to reset your
-									password.
-								</Form.Text>
-							</Form.Group>
+					<Form onSubmit={handleSubmit}>
+						<Form.Group className="mb-4">
+							<Form.Label className="fw-medium">Email Address</Form.Label>
+							<Form.Control
+								type="email"
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+								required
+								className="form-control-lg rounded-3 border-light-subtle"
+								placeholder="Enter your email"
+								disabled={sent}
+							/>
+							<Form.Text className="text-secondary mt-2 d-block">
+								We'll send you an email with instructions to reset your
+								password.
+							</Form.Text>
+						</Form.Group>
 
-							{sent ? (
-								<div className="text-center mt-4">
-									<div className="mb-3 text-white">
-										Reset link has been sent! Please check your email.
-									</div>
-									<Button
-										type="button"
-										onClick={() => setSent(false)}
-										className="w-100 social-button"
-									>
-										Send Again
-									</Button>
+						{sent ? (
+							<div className="text-center mt-4">
+								<div className="alert alert-success py-3 rounded-3">
+									Reset link has been sent! Please check your email.
 								</div>
-							) : (
 								<Button
-									type="submit"
-									className="w-100 gradient-button"
-									disabled={loading}
+									type="button"
+									onClick={() => setSent(false)}
+									className="w-100 btn-lg btn-outline-primary rounded-3 mt-3"
 								>
-									{loading ? "Sending..." : "Send Reset Link"}
+									Send Again
 								</Button>
-							)}
-						</Form>
+							</div>
+						) : (
+							<Button
+								type="submit"
+								className="w-100 btn-lg btn-primary rounded-3"
+								disabled={loading}
+							>
+								{loading ? (
+									<>
+										<span
+											className="spinner-border spinner-border-sm me-2"
+											role="status"
+											aria-hidden="true"
+										></span>
+										Sending...
+									</>
+								) : (
+									"Send Reset Link"
+								)}
+							</Button>
+						)}
+					</Form>
 
-						<p className="text-center mt-4 text-secondary">
-							Remember your password?{" "}
-							<Link to="/login" className="signup-link">
-								Back to Login
-							</Link>
-						</p>
-					</div>
+					<p className="text-center mt-4 mb-0">
+						Remember your password?{" "}
+						<Link
+							to="/login"
+							className="text-primary text-decoration-none fw-medium"
+						>
+							Back to Login
+						</Link>
+					</p>
 				</div>
 			</div>
 

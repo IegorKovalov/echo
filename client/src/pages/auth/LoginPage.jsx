@@ -41,68 +41,91 @@ const LoginPage = () => {
 	};
 
 	return (
-		<div className="min-h-screen bg-black text-white d-flex flex-column">
-			<div className="flex-grow-1 d-flex flex-column justify-content-center align-items-center p-4">
-				<div className="auth-card-container animate-fade-down">
-					<div className="text-center mb-3">
-						<h1 className="gradient-title mb-1">echo</h1>
+		<div className="auth-container d-flex flex-column min-vh-100 bg-light">
+			<div className="auth-content flex-grow-1 d-flex align-items-center justify-content-center py-5">
+				<div
+					className="auth-card bg-white rounded-4 shadow-sm p-4 p-md-5 mx-auto"
+					style={{ maxWidth: "450px" }}
+				>
+					<div className="text-center mb-4">
+						<h1 className="display-5 fw-bold text-primary mb-2">echo</h1>
 						<p className="text-secondary">
 							Where moments fade, memories remain
 						</p>
 					</div>
-					<div className="space-y-6">
-						<Form noValidate onSubmit={handleSubmit} className="space-y-4">
-							<Form.Group className="mb-3">
-								<Form.Label className="text-secondary">Email</Form.Label>
-								<Form.Control
-									type="email"
-									value={email}
-									onChange={(e) => setEmail(e.target.value)}
-									required
-									className="custom-input"
-									placeholder="you@example.com"
-								/>
-							</Form.Group>
 
-							<Form.Group className="mb-3">
-								<div className="d-flex justify-content-between align-items-center">
-									<Form.Label className="text-secondary">Password</Form.Label>
-									<Link to="/forgot-password" className="forgot-password-link">
-										Forgot password?
-									</Link>
-								</div>
-								<Form.Control
-									type="password"
-									value={password}
-									onChange={(e) => setPassword(e.target.value)}
-									required
-									className="custom-input"
-									placeholder="••••••••"
-								/>
-							</Form.Group>
+					<Form noValidate onSubmit={handleSubmit}>
+						<Form.Group className="mb-3">
+							<Form.Label className="fw-medium">Email</Form.Label>
+							<Form.Control
+								type="email"
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+								required
+								className="form-control-lg rounded-3 border-light-subtle"
+								placeholder="you@example.com"
+							/>
+						</Form.Group>
 
-							<Button
-								type="submit"
-								className="w-100 gradient-button"
-								disabled={loading}
-							>
-								{loading ? "Logging in..." : "Sign in"}
-							</Button>
-						</Form>
+						<Form.Group className="mb-4">
+							<div className="d-flex justify-content-between align-items-center">
+								<Form.Label className="fw-medium">Password</Form.Label>
+								<Link
+									to="/forgot-password"
+									className="text-primary text-decoration-none small"
+								>
+									Forgot password?
+								</Link>
+							</div>
+							<Form.Control
+								type="password"
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								required
+								className="form-control-lg rounded-3 border-light-subtle"
+								placeholder="••••••••"
+							/>
+						</Form.Group>
 
-						<div className="divider">
-							<span className="divider-text">or</span>
-						</div>
-						<p className="text-center mt-3 text-secondary">
-							Don't have an account?{" "}
-							<Link to="/register" className="signup-link">
-								Sign up
-							</Link>
-						</p>
+						<Button
+							type="submit"
+							className="w-100 btn-lg btn-primary rounded-3"
+							disabled={loading}
+						>
+							{loading ? (
+								<>
+									<span
+										className="spinner-border spinner-border-sm me-2"
+										role="status"
+										aria-hidden="true"
+									></span>
+									Logging in...
+								</>
+							) : (
+								"Sign in"
+							)}
+						</Button>
+					</Form>
+
+					<div className="d-flex align-items-center my-4">
+						<div className="flex-grow-1 border-top"></div>
+						<div className="mx-3 text-secondary small">or</div>
+						<div className="flex-grow-1 border-top"></div>
 					</div>
+
+					<p className="text-center mb-0">
+						Don't have an account?{" "}
+						<Link
+							to="/register"
+							className="text-primary text-decoration-none fw-medium"
+						>
+							Sign up
+						</Link>
+					</p>
 				</div>
 			</div>
-			<footer className="py-2 text-center text-secondary">
+
+			<footer className="py-3 text-center text-secondary">
 				© 2025 Echo. All rights reserved.
 			</footer>
 		</div>

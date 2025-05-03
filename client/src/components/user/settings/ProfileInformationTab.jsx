@@ -135,11 +135,11 @@ const ProfileInformationTab = () => {
 	};
 
 	return (
-		<div>
+		<div className="profile-information-container">
 			{/* Success/Error messages */}
 			{success && (
 				<div
-					className="alert alert-success d-flex align-items-center mb-4"
+					className="alert alert-success d-flex align-items-center mb-4 rounded-3"
 					role="alert"
 				>
 					<FaCheck className="me-2" />
@@ -149,7 +149,7 @@ const ProfileInformationTab = () => {
 
 			{error && (
 				<div
-					className="alert alert-danger d-flex align-items-center mb-4"
+					className="alert alert-danger d-flex align-items-center mb-4 rounded-3"
 					role="alert"
 				>
 					<FaInfoCircle className="me-2" />
@@ -158,19 +158,19 @@ const ProfileInformationTab = () => {
 			)}
 
 			<form onSubmit={handleSubmit}>
-				<div className="settings-section mb-4">
-					<div className="settings-section-header">
-						<div className="icon">
-							<FaUser />
+				<div className="settings-section p-4 bg-white rounded-3 shadow-sm mb-4">
+					<div className="settings-section-header d-flex align-items-center mb-4">
+						<div className="settings-icon bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+							<FaUser className="text-primary" />
 						</div>
-						<h3 className="settings-section-title">About You</h3>
+						<h3 className="settings-section-title m-0 fw-bold">About You</h3>
 					</div>
 
 					<div className="mb-4">
-						<label htmlFor="bio" className="form-label">
+						<label htmlFor="bio" className="form-label fw-medium">
 							Bio
 						</label>
-						<div className="form-text">
+						<div className="form-text mb-2">
 							Tell others about yourself. What are you passionate about?
 						</div>
 						<textarea
@@ -185,7 +185,7 @@ const ProfileInformationTab = () => {
 							rows={4}
 							maxLength={MAX_BIO_LENGTH}
 						></textarea>
-						<div className="d-flex justify-content-between mt-2">
+						<div className="d-flex justify-content-end mt-2">
 							<small
 								className={`${
 									formData.bio.length >= MAX_BIO_LENGTH * 0.9
@@ -195,28 +195,27 @@ const ProfileInformationTab = () => {
 							>
 								{formData.bio.length}/{MAX_BIO_LENGTH} characters
 							</small>
-							{validationErrors.bio && (
-								<small className="text-danger">{validationErrors.bio}</small>
-							)}
 						</div>
 					</div>
 				</div>
 
 				<div className="row">
 					<div className="col-md-6">
-						<div className="settings-section mb-4">
-							<div className="settings-section-header">
-								<div className="icon">
-									<FaBriefcase />
+						<div className="settings-section p-4 bg-white rounded-3 shadow-sm mb-4">
+							<div className="settings-section-header d-flex align-items-center mb-4">
+								<div className="settings-icon bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+									<FaBriefcase className="text-primary" />
 								</div>
-								<h3 className="settings-section-title">Work</h3>
+								<h3 className="settings-section-title m-0 fw-bold">Work</h3>
 							</div>
 
 							<div className="mb-3">
-								<label htmlFor="occupation" className="form-label">
+								<label htmlFor="occupation" className="form-label fw-medium">
 									Occupation
 								</label>
-								<div className="form-text">What do you do professionally?</div>
+								<div className="form-text mb-2">
+									What do you do professionally?
+								</div>
 								<input
 									type="text"
 									className="form-control"
@@ -231,19 +230,19 @@ const ProfileInformationTab = () => {
 					</div>
 
 					<div className="col-md-6">
-						<div className="settings-section mb-4">
-							<div className="settings-section-header">
-								<div className="icon">
-									<FaMapMarkerAlt />
+						<div className="settings-section p-4 bg-white rounded-3 shadow-sm mb-4">
+							<div className="settings-section-header d-flex align-items-center mb-4">
+								<div className="settings-icon bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+									<FaMapMarkerAlt className="text-primary" />
 								</div>
-								<h3 className="settings-section-title">Location</h3>
+								<h3 className="settings-section-title m-0 fw-bold">Location</h3>
 							</div>
 
 							<div className="mb-3">
-								<label htmlFor="location" className="form-label">
+								<label htmlFor="location" className="form-label fw-medium">
 									Location
 								</label>
-								<div className="form-text">Where are you based?</div>
+								<div className="form-text mb-2">Where are you based?</div>
 								<input
 									type="text"
 									className="form-control"
@@ -260,19 +259,21 @@ const ProfileInformationTab = () => {
 
 				<div className="row">
 					<div className="col-md-6">
-						<div className="settings-section mb-4">
-							<div className="settings-section-header">
-								<div className="icon">
-									<FaGlobe />
+						<div className="settings-section p-4 bg-white rounded-3 shadow-sm mb-4">
+							<div className="settings-section-header d-flex align-items-center mb-4">
+								<div className="settings-icon bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+									<FaGlobe className="text-primary" />
 								</div>
-								<h3 className="settings-section-title">Web Presence</h3>
+								<h3 className="settings-section-title m-0 fw-bold">
+									Web Presence
+								</h3>
 							</div>
 
 							<div className="mb-3">
-								<label htmlFor="website" className="form-label">
+								<label htmlFor="website" className="form-label fw-medium">
 									Website
 								</label>
-								<div className="form-text">
+								<div className="form-text mb-2">
 									Your personal website or portfolio
 								</div>
 								<input
@@ -296,19 +297,19 @@ const ProfileInformationTab = () => {
 					</div>
 
 					<div className="col-md-6">
-						<div className="settings-section mb-4">
-							<div className="settings-section-header">
-								<div className="icon">
-									<FaBirthdayCake />
+						<div className="settings-section p-4 bg-white rounded-3 shadow-sm mb-4">
+							<div className="settings-section-header d-flex align-items-center mb-4">
+								<div className="settings-icon bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+									<FaBirthdayCake className="text-primary" />
 								</div>
-								<h3 className="settings-section-title">Personal</h3>
+								<h3 className="settings-section-title m-0 fw-bold">Personal</h3>
 							</div>
 
 							<div className="mb-3">
-								<label htmlFor="birthday" className="form-label">
+								<label htmlFor="birthday" className="form-label fw-medium">
 									Birthday
 								</label>
-								<div className="form-text">When were you born?</div>
+								<div className="form-text mb-2">When were you born?</div>
 								<input
 									type="date"
 									className={`form-control ${
@@ -330,16 +331,20 @@ const ProfileInformationTab = () => {
 				</div>
 
 				{/* Action buttons */}
-				<div className="action-buttons">
+				<div className="d-flex justify-content-end gap-3 mt-4">
 					<button
 						type="button"
-						className="btn btn-outline-secondary"
+						className="btn btn-outline-secondary px-4"
 						onClick={fetchProfileInfo}
 						disabled={loading}
 					>
-						Reset Changes
+						Reset
 					</button>
-					<button type="submit" className="btn btn-primary" disabled={loading}>
+					<button
+						type="submit"
+						className="btn btn-primary px-4"
+						disabled={loading}
+					>
 						{loading ? (
 							<>
 								<span

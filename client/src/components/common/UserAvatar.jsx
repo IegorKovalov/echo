@@ -2,19 +2,49 @@ import { useEffect, useState } from "react";
 import { useProfile } from "../../context/ProfileContext";
 import { getInitials } from "../../utils/avatarUtils";
 
-const UserAvatar = ({ fullName, src = null, variant = "default" }) => {
+const UserAvatar = ({
+	fullName,
+	src = null,
+	variant = "default",
+	style = {},
+}) => {
 	const { profileImage } = useProfile();
 	const [avatarImage, setAvatarImage] = useState(null);
 	const [imageLoaded, setImageLoaded] = useState(false);
 
 	const imageSrc = src || profileImage || null;
 
-	const avatarVariant =
-		variant === "navbar"
-			? "avatar-navbar"
-			: variant === "settings"
-			? "avatar-settings"
-			: "avatar-default";
+	// Determine size and font size based on variant
+	let size, fontSize, bgColorClass;
+
+	switch (variant) {
+		case "navbar":
+			size = "32px";
+			fontSize = "0.875rem";
+			bgColorClass = "bg-primary";
+			break;
+		case "settings":
+			size = "100px";
+			fontSize = "2.5rem";
+			bgColorClass = "bg-primary";
+			break;
+		case "comment":
+			size = "28px";
+			fontSize = "0.75rem";
+			bgColorClass = "bg-secondary";
+			break;
+		default:
+			size = "40px";
+			fontSize = "1rem";
+			bgColorClass = "bg-primary";
+	}
+
+	// Combine provided style with default styles
+	const combinedStyle = {
+		width: size,
+		height: size,
+		...style,
+	};
 
 	useEffect(() => {
 		if (!imageSrc) {
@@ -47,41 +77,33 @@ const UserAvatar = ({ fullName, src = null, variant = "default" }) => {
 
 	if (avatarImage && imageLoaded) {
 		return (
-			<div className={`user-avatar-container ${avatarVariant}`}>
+			<div
+				className="user-avatar-container rounded-circle overflow-hidden"
+				style={combinedStyle}
+			>
 				<img
 					src={avatarImage}
 					alt={`${fullName || "User"}'s avatar`}
-					className="img-fluid rounded-circle"
+					className="img-fluid w-100 h-100"
 					style={{
-						width: "100%",
-						height: "100%",
 						objectFit: "cover",
-						border: "2px solid rgba(255, 255, 255, 0.1)",
 					}}
 				/>
 			</div>
 		);
 	}
 
-	let fontSize;
-	if (variant === "navbar") {
-		fontSize = "0.875rem";
-	} else if (variant === "settings") {
-		fontSize = "2.5rem";
-	} else {
-		fontSize = "1.25rem";
-	}
-
+	// Generate initials avatar
 	return (
-		<div className={`user-avatar ${avatarVariant}`}>
+		<div
+			className={`user-avatar-initials rounded-circle d-flex align-items-center justify-content-center ${bgColorClass} bg-opacity-10`}
+			style={combinedStyle}
+		>
 			<span
+				className="text-primary fw-semibold"
 				style={{
 					fontSize: fontSize,
 					lineHeight: 1,
-					position: "absolute",
-					top: "50%",
-					left: "50%",
-					transform: "translate(-50%, -50%)",
 				}}
 			>
 				{getInitials(fullName)}

@@ -13,8 +13,8 @@ import {
 	FaHome,
 	FaSearch,
 	FaSignOutAlt,
-	FaUsers,
 	FaUser,
+	FaUsers,
 } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -106,19 +106,20 @@ const Navbar = () => {
 		<BootstrapNavbar
 			expand="lg"
 			className={`custom-navbar sticky-top ${
-				scrolled ? "navbar-scrolled" : ""
+				scrolled ? "navbar-scrolled shadow-sm" : ""
 			}`}
 			expanded={isMobileMenuOpen}
 		>
 			<Container>
 				{/* Logo Section */}
 				<BootstrapNavbar.Brand as={Link} to="/home" className="navbar-logo">
-					<span className="gradient-text">echo</span>
+					<span className="fw-bold fs-4 text-primary">echo</span>
 				</BootstrapNavbar.Brand>
 
 				<BootstrapNavbar.Toggle
 					aria-controls="basic-navbar-nav"
 					onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+					className="border-0 shadow-none"
 				/>
 
 				<BootstrapNavbar.Collapse id="basic-navbar-nav">
@@ -129,12 +130,12 @@ const Navbar = () => {
 								key={index}
 								as={Link}
 								to={item.path}
-								className={`nav-item mx-2 ${
-									location.pathname === item.path ? "active" : ""
+								className={`nav-item mx-3 d-flex align-items-center ${
+									location.pathname === item.path ? "active fw-bold" : ""
 								}`}
 							>
-								{item.icon}
-								<span className="ms-2">{item.label}</span>
+								<span className="nav-icon me-2">{item.icon}</span>
+								<span>{item.label}</span>
 							</Nav.Link>
 						))}
 					</Nav>
@@ -142,23 +143,18 @@ const Navbar = () => {
 					{/* Search Bar */}
 					<div className="search-container mx-auto">
 						<Form onSubmit={handleSearch} className="d-flex">
-							<div className="search-input-wrapper w-100">
+							<div className="search-input-wrapper position-relative w-100">
+								<div className="position-absolute top-50 start-0 translate-middle-y ms-3">
+									<FaSearch className="text-secondary" />
+								</div>
 								<Form.Control
 									type="search"
 									placeholder="Search..."
-									className="search-input"
+									className="search-input ps-5 border-0 bg-light rounded-pill"
 									aria-label="Search"
 									value={searchQuery}
 									onChange={(e) => setSearchQuery(e.target.value)}
 								/>
-								<Button
-									type="submit"
-									variant="link"
-									className="search-icon"
-									aria-label="Submit search"
-								>
-									<FaSearch />
-								</Button>
 							</div>
 						</Form>
 					</div>
@@ -170,12 +166,14 @@ const Navbar = () => {
 								key={index}
 								as={Link}
 								to={item.path}
-								className={`nav-item mobile-nav-item my-1 ${
-									location.pathname === item.path ? "active" : ""
+								className={`nav-item mobile-nav-item py-2 px-3 mb-2 rounded-3 ${
+									location.pathname === item.path
+										? "active bg-primary text-white"
+										: "bg-light"
 								}`}
 							>
-								{item.icon}
-								<span className="ms-2">{item.label}</span>
+								<span className="nav-icon me-3">{item.icon}</span>
+								<span>{item.label}</span>
 							</Nav.Link>
 						))}
 					</Nav>
@@ -187,30 +185,41 @@ const Navbar = () => {
 							show={showNotifications}
 							onToggle={(nextShow) => setShowNotifications(nextShow)}
 							align="end"
+							className="me-2"
 						>
-							<Dropdown.Toggle
-								as="div"
-								className="notifications-toggle"
-								onClick={() => setShowNotifications(!showNotifications)}
-							>
-								<div className="position-relative">
-									<FaBell className="notifications-icon" />
+							<Dropdown.Toggle as="div" className="notifications-toggle">
+								<div
+									className="notifications-button p-2 position-relative rounded-circle d-flex align-items-center justify-content-center"
+									style={{ width: "40px", height: "40px" }}
+									onClick={() => setShowNotifications(!showNotifications)}
+								>
+									<FaBell className="text-secondary" />
 									{unreadNotifications > 0 && (
-										<span className="notification-badge">
+										<span
+											className="notification-badge position-absolute bg-danger text-white d-flex align-items-center justify-content-center rounded-circle"
+											style={{
+												width: "18px",
+												height: "18px",
+												top: "0",
+												right: "0",
+												fontSize: "10px",
+											}}
+										>
 											{unreadNotifications}
 										</span>
 									)}
 								</div>
 							</Dropdown.Toggle>
 
-							<Dropdown.Menu className="notifications-dropdown">
-								<Dropdown.Header className="notifications-header">
+							<Dropdown.Menu className="notifications-dropdown shadow-sm border-0 py-0 overflow-hidden">
+								<div className="notifications-header py-3 px-3 bg-light">
 									<div className="d-flex justify-content-between align-items-center">
-										<span>Notifications</span>
+										<span className="fw-bold">Notifications</span>
 										{unreadNotifications > 0 && (
 											<Button
 												variant="link"
-												className="mark-all-read p-0"
+												className="mark-all-read p-0 text-primary"
+												style={{ fontSize: "0.85rem", textDecoration: "none" }}
 												onClick={() =>
 													setNotifications(
 														notifications.map((n) => ({ ...n, read: true }))
@@ -221,75 +230,90 @@ const Navbar = () => {
 											</Button>
 										)}
 									</div>
-								</Dropdown.Header>
-								<Dropdown.Divider />
-								{notifications.length > 0 ? (
-									notifications.map((notification) => (
-										<Dropdown.Item
-											key={notification.id}
-											className={`notification-item ${
-												!notification.read ? "unread" : ""
-											}`}
-											onClick={() => handleNotificationClick(notification)}
-										>
-											<div className="notification-content">
-												<p className="notification-message mb-0">
-													{notification.message}
-												</p>
-												<small className="notification-time">
-													{notification.time}
-												</small>
+								</div>
+								<div
+									className="notifications-body"
+									style={{ maxHeight: "350px", overflowY: "auto" }}
+								>
+									{notifications.length > 0 ? (
+										notifications.map((notification) => (
+											<div
+												key={notification.id}
+												className={`notification-item py-3 px-3 border-bottom ${
+													!notification.read ? "unread bg-light" : ""
+												}`}
+												onClick={() => handleNotificationClick(notification)}
+											>
+												<div className="notification-content">
+													<p className="notification-message mb-1">
+														{notification.message}
+													</p>
+													<small className="notification-time text-secondary">
+														{notification.time}
+													</small>
+												</div>
 											</div>
-										</Dropdown.Item>
-									))
-								) : (
-									<Dropdown.Item className="text-center py-3">
-										No notifications yet
-									</Dropdown.Item>
-								)}
+										))
+									) : (
+										<div className="text-center py-4 text-secondary">
+											No notifications yet
+										</div>
+									)}
+								</div>
 							</Dropdown.Menu>
 						</Dropdown>
 
 						{/* User Menu */}
 						<Dropdown align="end">
 							<Dropdown.Toggle as="div" className="user-menu-toggle">
-								<div className="d-flex align-items-center">
-									<div className="navbar-avatar">
+								<div className="d-flex align-items-center user-dropdown-button py-1 px-2">
+									<div className="navbar-avatar me-2">
 										<UserAvatar fullName={userFullName} variant="navbar" />
 									</div>
-									<span className="navbar-username d-none d-sm-block">
+									<span className="navbar-username d-none d-lg-block me-1 fw-medium">
 										{userFullName}
 									</span>
 								</div>
 							</Dropdown.Toggle>
 
-							<Dropdown.Menu className="user-dropdown-menu">
-								<Dropdown.Header>My Account</Dropdown.Header>
-								<Dropdown.Divider />
-								<Dropdown.Item
-									as={Link}
-									to="/profile"
-									className="dropdown-menu-item"
-								>
-									<FaUser className="me-2" />
-									Profile
-								</Dropdown.Item>
-								<Dropdown.Item
-									as={Link}
-									to="/settings"
-									className="dropdown-menu-item"
-								>
-									<FaCog className="me-2" />
-									Settings
-								</Dropdown.Item>
-								<Dropdown.Divider />
-								<Dropdown.Item
-									onClick={handleLogout}
-									className="dropdown-menu-item text-danger"
-								>
-									<FaSignOutAlt className="me-2" />
-									Log Out
-								</Dropdown.Item>
+							<Dropdown.Menu className="user-dropdown-menu shadow-sm border-0 py-0 overflow-hidden">
+								<div className="user-dropdown-header bg-light p-3">
+									<div className="d-flex align-items-center">
+										<UserAvatar fullName={userFullName} variant="navbar" />
+										<div className="ms-2">
+											<div className="fw-bold">{userFullName}</div>
+											<small className="text-secondary">
+												@{currentUser?.username}
+											</small>
+										</div>
+									</div>
+								</div>
+								<div className="user-dropdown-body">
+									<Dropdown.Item
+										as={Link}
+										to="/profile"
+										className="dropdown-menu-item py-3"
+									>
+										<FaUser className="me-3 text-primary" />
+										Profile
+									</Dropdown.Item>
+									<Dropdown.Item
+										as={Link}
+										to="/settings"
+										className="dropdown-menu-item py-3"
+									>
+										<FaCog className="me-3 text-primary" />
+										Settings
+									</Dropdown.Item>
+									<Dropdown.Divider className="my-0" />
+									<Dropdown.Item
+										onClick={handleLogout}
+										className="dropdown-menu-item py-3 text-danger"
+									>
+										<FaSignOutAlt className="me-3" />
+										Log Out
+									</Dropdown.Item>
+								</div>
 							</Dropdown.Menu>
 						</Dropdown>
 					</Nav>

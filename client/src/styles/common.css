@@ -1,0 +1,87 @@
+/* Countdown Timer */
+.countdown-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .countdown-wrapper {
+    min-width: 80px;
+  }
+  
+  .countdown-text {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+  }
+  
+  .renew-button {
+    cursor: pointer;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+  }
+  
+  .renew-button:hover {
+    opacity: 1;
+    transform: rotate(15deg);
+  }
+  
+  /* Toast */
+  .echo-toast {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: none;
+    max-width: 320px;
+    min-width: 280px;
+    animation: slideInRight 0.3s ease;
+  }
+  
+  .echo-toast-header {
+    border-bottom: none;
+    padding: 0.75rem 1rem;
+    background-color: #fff;
+  }
+  
+  .echo-toast.success-toast .echo-toast-header {
+    border-bottom: 1px solid rgba(46, 204, 113, 0.2);
+  }
+  
+  .echo-toast.error-toast .echo-toast-header {
+    border-bottom: 1px solid rgba(231, 76, 60, 0.2);
+  }
+  
+  .echo-toast.warning-toast .echo-toast-header {
+    border-bottom: 1px solid rgba(241, 196, 15, 0.2);
+  }
+  
+  .echo-toast.info-toast .echo-toast-header {
+    border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+  }
+  
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  /* User Avatar */
+  .user-avatar-container {
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+  }
+  
+  .user-avatar-initials {
+    transition: all 0.2s ease;
+  }
+  
+  .user-avatar-initials:hover,
+  .user-avatar-container:hover {
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+  }

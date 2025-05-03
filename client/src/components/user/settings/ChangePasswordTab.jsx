@@ -8,6 +8,7 @@ import {
 	FaTimes,
 } from "react-icons/fa";
 import { useToast } from "../../../context/ToastContext";
+
 const ChangePasswordTab = ({ passwordData, onSubmit, loading }) => {
 	const [formData, setFormData] = useState({
 		passwordCurrent: passwordData?.passwordCurrent || "",
@@ -165,25 +166,27 @@ const ChangePasswordTab = ({ passwordData, onSubmit, loading }) => {
 	};
 
 	return (
-		<div className="settings-section">
-			<div className="settings-section-header">
-				<div className="icon">
-					<FaShieldAlt />
+		<div className="settings-section p-4 bg-white rounded-3 shadow-sm mb-4">
+			<div className="settings-section-header d-flex align-items-center mb-4">
+				<div className="settings-icon bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+					<FaShieldAlt className="text-primary" />
 				</div>
-				<h3 className="settings-section-title">Password Security</h3>
+				<h3 className="settings-section-title m-0 fw-bold">
+					Password Security
+				</h3>
 			</div>
 
 			<form onSubmit={handleSubmit}>
 				{/* Current Password field */}
 				<div className="mb-4">
-					<label htmlFor="currentPassword" className="form-label">
+					<label htmlFor="currentPassword" className="form-label fw-medium">
 						<FaLock className="me-2 text-primary" />
 						Current Password
 					</label>
-					<div className="form-text">
+					<div className="form-text mb-2">
 						Enter your current password to verify your identity
 					</div>
-					<div className="input-group password-input-group">
+					<div className="input-group">
 						<input
 							type={showPassword.current ? "text" : "password"}
 							className={`form-control ${
@@ -215,12 +218,12 @@ const ChangePasswordTab = ({ passwordData, onSubmit, loading }) => {
 
 				{/* New Password field */}
 				<div className="mb-4">
-					<label htmlFor="newPassword" className="form-label">
+					<label htmlFor="newPassword" className="form-label fw-medium">
 						<FaLock className="me-2 text-primary" />
 						New Password
 					</label>
-					<div className="form-text">Create a strong, unique password</div>
-					<div className="input-group password-input-group">
+					<div className="form-text mb-2">Create a strong, unique password</div>
+					<div className="input-group">
 						<input
 							type={showPassword.new ? "text" : "password"}
 							className={`form-control ${
@@ -251,9 +254,9 @@ const ChangePasswordTab = ({ passwordData, onSubmit, loading }) => {
 
 					{/* Password strength indicator */}
 					{formData.password && (
-						<div className="progress-container">
+						<div className="password-strength-container mt-3">
 							<div className="d-flex justify-content-between align-items-center mb-1">
-								<small>Password Strength:</small>
+								<small className="text-secondary">Password Strength:</small>
 								<small
 									className={`fw-bold ${getStrengthColor().replace(
 										"bg-",
@@ -263,7 +266,7 @@ const ChangePasswordTab = ({ passwordData, onSubmit, loading }) => {
 									{getStrengthText()}
 								</small>
 							</div>
-							<div className="progress" style={{ height: "8px" }}>
+							<div className="progress rounded-pill" style={{ height: "8px" }}>
 								<div
 									className={`progress-bar ${getStrengthColor()}`}
 									role="progressbar"
@@ -275,17 +278,17 @@ const ChangePasswordTab = ({ passwordData, onSubmit, loading }) => {
 							</div>
 
 							{/* Password requirements */}
-							<div className="password-requirements">
-								<small className="text-muted d-block mb-2">
+							<div className="password-requirements p-3 bg-light rounded-3 mt-3">
+								<small className="text-muted d-block mb-3 fw-medium">
 									Password requirements:
 								</small>
 								<div className="row">
 									{requirements.map((req) => (
 										<div key={req.id} className="col-md-6 mb-2">
-											<div className="password-requirement">
-												<span className="icon">
+											<div className="d-flex align-items-center">
+												<span className="me-2">
 													{meetsRequirements[req.id] ? (
-														<FaCheck className={`text-success`} />
+														<FaCheck className="text-success" />
 													) : (
 														<FaTimes className="text-muted" />
 													)}
@@ -310,12 +313,14 @@ const ChangePasswordTab = ({ passwordData, onSubmit, loading }) => {
 
 				{/* Confirm New Password field */}
 				<div className="mb-4">
-					<label htmlFor="confirmPassword" className="form-label">
+					<label htmlFor="confirmPassword" className="form-label fw-medium">
 						<FaLock className="me-2 text-primary" />
 						Confirm New Password
 					</label>
-					<div className="form-text">Re-enter your new password to confirm</div>
-					<div className="input-group password-input-group">
+					<div className="form-text mb-2">
+						Re-enter your new password to confirm
+					</div>
+					<div className="input-group">
 						<input
 							type={showPassword.confirm ? "text" : "password"}
 							className={`form-control ${
@@ -346,13 +351,13 @@ const ChangePasswordTab = ({ passwordData, onSubmit, loading }) => {
 
 					{/* Password match indicator */}
 					{formData.password && formData.passwordConfirm && (
-						<div className="mt-2">
+						<div className="password-match-indicator mt-2">
 							{formData.password === formData.passwordConfirm ? (
-								<small className="text-success">
+								<small className="text-success d-flex align-items-center">
 									<FaCheck className="me-1" /> Passwords match
 								</small>
 							) : (
-								<small className="text-danger">
+								<small className="text-danger d-flex align-items-center">
 									<FaTimes className="me-1" /> Passwords don't match
 								</small>
 							)}
@@ -361,10 +366,10 @@ const ChangePasswordTab = ({ passwordData, onSubmit, loading }) => {
 				</div>
 
 				{/* Action buttons */}
-				<div className="action-buttons">
+				<div className="d-flex justify-content-end gap-3 mt-4">
 					<button
 						type="button"
-						className="btn btn-outline-secondary"
+						className="btn btn-outline-secondary px-4"
 						onClick={() => {
 							setFormData({
 								passwordCurrent: "",
@@ -375,11 +380,11 @@ const ChangePasswordTab = ({ passwordData, onSubmit, loading }) => {
 						}}
 						disabled={loading}
 					>
-						Clear Form
+						Clear
 					</button>
 					<button
 						type="submit"
-						className="btn btn-primary"
+						className="btn btn-primary px-4"
 						disabled={
 							loading ||
 							passwordStrength < 60 ||

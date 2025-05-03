@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Badge, Card, Dropdown, Form } from "react-bootstrap";
-import { FaEllipsisV, FaHeart, FaRegHeart } from "react-icons/fa";
+import { FaComment, FaEllipsisH, FaHeart, FaRegHeart } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
 import CountdownTimer from "../common/CountdownTimer";
 import UserAvatar from "../common/UserAvatar";
@@ -76,44 +76,61 @@ const PostCard = ({
 	};
 
 	const isNearExpiration = post.expirationProgress > 75;
+	const formatPostDate = (date) => {
+		return new Date(date).toLocaleString("en-GB", {
+			month: "short",
+			day: "numeric",
+			hour: "numeric",
+			minute: "2-digit",
+		});
+	};
 
 	return (
-		<Card
-			className={`post-card mb-3 ${isNearExpiration ? "expiring-post" : ""}`}
+		<div
+			className={`post-card mb-4 ${isNearExpiration ? "expiring-post" : ""}`}
 		>
-			<Card.Header className="d-flex justify-content-between align-items-center">
+			<div className="post-header d-flex justify-content-between align-items-center p-3">
 				<div className="d-flex align-items-center">
-					<div className="post-avatar">
+					<div className="post-avatar me-3">
 						<UserAvatar fullName={post.user.fullName} variant="navbar" />
 					</div>
 					<div className="post-header-info">
-						<h6>{post.user.fullName}</h6>
-						<small>@{post.user.username}</small>
+						<h6 className="mb-0 fw-semibold">{post.user.fullName}</h6>
+						<small className="text-secondary">@{post.user.username}</small>
 					</div>
 				</div>
-				<div className="post-header-actions">
+				<div className="post-header-actions d-flex align-items-center">
 					{post.expiresAt && !post.isExpired && (
-						<CountdownTimer
-							expiresAt={post.expiresAt}
-							expirationProgress={post.expirationProgress}
-							renewalCount={post.renewalCount || 0}
-							onRenew={handleRenew}
-							canRenew={
-								post.user._id === currentUser?._id && post.renewalCount < 3
-							}
-						/>
+						<div className="me-3">
+							<CountdownTimer
+								expiresAt={post.expiresAt}
+								expirationProgress={post.expirationProgress}
+								renewalCount={post.renewalCount || 0}
+								onRenew={handleRenew}
+								canRenew={
+									post.user._id === currentUser?._id && post.renewalCount < 3
+								}
+							/>
+						</div>
 					)}
 					{post.user._id === currentUser?._id && (
-						<Dropdown align="start">
-							<Dropdown.Toggle variant="link" className="p-0 text-black">
-								<FaEllipsisV />
+						<Dropdown align="end">
+							<Dropdown.Toggle
+								variant="link"
+								className="p-0 text-dark post-menu-toggle"
+							>
+								<FaEllipsisH />
 							</Dropdown.Toggle>
-							<Dropdown.Menu>
-								<Dropdown.Item onClick={startEditing}>Edit</Dropdown.Item>
-								<Dropdown.Item onClick={handleRenew}>Renew</Dropdown.Item>
+							<Dropdown.Menu className="shadow-sm border-0">
+								<Dropdown.Item onClick={startEditing} className="post-edit-btn">
+									Edit
+								</Dropdown.Item>
+								<Dropdown.Item onClick={handleRenew} className="post-renew-btn">
+									Renew
+								</Dropdown.Item>
 								<Dropdown.Item
 									onClick={() => onDelete(post._id)}
-									className="text-danger"
+									className="text-danger post-delete-btn"
 								>
 									Delete
 								</Dropdown.Item>
@@ -121,21 +138,27 @@ const PostCard = ({
 						</Dropdown>
 					)}
 				</div>
-			</Card.Header>
+			</div>
 
-			<Card.Body>
+			<div className="post-body p-3">
 				{isEditing ? (
-					<>
+					<div className="post-edit-form">
 						<Form.Control
 							as="textarea"
 							rows={3}
 							value={editedContent}
 							onChange={onEditedContentChange}
-							className="mb-2"
+							className="mb-2 post-edit-input"
 						/>
-						<div>
+						<div className="d-flex justify-content-end">
 							<button
-								className="btn btn-success btn-sm me-2"
+								className="btn btn-sm me-2 post-edit-cancel"
+								onClick={() => setIsEditing(false)}
+							>
+								Cancel
+							</button>
+							<button
+								className="btn btn-primary btn-sm post-edit-save"
 								onClick={() => {
 									onEdit(post._id, editedContent);
 									setIsEditing(false);
@@ -143,39 +166,42 @@ const PostCard = ({
 							>
 								Save
 							</button>
-							<button
-								className="btn btn-secondary btn-sm"
-								onClick={() => setIsEditing(false)}
-							>
-								Cancel
-							</button>
+						</div>
+					</div>
+				) : (
+					<>
+						<div className="post-content">{post.content}</div>
+						<div className="post-date mt-2">
+							<small className="text-secondary">
+								{formatPostDate(post.createdAt)}
+							</small>
 						</div>
 					</>
-				) : (
-					<Card.Text>{post.content}</Card.Text>
 				)}
-				<small className="text-secondary d-block mt-2">
-					{new Date(post.createdAt).toLocaleString("en-GB")}
-				</small>
-			</Card.Body>
+			</div>
 
-			<Card.Footer className="post-footer">
+			<div className="post-footer p-3 border-top">
 				<div className="d-flex justify-content-between">
 					<button
-						className={`btn btn-link post-action-btn ${isLiked ? "liked" : ""}`}
+						className={`post-action-btn like-btn d-flex align-items-center ${
+							isLiked ? "liked" : ""
+						}`}
 						onClick={toggleLike}
 					>
-						{isLiked ? <FaHeart /> : <FaRegHeart />} {post.likes}
+						{isLiked ? (
+							<FaHeart className="text-danger me-2" />
+						) : (
+							<FaRegHeart className="me-2" />
+						)}
+						<span>{post.likes}</span>
 					</button>
 
 					<button
-						className="btn btn-link post-action-btn"
+						className="post-action-btn comment-btn d-flex align-items-center"
 						onClick={() => setCommentsVisible(!commentsVisible)}
 					>
-						<Badge bg="secondary" className="mb-2">
-							{postComments.length}{" "}
-							{postComments.length === 1 ? "Comment" : "Comments"}
-						</Badge>
+						<FaComment className="me-2" />
+						<span>{postComments.length}</span>
 					</button>
 				</div>
 
@@ -189,8 +215,8 @@ const PostCard = ({
 						isSubmitting={isSubmittingComment}
 					/>
 				)}
-			</Card.Footer>
-		</Card>
+			</div>
+		</div>
 	);
 };
 

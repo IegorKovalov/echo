@@ -1,0 +1,45 @@
+/* Full-width sticky navbar */
+.sticky-navbar {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    z-index: 1050;
+    background-color: #fff;
+    border-bottom: 1px solid #eaeaea;
+  }
+  
+  /* Messenger: fixed to the right side of the screen */
+  .messenger-sidebar {
+    position: fixed;
+    top: 60px; /* adjust to navbar height */
+    right: 0;
+    width: 320px;
+    height: calc(100vh - 60px);
+    background-color: #fff;
+    border-left: 1px solid #ddd;
+    overflow-y: auto;
+    z-index: 1040;
+    padding: 1rem;
+  }
+  
+  /* Main content: fills remaining space and scrolls */
+  .main-scrollable-content {
+    margin-right: 320px; /* reserve space for messenger */
+    padding: 1rem;
+    height: calc(100vh - 60px);
+    overflow-y: auto;
+  }
+@media (max-width: 768px) {
+	.app-layout {
+		flex-direction: column;
+	}
+    .messenger-sidebar {
+		display: none;
+	}
+
+	.main-content {
+		margin-right: 0;
+	}
+}

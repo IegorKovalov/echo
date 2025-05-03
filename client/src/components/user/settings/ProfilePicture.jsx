@@ -138,19 +138,24 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 
 	return (
 		<>
-			<div className="profile-picture-container" onClick={handleModalOpen}>
+			<div
+				className="profile-picture-container position-relative"
+				onClick={handleModalOpen}
+			>
 				{picture ? (
 					<img
 						src={picture}
 						alt={`${fullName}'s profile`}
-						className="profile-picture"
+						className="profile-picture rounded-circle"
 					/>
 				) : (
 					<UserAvatar fullName={fullName} variant="settings" />
 				)}
-				<div className="profile-picture-overlay">
-					<FaCamera className="profile-picture-icon" />
-					<div className="profile-picture-text">Change Photo</div>
+				<div className="profile-picture-overlay d-flex flex-column align-items-center justify-content-center position-absolute top-0 start-0 w-100 h-100 rounded-circle">
+					<FaCamera className="profile-picture-icon text-white mb-1" />
+					<div className="profile-picture-text small text-white">
+						Change Photo
+					</div>
 				</div>
 			</div>
 
@@ -159,10 +164,9 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 				onHide={handleModalClose}
 				centered
 				size="md"
-				contentClassName="profile-modal"
-				backdropClassName="modal-backdrop-dark"
+				className="profile-picture-modal"
 			>
-				<Modal.Header closeButton className="text-white">
+				<Modal.Header closeButton>
 					<Modal.Title>Update Profile Picture</Modal.Title>
 				</Modal.Header>
 				<Modal.Body>
@@ -170,7 +174,7 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 						<div className="text-center py-4">
 							<div className="mb-4">
 								<FaTrash className="text-danger mb-3" size={48} />
-								<h5 className="text-white">Remove Profile Picture?</h5>
+								<h5>Remove Profile Picture?</h5>
 								<p className="text-secondary">
 									This will permanently remove your profile picture. You will be
 									represented by your initials until you upload a new image.
@@ -181,6 +185,7 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 									variant="outline-secondary"
 									onClick={() => setShowDeleteConfirm(false)}
 									disabled={loading}
+									className="px-4"
 								>
 									Cancel
 								</Button>
@@ -188,6 +193,7 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 									variant="danger"
 									onClick={handleDeleteProfilePicture}
 									disabled={loading}
+									className="px-4"
 								>
 									{loading ? (
 										<>
@@ -206,34 +212,48 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 						</div>
 					) : (
 						<>
-							<div className="picture-preview-container">
-								{previewImage ? (
-									<>
-										<img
-											src={previewImage}
-											alt="Preview"
-											className="profile-picture"
+							<div className="picture-preview-container d-flex justify-content-center mb-4">
+								<div className="position-relative">
+									{previewImage ? (
+										<>
+											<img
+												src={previewImage}
+												alt="Preview"
+												className="profile-picture rounded-circle shadow-sm"
+												style={{
+													width: "150px",
+													height: "150px",
+													objectFit: "cover",
+												}}
+											/>
+											<button
+												className="profile-picture-remove btn btn-sm btn-light rounded-circle position-absolute top-0 end-0 shadow-sm"
+												onClick={handleRemove}
+											>
+												<FaTimes />
+											</button>
+										</>
+									) : (
+										<UserAvatar
+											fullName={fullName}
+											variant="settings"
+											style={{ width: "150px", height: "150px" }}
 										/>
-										<div
-											className="profile-picture-remove"
-											onClick={handleRemove}
-										>
-											<FaTimes />
-										</div>
-									</>
-								) : (
-									<UserAvatar fullName={fullName} variant="settings" />
-								)}
+									)}
+								</div>
 							</div>
 
-							<div className="upload-instructions">
-								Upload a new profile picture. The image should be at least
-								400x400 pixels.
+							<div className="upload-instructions text-center mb-4">
+								<p className="text-secondary">
+									Upload a new profile picture. The image should be at least
+									400x400 pixels.
+								</p>
 							</div>
 
 							<Button
-								className="upload-button w-100"
+								className="upload-button w-100 mb-3 py-2"
 								onClick={handleClickUpload}
+								variant="primary"
 							>
 								<FaUpload className="me-2" /> Select an Image
 							</Button>
@@ -243,13 +263,13 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 								ref={fileInputRef}
 								onChange={handleFileSelect}
 								accept="image/*"
-								className="file-input"
+								className="d-none"
 							/>
 
 							{picture && (
 								<Button
 									variant="outline-danger"
-									className="w-100 mt-3"
+									className="w-100 py-2"
 									onClick={() => setShowDeleteConfirm(true)}
 								>
 									<FaTrash className="me-2" /> Remove Profile Picture
@@ -260,13 +280,18 @@ const ProfilePicture = ({ picture, fullName, onPictureUpdate }) => {
 				</Modal.Body>
 				{!showDeleteConfirm && (
 					<Modal.Footer>
-						<Button variant="outline-secondary" onClick={handleModalClose}>
+						<Button
+							variant="outline-secondary"
+							onClick={handleModalClose}
+							className="px-4"
+						>
 							Cancel
 						</Button>
 						<Button
-							className="gradient-button"
+							variant="primary"
 							onClick={handleSave}
 							disabled={loading || (!selectedFile && previewImage === picture)}
+							className="px-4"
 						>
 							{loading ? (
 								<>

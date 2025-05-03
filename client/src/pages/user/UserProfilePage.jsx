@@ -231,10 +231,11 @@ const UserProfilePage = () => {
 
 	if (userLoading) {
 		return (
-			<Container className="py-5 text-center text-white">
-				<div className="spinner-border text-light" role="status">
+			<Container className="py-5 text-center">
+				<div className="spinner-border text-primary" role="status">
 					<span className="visually-hidden">Loading user profile...</span>
 				</div>
+				<p className="mt-2 text-secondary">Loading profile...</p>
 			</Container>
 		);
 	}
@@ -251,42 +252,57 @@ const UserProfilePage = () => {
 					{/* Activity Overview */}
 					<Row className="mb-4 g-3">
 						<Col md={4}>
-							<Card className="stat-card">
-								<Card.Body className="text-center">
-									<FaUser className="stat-icon" />
-									<h3 className="stat-number">{activeEchoes}</h3>
-									<p className="stat-label">Active Echoes</p>
+							<Card className="shadow-sm border-0 rounded-4 overflow-hidden">
+								<Card.Body className="p-3 p-md-4 text-center">
+									<div
+										className="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle p-3 mx-auto mb-3"
+										style={{ width: "60px", height: "60px" }}
+									>
+										<FaUser className="text-primary" size={24} />
+									</div>
+									<h3 className="fw-bold mb-1">{activeEchoes}</h3>
+									<p className="text-secondary mb-0">Active Echoes</p>
 								</Card.Body>
 							</Card>
 						</Col>
 						<Col md={4}>
-							<Card className="stat-card">
-								<Card.Body className="text-center">
-									<FaHeart className="stat-icon" />
-									<h3 className="stat-number">{totalInteractions}</h3>
-									<p className="stat-label">Total Engagement</p>
+							<Card className="shadow-sm border-0 rounded-4 overflow-hidden">
+								<Card.Body className="p-3 p-md-4 text-center">
+									<div
+										className="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle p-3 mx-auto mb-3"
+										style={{ width: "60px", height: "60px" }}
+									>
+										<FaHeart className="text-primary" size={24} />
+									</div>
+									<h3 className="fw-bold mb-1">{totalInteractions}</h3>
+									<p className="text-secondary mb-0">Total Engagement</p>
 								</Card.Body>
 							</Card>
 						</Col>
 						<Col md={4}>
-							<Card className="stat-card">
-								<Card.Body className="text-center">
-									<FaClock className="stat-icon" />
-									<h3 className="stat-number" data-type="time">
+							<Card className="shadow-sm border-0 rounded-4 overflow-hidden">
+								<Card.Body className="p-3 p-md-4 text-center">
+									<div
+										className="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle p-3 mx-auto mb-3"
+										style={{ width: "60px", height: "60px" }}
+									>
+										<FaClock className="text-primary" size={24} />
+									</div>
+									<h3 className="fw-bold mb-1" data-type="time">
 										{getTimeSinceLastEcho()}
 									</h3>
-									<p className="stat-label">Recent Activity</p>
+									<p className="text-secondary mb-0">Recent Activity</p>
 								</Card.Body>
 							</Card>
 						</Col>
 					</Row>
 
 					{/* Create Echo Section */}
-					<Card className="echo-card mb-4">
-						<Card.Body>
-							<div className="echo-form-header">
-								<h5 className="mb-0">Create Echo</h5>
-								<small className="text-muted">
+					<Card className="shadow-sm border-0 rounded-4 overflow-hidden mb-4">
+						<Card.Body className="p-4">
+							<div className="mb-3">
+								<h5 className="fw-bold mb-1">Create Echo</h5>
+								<small className="text-secondary">
 									Echoes automatically expire after 24 hours
 								</small>
 							</div>
@@ -299,11 +315,13 @@ const UserProfilePage = () => {
 					</Card>
 
 					{/* Echoes Feed */}
-					<Card className="echoes-feed">
-						<Card.Body>
-							<div className="echoes-header">
-								<h5 className="mb-0">Your Echoes</h5>
-								<small className="text-muted">Recent and active echoes</small>
+					<Card className="shadow-sm border-0 rounded-4 overflow-hidden">
+						<Card.Body className="p-4">
+							<div className="mb-4">
+								<h5 className="fw-bold mb-1">Your Echoes</h5>
+								<small className="text-secondary">
+									Recent and active echoes
+								</small>
 							</div>
 							{postsLoading ? (
 								<div className="text-center py-4">
@@ -313,11 +331,17 @@ const UserProfilePage = () => {
 									>
 										<span className="visually-hidden">Loading echoes...</span>
 									</div>
-									<p className="text-muted mt-2">Loading echoes...</p>
+									<p className="text-secondary mt-2">Loading echoes...</p>
 								</div>
 							) : posts.length === 0 ? (
-								<div className="text-center py-5 my-5">
-									<h3 className="gradient-text mb-3">No Echoes</h3>
+								<div className="text-center py-5 my-4">
+									<div
+										className="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center p-3 mb-3"
+										style={{ width: "80px", height: "80px" }}
+									>
+										<FaComment className="text-primary" size={32} />
+									</div>
+									<h3 className="fw-bold text-primary mb-3">No Echoes</h3>
 									<p className="text-secondary">
 										Create your first echo to begin
 									</p>

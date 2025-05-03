@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, Card, Form } from "react-bootstrap";
+import { Button, Form } from "react-bootstrap";
 import { FaClock, FaPaperPlane } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -67,9 +67,9 @@ function PostForm({ onPostCreated }) {
 	];
 
 	return (
-		<Card.Body className="p-3">
-			<div className="d-flex align-items-start mb-3">
-				<div className="post-avatar">
+		<div className="post-form-container bg-white p-3 mb-4 rounded-3 shadow-sm">
+			<div className="d-flex align-items-start">
+				<div className="post-avatar me-3">
 					<UserAvatar fullName={currentUser?.fullName} variant="navbar" />
 				</div>
 				<Form className="w-100" onSubmit={handleSubmit}>
@@ -80,27 +80,26 @@ function PostForm({ onPostCreated }) {
 							value={postContent}
 							onChange={handleContentChange}
 							placeholder="What's on your mind?"
-							className="post-input"
+							className="post-input border-0 bg-light rounded-3 p-3"
 							disabled={isSubmitting}
 						/>
 					</Form.Group>
 
-					{/* Expiration settings */}
 					<div className="d-flex justify-content-between align-items-center mt-3">
 						<Button
 							variant="link"
-							className="text-secondary p-0"
+							className="text-secondary p-0 d-flex align-items-center"
 							onClick={toggleExpirationOptions}
 						>
-							<FaClock className="me-1" />
-							Set expiration time
+							<FaClock className="me-2" />
+							<span>Set expiration</span>
 						</Button>
 
 						<Button
 							variant="primary"
 							type="submit"
 							disabled={!postContent.trim() || isSubmitting}
-							className="gradient-button"
+							className="post-submit-btn px-4 py-2 rounded-pill"
 						>
 							{isSubmitting ? (
 								<span
@@ -116,14 +115,14 @@ function PostForm({ onPostCreated }) {
 					</div>
 
 					{showExpirationOptions && (
-						<div className="expiration-options mt-3 p-2 rounded">
-							<Form.Label className="text-secondary mb-2">
+						<div className="expiration-options mt-3 p-3 rounded-3 bg-light">
+							<Form.Label className="mb-2 fw-medium">
 								This post will expire after:
 							</Form.Label>
 							<Form.Select
 								value={expirationTime}
 								onChange={handleExpirationChange}
-								className="expiration-select"
+								className="expiration-select rounded-pill"
 							>
 								{expirationOptions.map((option) => (
 									<option key={option.value} value={option.value}>
@@ -131,7 +130,7 @@ function PostForm({ onPostCreated }) {
 									</option>
 								))}
 							</Form.Select>
-							<small className="text-muted d-block mt-1">
+							<small className="text-muted d-block mt-2">
 								All posts automatically expire after the selected time. You can
 								renew a post up to 3 times.
 							</small>
@@ -139,7 +138,7 @@ function PostForm({ onPostCreated }) {
 					)}
 				</Form>
 			</div>
-		</Card.Body>
+		</div>
 	);
 }
 

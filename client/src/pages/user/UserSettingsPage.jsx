@@ -124,14 +124,14 @@ const UserSettingsPage = () => {
 
 	return (
 		<Container className="py-4">
-			<h2 className="mb-4 text-white">Settings</h2>
+			<h2 className="fw-bold text-primary mb-4">Settings</h2>
 
 			<Tab.Container activeKey={activeTab} onSelect={(k) => setActiveTab(k)}>
 				<Row>
 					<Col lg={3} md={4} className="mb-4">
-						<Card className="settings-sidebar border-0">
+						<Card className="shadow-sm border-0 rounded-4 overflow-hidden">
 							<Card.Body className="p-0">
-								<div className="user-profile-summary p-3 text-center">
+								<div className="p-4 text-center border-bottom">
 									<div className="mb-3">
 										<ProfilePicture
 											picture={accountData.picture}
@@ -139,48 +139,57 @@ const UserSettingsPage = () => {
 											onPictureUpdate={updatePicture}
 										/>
 									</div>
-									<h5 className="mb-1">{accountData.fullname}</h5>
+									<h5 className="fw-bold mb-1">{accountData.fullname}</h5>
 									<p className="text-secondary mb-0">@{accountData.username}</p>
 								</div>
 
-								<Nav variant="pills" className="flex-column settings-nav">
+								<Nav variant="pills" className="flex-column settings-nav p-2">
 									<Nav.Item>
 										<Nav.Link
 											eventKey="account"
 											href="#account"
-											className="d-flex justify-content-between align-items-center"
+											className="d-flex justify-content-between align-items-center rounded-3 mb-1 p-3"
 										>
-											<div>
-												<FaUserCog className="me-2" />
-												Account
+											<div className="d-flex align-items-center">
+												<FaUserCog className="me-3 text-primary" />
+												<span>Account</span>
 											</div>
-											<FaChevronRight className="nav-chevron" />
+											<FaChevronRight
+												className="nav-chevron text-secondary"
+												style={{ fontSize: "12px" }}
+											/>
 										</Nav.Link>
 									</Nav.Item>
 									<Nav.Item>
 										<Nav.Link
 											eventKey="profile"
 											href="#profile"
-											className="d-flex justify-content-between align-items-center"
+											className="d-flex justify-content-between align-items-center rounded-3 mb-1 p-3"
 										>
-											<div>
-												<FaUserCircle className="me-2" />
-												Profile
+											<div className="d-flex align-items-center">
+												<FaUserCircle className="me-3 text-primary" />
+												<span>Profile</span>
 											</div>
-											<FaChevronRight className="nav-chevron" />
+											<FaChevronRight
+												className="nav-chevron text-secondary"
+												style={{ fontSize: "12px" }}
+											/>
 										</Nav.Link>
 									</Nav.Item>
 									<Nav.Item>
 										<Nav.Link
 											eventKey="security"
 											href="#security"
-											className="d-flex justify-content-between align-items-center"
+											className="d-flex justify-content-between align-items-center rounded-3 p-3"
 										>
-											<div>
-												<FaLock className="me-2" />
-												Security
+											<div className="d-flex align-items-center">
+												<FaLock className="me-3 text-primary" />
+												<span>Security</span>
 											</div>
-											<FaChevronRight className="nav-chevron" />
+											<FaChevronRight
+												className="nav-chevron text-secondary"
+												style={{ fontSize: "12px" }}
+											/>
 										</Nav.Link>
 									</Nav.Item>
 								</Nav>
@@ -189,11 +198,11 @@ const UserSettingsPage = () => {
 					</Col>
 
 					<Col lg={9} md={8}>
-						<Card className="settings-content-card border-0">
-							<Card.Body>
+						<Card className="shadow-sm border-0 rounded-4 overflow-hidden">
+							<Card.Body className="p-4">
 								<Tab.Content>
 									<Tab.Pane eventKey="account">
-										<h3 className="text-white mb-4">Account Settings</h3>
+										<h3 className="fw-bold mb-4">Account Settings</h3>
 										<AccountSettingsTab
 											accountData={accountData}
 											setAccountData={setAccountData}
@@ -205,12 +214,12 @@ const UserSettingsPage = () => {
 									</Tab.Pane>
 
 									<Tab.Pane eventKey="profile">
-										<h3 className="text-white mb-4">Profile Information</h3>
+										<h3 className="fw-bold mb-4">Profile Information</h3>
 										<ProfileInformationTab />
 									</Tab.Pane>
 
 									<Tab.Pane eventKey="security">
-										<h3 className="text-white mb-4">Security Settings</h3>
+										<h3 className="fw-bold mb-4">Security Settings</h3>
 										<ChangePasswordTab
 											passwordData={passwordData}
 											onSubmit={handlePasswordSubmit}

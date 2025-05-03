@@ -1,3 +1,4 @@
+import { Col, Container, Row } from "react-bootstrap";
 import { Outlet } from "react-router-dom";
 import Messenger from "../components/layout/Messenger";
 import Navbar from "../components/layout/Navbar";
@@ -7,15 +8,25 @@ const AppLayout = () => {
 	const { currentUser } = useAuth();
 
 	return (
-		<div className="app-layout">
-			{currentUser && <Navbar />}
-			<div className="app-body">
-				<Messenger />
-				<main className="main-content">
-					<Outlet />
-				</main>
+		<>
+			<div className="sticky-navbar">
+				<Navbar /> {/* Full-width navbar */}
 			</div>
-		</div>
+
+			<div className="app-body" style={{ display: "flex" }}>
+				{/* Scrollable Outlet content */}
+				<div className="main-scrollable-content" style={{ flex: 1 }}>
+					<Outlet />
+				</div>
+
+				{/* Messenger: only if user is logged in */}
+				{currentUser && (
+					<div className="messenger-sidebar">
+						<Messenger />
+					</div>
+				)}
+			</div>
+		</>
 	);
 };
 

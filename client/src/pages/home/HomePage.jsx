@@ -24,8 +24,8 @@ const HomePage = () => {
 
 	return (
 		<Container className="py-4">
-			<div className="text-white mb-4">
-				<h1 className="gradient-text mb-4">
+			<div className="mb-4">
+				<h1 className="fw-bold text-primary mb-3">
 					{greeting}, {currentUser?.fullName?.split(" ")[0] || "User"}!
 				</h1>
 				<p className="text-secondary">
@@ -35,24 +35,35 @@ const HomePage = () => {
 
 			<Row className="g-4">
 				<Col lg={8}>
-					<Card className="home-feed border-0">
-						<Card.Body>
-							<div className="create-post-placeholder p-4 text-center mb-4">
-								<div className="avatar-placeholder mb-3">
-									<FaPlus size={24} className="gradient-text" />
+					<Card className="shadow-sm border-0 rounded-4 overflow-hidden mb-4">
+						<Card.Body className="p-4">
+							<div className="create-post-placeholder p-4 bg-light rounded-4 text-center mb-4">
+								<div className="mb-3">
+									<div
+										className="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle p-3"
+										style={{ width: "70px", height: "70px" }}
+									>
+										<FaPlus size={24} className="text-primary" />
+									</div>
 								</div>
-								<h4 className="gradient-text mb-2">Create Your First Echo</h4>
+								<h4 className="fw-bold text-primary mb-2">
+									Create Your First Echo
+								</h4>
 								<p className="text-secondary">
-									Share your thoughts, moments, and experiences with your friends.
+									Share your thoughts, moments, and experiences with your
+									friends.
 								</p>
 							</div>
 
 							<div className="feed-placeholder">
-								<div className="text-center py-5 my-5">
-									<div className="gradient-text mb-3">
-										<FaPlus size={48} />
+								<div className="text-center py-5 my-4">
+									<div
+										className="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center p-3 mb-3"
+										style={{ width: "80px", height: "80px" }}
+									>
+										<FaPlus size={36} className="text-primary" />
 									</div>
-									<h3 className="gradient-text mb-3">Coming Soon</h3>
+									<h3 className="fw-bold text-primary mb-3">Coming Soon</h3>
 									<p className="text-secondary">
 										Your personalized feed will appear here. Stay tuned!
 									</p>
@@ -63,29 +74,44 @@ const HomePage = () => {
 				</Col>
 
 				<Col lg={4}>
-					<Card className="home-sidebar border-0">
-						<Card.Body>
-							<h5 className="gradient-text mb-4">Activity Overview</h5>
+					<Card className="shadow-sm border-0 rounded-4 overflow-hidden">
+						<Card.Body className="p-4">
+							<h5 className="fw-bold mb-4">Activity Overview</h5>
 							<div className="activity-stats">
-								<div className="activity-stat-item mb-4">
-									<FaHeart className="stat-icon gradient-text" />
-									<div className="stat-content">
-										<h3 className="stat-number">0</h3>
-										<p className="stat-label">Likes Received</p>
+								<div className="activity-stat-item d-flex align-items-center p-3 bg-light rounded-4 mb-3">
+									<div
+										className="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle p-3 me-3"
+										style={{ width: "50px", height: "50px" }}
+									>
+										<FaHeart className="text-primary" />
+									</div>
+									<div>
+										<h3 className="fw-bold mb-0">0</h3>
+										<p className="text-secondary mb-0">Likes Received</p>
 									</div>
 								</div>
-								<div className="activity-stat-item mb-4">
-									<FaComment className="stat-icon gradient-text" />
-									<div className="stat-content">
-										<h3 className="stat-number">0</h3>
-										<p className="stat-label">Comments</p>
+								<div className="activity-stat-item d-flex align-items-center p-3 bg-light rounded-4 mb-3">
+									<div
+										className="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle p-3 me-3"
+										style={{ width: "50px", height: "50px" }}
+									>
+										<FaComment className="text-primary" />
+									</div>
+									<div>
+										<h3 className="fw-bold mb-0">0</h3>
+										<p className="text-secondary mb-0">Comments</p>
 									</div>
 								</div>
-								<div className="activity-stat-item">
-									<FaBell className="stat-icon gradient-text" />
-									<div className="stat-content">
-										<h3 className="stat-number">0</h3>
-										<p className="stat-label">Notifications</p>
+								<div className="activity-stat-item d-flex align-items-center p-3 bg-light rounded-4">
+									<div
+										className="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle p-3 me-3"
+										style={{ width: "50px", height: "50px" }}
+									>
+										<FaBell className="text-primary" />
+									</div>
+									<div>
+										<h3 className="fw-bold mb-0">0</h3>
+										<p className="text-secondary mb-0">Notifications</p>
 									</div>
 								</div>
 							</div>

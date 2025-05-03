@@ -1,5 +1,4 @@
 import React from "react";
-import { Card, Col, Row } from "react-bootstrap";
 import {
 	FaBirthdayCake,
 	FaBriefcase,
@@ -21,84 +20,91 @@ const ProfileHeader = ({ user, isCurrentUser }) => {
 	};
 
 	return (
-		<Card className="profile-header-card mb-4">
-			<Card.Body>
-				<div className="profile-header-content">
-					<div className="profile-left-section">
-						<div className="profile-avatar-container">
-							{isCurrentUser ? (
-								<Link to="/settings" className="profile-avatar-link">
-									<UserAvatar
-										fullName={user?.fullName}
-										src={user?.profilePicture}
-										variant="settings"
-									/>
-									<div className="profile-avatar-edit-overlay">
-										<small>Edit</small>
-									</div>
-								</Link>
-							) : (
+		<div className="profile-header mb-4">
+			<div className="profile-header-content p-4">
+				<div className="profile-top d-flex flex-wrap gap-4 align-items-center mb-4">
+					<div className="profile-avatar-container">
+						{isCurrentUser ? (
+							<Link to="/settings" className="profile-avatar-link">
 								<UserAvatar
 									fullName={user?.fullName}
 									src={user?.profilePicture}
 									variant="settings"
 								/>
-							)}
-						</div>
-						<div className="profile-main-info">
-							<h2 className="profile-name mb-1">{user?.fullName}</h2>
-							<h6 className="profile-username text-secondary mb-0">@{user?.username}</h6>
-						</div>
+								<div className="profile-avatar-edit-overlay">
+									<small>Edit</small>
+								</div>
+							</Link>
+						) : (
+							<UserAvatar
+								fullName={user?.fullName}
+								src={user?.profilePicture}
+								variant="settings"
+							/>
+						)}
 					</div>
-					<div className="profile-right-section">
-						{user?.bio && <p className="profile-bio mb-0">{user?.bio}</p>}
+					<div className="profile-main-info">
+						<h2 className="profile-name mb-1 fw-bold">{user?.fullName}</h2>
+						<h6 className="profile-username text-secondary mb-3">
+							@{user?.username}
+						</h6>
+
+						{isCurrentUser && (
+							<Link
+								to="/settings#profile"
+								className="btn btn-outline-primary btn-sm px-4 rounded-pill"
+							>
+								Edit Profile
+							</Link>
+						)}
 					</div>
 				</div>
-				<div className="profile-header-bottom">
-					<div className="profile-details">
-						{user?.location && (
-							<div className="profile-detail-item">
-								<FaMapMarkerAlt className="profile-detail-icon" />
-								<span>{user.location}</span>
-							</div>
-						)}
-						{user?.website && (
-							<div className="profile-detail-item">
-								<FaLink className="profile-detail-icon" />
-								<a
-									href={user.website.startsWith("http") ? user.website : `https://${user.website}`}
-									target="_blank"
-									rel="noopener noreferrer"
-									className="profile-website-link"
-								>
-									{user.website.replace(/^https?:\/\//, "")}
-								</a>
-							</div>
-						)}
-						{user?.occupation && (
-							<div className="profile-detail-item">
-								<FaBriefcase className="profile-detail-icon" />
-								<span>{user.occupation}</span>
-							</div>
-						)}
-						{user?.birthday && (
-							<div className="profile-detail-item">
-								<FaBirthdayCake className="profile-detail-icon" />
-								<span>Born {formatDate(user.birthday)}</span>
-							</div>
-						)}
+
+				{user?.bio && (
+					<div className="profile-bio mb-4">
+						<p className="mb-0">{user?.bio}</p>
 					</div>
-					{isCurrentUser && (
-						<Link
-							to="/settings#profile"
-							className="btn btn-outline-primary profile-edit-button"
-						>
-							Edit Profile
-						</Link>
+				)}
+
+				<div className="profile-details d-flex flex-wrap gap-3">
+					{user?.location && (
+						<div className="profile-detail-item d-flex align-items-center">
+							<FaMapMarkerAlt className="text-primary me-2" />
+							<span>{user.location}</span>
+						</div>
+					)}
+					{user?.website && (
+						<div className="profile-detail-item d-flex align-items-center">
+							<FaLink className="text-primary me-2" />
+							<a
+								href={
+									user.website.startsWith("http")
+										? user.website
+										: `https://${user.website}`
+								}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="profile-website-link"
+							>
+								{user.website.replace(/^https?:\/\//, "")}
+							</a>
+						</div>
+					)}
+					{user?.occupation && (
+						<div className="profile-detail-item d-flex align-items-center">
+							<FaBriefcase className="text-primary me-2" />
+							<span>{user.occupation}</span>
+						</div>
+					)}
+					{user?.birthday && (
+						<div className="profile-detail-item d-flex align-items-center">
+							<FaBirthdayCake className="text-primary me-2" />
+							<span>Born {formatDate(user.birthday)}</span>
+						</div>
 					)}
 				</div>
-			</Card.Body>
-		</Card>
+			</div>
+		</div>
 	);
 };
 

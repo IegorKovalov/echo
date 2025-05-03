@@ -1,8 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import Toast from "react-bootstrap/Toast";
-import { FaBell } from "react-icons/fa";
+import {
+	FaBell,
+	FaCheckCircle,
+	FaExclamationTriangle,
+	FaInfoCircle,
+	FaTimesCircle,
+} from "react-icons/fa";
 
-function CustomToast({ message, onClose, toastType }) {
+function CustomToast({ message, onClose, toastType = "info" }) {
 	const [show, setShow] = useState(true);
 	const [timestamp, setTimestamp] = useState("just now");
 	const createdAtRef = useRef(Date.now());
@@ -35,22 +41,49 @@ function CustomToast({ message, onClose, toastType }) {
 
 	const shouldAutohide = toastType === "error" || toastType === "success";
 
+	// Configure toast based on toast type
+	const getToastIcon = () => {
+		switch (toastType) {
+			case "success":
+				return <FaCheckCircle className="text-success" />;
+			case "error":
+				return <FaTimesCircle className="text-danger" />;
+			case "warning":
+				return <FaExclamationTriangle className="text-warning" />;
+			case "info":
+			default:
+				return <FaInfoCircle className="text-primary" />;
+		}
+	};
+
+	const getToastClass = () => {
+		switch (toastType) {
+			case "success":
+				return "echo-toast success-toast";
+			case "error":
+				return "echo-toast error-toast";
+			case "warning":
+				return "echo-toast warning-toast";
+			case "info":
+			default:
+				return "echo-toast info-toast";
+		}
+	};
+
 	return (
 		<Toast
 			onClose={handleClose}
 			show={show}
 			autohide={shouldAutohide}
-			delay={3000}
-			className="echo-toast"
+			delay={5000}
+			className={getToastClass()}
 		>
 			<Toast.Header className="echo-toast-header">
-				<span className="toast-icon">
-					<FaBell />
-				</span>
-				<strong className="me-auto gradient-text">echo</strong>
-				<small className="gradient-text">{timestamp}</small>
+				<span className="toast-icon me-2">{getToastIcon()}</span>
+				<strong className="me-auto">echo</strong>
+				<small className="text-secondary">{timestamp}</small>
 			</Toast.Header>
-			<Toast.Body>{message}</Toast.Body>
+			<Toast.Body className="py-3">{message}</Toast.Body>
 		</Toast>
 	);
 }

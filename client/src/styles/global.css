@@ -1,0 +1,14 @@
+:root {
+    --primary-color: #3498db;
+    --primary-hover: #2980b9;
+    --secondary-color: #f8f9fa;
+    --text-color: #333;
+    --text-secondary: #6c757d;
+    --border-color: #e9ecef;
+    --success-color: #2ecc71;
+    --danger-color: #e74c3c;
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+    --transition-speed: 0.2s;
+    --border-radius: 8px;
+  }

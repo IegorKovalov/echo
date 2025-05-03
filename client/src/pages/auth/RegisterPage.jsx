@@ -50,106 +50,133 @@ const RegisterPage = () => {
 	};
 
 	return (
-		<div className="min-h-screen bg-black text-white d-flex flex-column">
-			<div className="flex-grow-1 d-flex flex-column justify-content-center align-items-center p-4">
-				<div className="auth-card-container animate-fade-down">
+		<div className="auth-container d-flex flex-column min-vh-100 bg-light">
+			<div className="auth-content flex-grow-1 d-flex align-items-center justify-content-center py-5">
+				<div
+					className="auth-card bg-white rounded-4 shadow-sm p-4 p-md-5 mx-auto"
+					style={{ maxWidth: "480px" }}
+				>
 					<div className="text-center mb-4">
-						<h1 className="gradient-title mb-2">echo</h1>
+						<h1 className="display-5 fw-bold text-primary mb-2">echo</h1>
 						<p className="text-secondary">Create your account</p>
 					</div>
 
-					<div className="space-y-6">
-						<Form onSubmit={handleSubmit} className="space-y-4">
-							<Form.Group className="mb-3">
-								<Form.Label className="text-secondary">Username</Form.Label>
-								<Form.Control
-									type="text"
-									name="username"
-									value={formData.username}
-									onChange={handleChange}
-									minLength="3"
-									maxLength="30"
-									required
-									className="custom-input"
-									placeholder="Choose a username"
-								/>
-							</Form.Group>
+					{error && (
+						<div className="alert alert-danger py-2 rounded-3 mb-3">
+							{error}
+						</div>
+					)}
 
-							<Form.Group className="mb-3">
-								<Form.Label className="text-secondary">Full Name</Form.Label>
-								<Form.Control
-									type="text"
-									name="fullName"
-									value={formData.fullName}
-									onChange={handleChange}
-									minLength="2"
-									maxLength="100"
-									required
-									className="custom-input"
-									placeholder="Enter your full name"
-								/>
-							</Form.Group>
+					<Form onSubmit={handleSubmit}>
+						<Form.Group className="mb-3">
+							<Form.Label className="fw-medium">Username</Form.Label>
+							<Form.Control
+								type="text"
+								name="username"
+								value={formData.username}
+								onChange={handleChange}
+								minLength="3"
+								maxLength="30"
+								required
+								className="form-control-lg rounded-3 border-light-subtle"
+								placeholder="Choose a username"
+							/>
+						</Form.Group>
 
-							<Form.Group className="mb-3">
-								<Form.Label className="text-secondary">Email</Form.Label>
-								<Form.Control
-									type="email"
-									name="email"
-									value={formData.email}
-									onChange={handleChange}
-									required
-									className="custom-input"
-									placeholder="you@example.com"
-								/>
-							</Form.Group>
+						<Form.Group className="mb-3">
+							<Form.Label className="fw-medium">Full Name</Form.Label>
+							<Form.Control
+								type="text"
+								name="fullName"
+								value={formData.fullName}
+								onChange={handleChange}
+								minLength="2"
+								maxLength="100"
+								required
+								className="form-control-lg rounded-3 border-light-subtle"
+								placeholder="Enter your full name"
+							/>
+						</Form.Group>
 
-							<Form.Group className="mb-3">
-								<Form.Label className="text-secondary">Password</Form.Label>
-								<Form.Control
-									type="password"
-									name="password"
-									value={formData.password}
-									onChange={handleChange}
-									minLength="8"
-									required
-									className="custom-input"
-									placeholder="••••••••"
-								/>
-							</Form.Group>
+						<Form.Group className="mb-3">
+							<Form.Label className="fw-medium">Email</Form.Label>
+							<Form.Control
+								type="email"
+								name="email"
+								value={formData.email}
+								onChange={handleChange}
+								required
+								className="form-control-lg rounded-3 border-light-subtle"
+								placeholder="you@example.com"
+							/>
+						</Form.Group>
 
-							<Form.Group className="mb-4">
-								<Form.Label className="text-secondary">
-									Confirm Password
-								</Form.Label>
-								<Form.Control
-									type="password"
-									name="passwordConfirm"
-									value={formData.passwordConfirm}
-									onChange={handleChange}
-									minLength="8"
-									required
-									className="custom-input"
-									placeholder="••••••••"
-								/>
-							</Form.Group>
+						<Form.Group className="mb-3">
+							<Form.Label className="fw-medium">Password</Form.Label>
+							<Form.Control
+								type="password"
+								name="password"
+								value={formData.password}
+								onChange={handleChange}
+								minLength="8"
+								required
+								className="form-control-lg rounded-3 border-light-subtle"
+								placeholder="••••••••"
+							/>
+							<Form.Text className="text-secondary small">
+								Password must be at least 8 characters long
+							</Form.Text>
+						</Form.Group>
 
-							<Button
-								type="submit"
-								className="w-100 gradient-button"
-								disabled={loading}
-							>
-								{loading ? "Creating Account..." : "Sign up"}
-							</Button>
-						</Form>
+						<Form.Group className="mb-4">
+							<Form.Label className="fw-medium">Confirm Password</Form.Label>
+							<Form.Control
+								type="password"
+								name="passwordConfirm"
+								value={formData.passwordConfirm}
+								onChange={handleChange}
+								minLength="8"
+								required
+								className="form-control-lg rounded-3 border-light-subtle"
+								placeholder="••••••••"
+							/>
+						</Form.Group>
 
-						<div className="divider"></div>
-						<p className="text-center mt-4 text-secondary">
-							Already have an account?{" "}
-							<Link to="/login" className="signup-link">
-								Sign in
-							</Link>
-						</p>
+						<Button
+							type="submit"
+							className="w-100 btn-lg btn-primary rounded-3"
+							disabled={loading}
+						>
+							{loading ? (
+								<>
+									<span
+										className="spinner-border spinner-border-sm me-2"
+										role="status"
+										aria-hidden="true"
+									></span>
+									Creating Account...
+								</>
+							) : (
+								"Sign up"
+							)}
+						</Button>
+					</Form>
+
+					<div className="d-flex align-items-center my-4">
+						<div className="flex-grow-1 border-top"></div>
+						<div className="mx-3 text-secondary small">or</div>
+						<div className="flex-grow-1 border-top"></div>
 					</div>
+
+					<p className="text-center mb-0">
+						Already have an account?{" "}
+						<Link
+							to="/login"
+							className="text-primary text-decoration-none fw-medium"
+						>
+							Sign in
+						</Link>
+					</p>
 				</div>
 			</div>
 

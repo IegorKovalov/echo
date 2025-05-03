@@ -84,29 +84,31 @@ const AccountSettingsTab = ({
 	};
 
 	return (
-		<div className="settings-section">
-			<div className="settings-section-header">
-				<div className="icon">
-					<FaUser />
+		<div className="settings-section p-4 bg-white rounded-3 shadow-sm mb-4">
+			<div className="settings-section-header d-flex align-items-center mb-4">
+				<div className="settings-icon bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+					<FaUser className="text-primary" />
 				</div>
-				<h3 className="settings-section-title">Basic Information</h3>
+				<h3 className="settings-section-title m-0 fw-bold">
+					Basic Information
+				</h3>
 			</div>
 
 			<form onSubmit={handleSubmit}>
 				{/* Username field */}
 				<div className="mb-4">
-					<label htmlFor="username" className="form-label">
+					<label htmlFor="username" className="form-label fw-medium">
 						<FaUser className="me-2 text-primary" />
 						Username
 					</label>
-					<div className="form-text">
+					<div className="form-text mb-2">
 						Your unique identifier for logging in and mentions
 					</div>
 					<div className="input-group">
-						<span className="input-group-text bg-light">@</span>
+						<span className="input-group-text bg-light border-end-0">@</span>
 						<input
 							type="text"
-							className={`form-control ${
+							className={`form-control border-start-0 ${
 								validationErrors.username ? "is-invalid" : ""
 							}`}
 							id="username"
@@ -127,11 +129,11 @@ const AccountSettingsTab = ({
 
 				{/* Fullname field */}
 				<div className="mb-4">
-					<label htmlFor="fullname" className="form-label">
+					<label htmlFor="fullname" className="form-label fw-medium">
 						<FaIdCard className="me-2 text-primary" />
 						Full Name
 					</label>
-					<div className="form-text">
+					<div className="form-text mb-2">
 						Your name as it will appear to other users
 					</div>
 					<input
@@ -153,11 +155,11 @@ const AccountSettingsTab = ({
 
 				{/* Email field */}
 				<div className="mb-4">
-					<label htmlFor="email" className="form-label">
+					<label htmlFor="email" className="form-label fw-medium">
 						<FaEnvelope className="me-2 text-primary" />
 						Email Address
 					</label>
-					<div className="form-text">
+					<div className="form-text mb-2">
 						Your email for notifications and account recovery
 					</div>
 					<input
@@ -179,18 +181,18 @@ const AccountSettingsTab = ({
 				</div>
 
 				{/* Action buttons */}
-				<div className="action-buttons">
+				<div className="d-flex justify-content-end gap-3 mt-4">
 					<button
 						type="button"
-						className="btn btn-outline-secondary"
+						className="btn btn-outline-secondary px-4"
 						onClick={handleReset}
 						disabled={loading || !hasChanges}
 					>
-						Reset Changes
+						Reset
 					</button>
 					<button
 						type="submit"
-						className="btn btn-primary"
+						className="btn btn-primary px-4"
 						disabled={loading || !hasChanges}
 					>
 						{loading ? (

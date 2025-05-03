@@ -12,7 +12,7 @@ function PostList({
 	onRenew,
 }) {
 	return (
-		<>
+		<div className="post-list">
 			{posts.map((post) => (
 				<PostCard
 					key={post._id}
@@ -26,7 +26,7 @@ function PostList({
 					onRenew={onRenew}
 				/>
 			))}
-		</>
+		</div>
 	);
 }
 
