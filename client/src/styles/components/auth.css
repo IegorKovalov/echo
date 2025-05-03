@@ -1,88 +1,66 @@
-/* Auth page specific styles */
 .auth-page {
   padding: 0 !important;
   margin: 0 !important;
   height: 100vh !important;
   width: 100% !important;
   overflow-x: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .auth-card-container {
   width: 100%;
-  max-width: 450px;
-  padding: 2rem;
+  max-width: 400px;
+  padding: var(--space-8);
   background-color: var(--bg-overlay);
   border-radius: var(--radius-lg);
   backdrop-filter: var(--backdrop-blur);
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--border-light);
+  transition: transform var(--transition-normal);
 }
 
-/* Social login buttons */
 .social-button {
   background-color: var(--bg-input);
-  border-color: var(--border-input);
+  border: 1px solid var(--border-input);
   color: var(--text-primary);
-  transition: background-color var(--transition-fast);
-  padding: 0.75rem 1rem;
+  transition: all var(--transition-fast);
+  padding: var(--space-3) var(--space-4);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.95rem;
   border-radius: var(--radius-md);
+  font-weight: 500;
 }
 
 .social-button:hover {
   background-color: var(--bg-input-hover);
   color: var(--text-primary);
+  transform: translateY(-1px);
 }
 
-/* Links */
-.forgot-password-link {
+.forgot-password-link, .signup-link {
   color: var(--color-secondary);
   font-size: 0.85rem;
   text-decoration: none;
   transition: all var(--transition-fast);
 }
 
-.forgot-password-link:hover {
+.forgot-password-link:hover, .signup-link:hover {
   color: #db2777;
-  text-decoration: underline;
+  text-decoration: none;
+  opacity: 0.9;
 }
 
 .signup-link {
-  color: var(--color-secondary);
-  text-decoration: none;
   font-weight: 500;
-  transition: all var(--transition-fast);
 }
 
-.signup-link:hover {
-  color: #db2777;
-  text-decoration: underline;
-}
-
-/* Responsive adjustments */
 @media (max-width: 767.98px) {
   .auth-card-container {
     max-width: 90%;
-    padding: 2rem;
-  }
-}
-
-@media (max-height: 700px) {
-  .auth-card-container {
-    padding: 1.5rem;
-  }
-
-  .space-y-6 > * + * {
-    margin-top: 1rem;
-  }
-}
-
-/* For extra tall screens, ensure vertical centering */
-@media (min-height: 1000px) {
-  .auth-card-container {
-    margin-top: -5vh;
+    padding: var(--space-6);
   }
 }

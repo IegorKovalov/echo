@@ -1,33 +1,33 @@
-/* Typography styles */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-weight: 700;
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
   line-height: 1.2;
-  margin-bottom: 0.5rem;
+  letter-spacing: -0.015em;
+  margin-bottom: var(--space-4);
 }
 
 h1 {
-  font-size: 2.5rem;
+  font-size: 2.25rem;
+  letter-spacing: -0.03em;
 }
 
 h2 {
-  font-size: 2rem;
+  font-size: 1.875rem;
+  letter-spacing: -0.025em;
 }
 
 h3 {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
 }
 
 h4 {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
+  letter-spacing: -0.015em;
 }
 
 h5 {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
+  letter-spacing: -0.01em;
 }
 
 h6 {
@@ -36,7 +36,7 @@ h6 {
 
 p {
   line-height: 1.6;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 }
 
 .text-primary {
@@ -75,44 +75,38 @@ p {
 }
 
 .gradient-title {
-  font-size: 3rem;
-  font-weight: bold;
+  font-size: 2.5rem;
+  font-weight: 600;
   background: var(--gradient-text);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   line-height: 1.2;
+  letter-spacing: -0.035em;
 }
 
 @media (max-width: 768px) {
   h1 {
-    font-size: 2rem;
-  }
-
-  h2 {
     font-size: 1.75rem;
   }
 
-  h3 {
+  h2 {
     font-size: 1.5rem;
   }
 
-  h4 {
+  h3 {
     font-size: 1.25rem;
   }
 
+  h4 {
+    font-size: 1.125rem;
+  }
+
   h5 {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   .gradient-title {
-    font-size: 2.5rem;
-  }
-}
-
-@media (max-height: 700px) {
-  .gradient-title {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem !important;
+    font-size: 2rem;
   }
 }
