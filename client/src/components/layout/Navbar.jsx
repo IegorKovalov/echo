@@ -30,26 +30,18 @@ const Navbar = () => {
 	const [scrolled, setScrolled] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+	// Simplified notifications state for demonstration
 	const [notifications, setNotifications] = useState([
 		{
 			id: 1,
-			type: "friend_request",
-			message: "John Doe sent you a friend request",
-			time: "2 minutes ago",
+			message: "New message from John",
+			time: "2m ago",
 			read: false,
 		},
 		{
 			id: 2,
-			type: "like",
-			message: "Jane Smith liked your post",
-			time: "1 hour ago",
-			read: false,
-		},
-		{
-			id: 3,
-			type: "comment",
-			message: "Mike Johnson commented on your post",
-			time: "3 hours ago",
+			message: "Your post received a like",
+			time: "1h ago",
 			read: true,
 		},
 	]);
@@ -84,17 +76,24 @@ const Navbar = () => {
 
 	const handleSearch = (e) => {
 		e.preventDefault();
+		// Implement search logic here
+		console.log("Searching for:", searchQuery);
 	};
 
 	const unreadNotifications = notifications.filter((n) => !n.read).length;
 
-	const handleNotificationClick = (notification) => {
+	const handleNotificationClick = (notificationId) => {
 		// Mark notification as read
 		setNotifications(
 			notifications.map((n) =>
-				n.id === notification.id ? { ...n, read: true } : n
+				n.id === notificationId ? { ...n, read: true } : n
 			)
 		);
+		// Optional: Navigate to notification source
+	};
+
+	const handleMarkAllAsRead = () => {
+		setNotifications(notifications.map((n) => ({ ...n, read: true })));
 	};
 
 	const navItems = [
@@ -113,9 +112,10 @@ const Navbar = () => {
 			<Container>
 				{/* Logo Section */}
 				<BootstrapNavbar.Brand as={Link} to="/home" className="navbar-logo">
-					<span className="fw-bold fs-4 text-primary">echo</span>
+					echo
 				</BootstrapNavbar.Brand>
 
+				{/* Mobile Toggle */}
 				<BootstrapNavbar.Toggle
 					aria-controls="basic-navbar-nav"
 					onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -123,14 +123,16 @@ const Navbar = () => {
 				/>
 
 				<BootstrapNavbar.Collapse id="basic-navbar-nav">
-					{/* Navigation items for desktop view */}
-					<Nav className="me-auto d-none d-lg-flex">
+					{/* Navigation items */}
+					<Nav className="mx-auto">
+						{" "}
+						{/* Center navigation links */}
 						{navItems.map((item, index) => (
 							<Nav.Link
 								key={index}
 								as={Link}
 								to={item.path}
-								className={`nav-item mx-3 d-flex align-items-center ${
+								className={`nav-item mx-2 d-flex align-items-center ${
 									location.pathname === item.path ? "active fw-bold" : ""
 								}`}
 							>
@@ -140,9 +142,9 @@ const Navbar = () => {
 						))}
 					</Nav>
 
-					{/* Search Bar */}
-					<div className="search-container mx-auto">
-						<Form onSubmit={handleSearch} className="d-flex">
+					{/* Search Bar - Moved to be more central on larger screens */}
+					<div className="search-container">
+						<Form onSubmit={handleSearch} className="d-flex w-100">
 							<div className="search-input-wrapper position-relative w-100">
 								<div className="position-absolute top-50 start-0 translate-middle-y ms-3">
 									<FaSearch className="text-secondary" />
@@ -150,7 +152,7 @@ const Navbar = () => {
 								<Form.Control
 									type="search"
 									placeholder="Search..."
-									className="search-input ps-5 border-0 bg-light rounded-pill"
+									className="search-input ps-5"
 									aria-label="Search"
 									value={searchQuery}
 									onChange={(e) => setSearchQuery(e.target.value)}
@@ -159,26 +161,7 @@ const Navbar = () => {
 						</Form>
 					</div>
 
-					{/* Navigation items for mobile view */}
-					<Nav className="d-lg-none mt-3">
-						{navItems.map((item, index) => (
-							<Nav.Link
-								key={index}
-								as={Link}
-								to={item.path}
-								className={`nav-item mobile-nav-item py-2 px-3 mb-2 rounded-3 ${
-									location.pathname === item.path
-										? "active bg-primary text-white"
-										: "bg-light"
-								}`}
-							>
-								<span className="nav-icon me-3">{item.icon}</span>
-								<span>{item.label}</span>
-							</Nav.Link>
-						))}
-					</Nav>
-
-					{/* Notifications */}
+					{/* Right-aligned items */}
 					<Nav className="ms-auto align-items-center">
 						{/* Notifications Dropdown */}
 						<Dropdown
@@ -190,28 +173,18 @@ const Navbar = () => {
 							<Dropdown.Toggle as="div" className="notifications-toggle">
 								<div
 									className="notifications-button p-2 position-relative rounded-circle d-flex align-items-center justify-content-center"
-									style={{ width: "40px", height: "40px" }}
 									onClick={() => setShowNotifications(!showNotifications)}
 								>
 									<FaBell className="text-secondary" />
 									{unreadNotifications > 0 && (
-										<span
-											className="notification-badge position-absolute bg-danger text-white d-flex align-items-center justify-content-center rounded-circle"
-											style={{
-												width: "18px",
-												height: "18px",
-												top: "0",
-												right: "0",
-												fontSize: "10px",
-											}}
-										>
+										<span className="notification-badge position-absolute bg-danger text-white d-flex align-items-center justify-content-center rounded-circle">
 											{unreadNotifications}
 										</span>
 									)}
 								</div>
 							</Dropdown.Toggle>
 
-							<Dropdown.Menu className="notifications-dropdown shadow-sm border-0 py-0 overflow-hidden">
+							<Dropdown.Menu className="notifications-dropdown shadow-sm border-0 py-0">
 								<div className="notifications-header py-3 px-3 bg-light">
 									<div className="d-flex justify-content-between align-items-center">
 										<span className="fw-bold">Notifications</span>
@@ -219,22 +192,14 @@ const Navbar = () => {
 											<Button
 												variant="link"
 												className="mark-all-read p-0 text-primary"
-												style={{ fontSize: "0.85rem", textDecoration: "none" }}
-												onClick={() =>
-													setNotifications(
-														notifications.map((n) => ({ ...n, read: true }))
-													)
-												}
+												onClick={handleMarkAllAsRead}
 											>
 												Mark all as read
 											</Button>
 										)}
 									</div>
 								</div>
-								<div
-									className="notifications-body"
-									style={{ maxHeight: "350px", overflowY: "auto" }}
-								>
+								<div className="notifications-body">
 									{notifications.length > 0 ? (
 										notifications.map((notification) => (
 											<div
@@ -242,7 +207,7 @@ const Navbar = () => {
 												className={`notification-item py-3 px-3 border-bottom ${
 													!notification.read ? "unread bg-light" : ""
 												}`}
-												onClick={() => handleNotificationClick(notification)}
+												onClick={() => handleNotificationClick(notification.id)}
 											>
 												<div className="notification-content">
 													<p className="notification-message mb-1">
@@ -271,12 +236,12 @@ const Navbar = () => {
 										<UserAvatar fullName={userFullName} variant="navbar" />
 									</div>
 									<span className="navbar-username d-none d-lg-block me-1 fw-medium">
-										{userFullName}
+										{userFullName.split(" ")[0]} {/* Show only first name */}
 									</span>
 								</div>
 							</Dropdown.Toggle>
 
-							<Dropdown.Menu className="user-dropdown-menu shadow-sm border-0 py-0 overflow-hidden">
+							<Dropdown.Menu className="user-dropdown-menu shadow-sm border-0 py-0">
 								<div className="user-dropdown-header bg-light p-3">
 									<div className="d-flex align-items-center">
 										<UserAvatar fullName={userFullName} variant="navbar" />

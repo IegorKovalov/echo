@@ -1,14 +1,66 @@
 :root {
-    --primary-color: #3498db;
-    --primary-hover: #2980b9;
-    --secondary-color: #f8f9fa;
-    --text-color: #333;
-    --text-secondary: #6c757d;
-    --border-color: #e9ecef;
-    --success-color: #2ecc71;
-    --danger-color: #e74c3c;
-    --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
-    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+    --primary-color: #5a67d8; /* A slightly softer blue/purple */
+    --primary-hover: #434190;
+    --secondary-color: #f7fafc; /* Lighter background */
+    --text-color: #2d3748; /* Darker, more readable text */
+    --text-secondary: #718096; /* Muted secondary text */
+    --border-color: #e2e8f0; /* Softer border color */
+    --success-color: #48bb78; /* Muted green */
+    --danger-color: #f56565; /* Muted red */
+    --warning-color: #f6e05e; /* Muted yellow */
+    --info-color: #63b3ed; /* Muted blue */
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); /* Softer shadow */
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* Softer shadow */
     --transition-speed: 0.2s;
-    --border-radius: 8px;
-  }
+    --border-radius: 8px; /* Consistent border radius */
+}
+
+/* Apply a clean font and basic text styles */
+body {
+    font-family: 'Inter', sans-serif; /* Using Inter as suggested */
+    color: var(--text-color);
+    background-color: var(--secondary-color);
+    line-height: 1.6; /* Improved readability */
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-color);
+    font-weight: 600; /* Semi-bold headings */
+}
+
+p {
+    color: var(--text-color);
+}
+
+small {
+    color: var(--text-secondary);
+}
+
+/* Link styles */
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color var(--transition-speed);
+}
+
+a:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
+/* Utility classes */
+.text-primary { color: var(--primary-color) !important; }
+.text-secondary { color: var(--text-secondary) !important; }
+.text-success { color: var(--success-color) !important; }
+.text-danger { color: var(--danger-color) !important; }
+.text-warning { color: var(--warning-color) !important; }
+.text-info { color: var(--info-color) !important; }
+
+.bg-primary { background-color: var(--primary-color) !important; }
+.bg-secondary { background-color: var(--secondary-color) !important; }
+.bg-success { background-color: var(--success-color) !important; }
+.bg-danger { background-color: var(--danger-color) !important; }
+.bg-warning { background-color: var(--warning-color) !important; }
+.bg-info { background-color: var(--info-color) !important; }
+
+.bg-opacity-10 { background-color: rgba(90, 103, 216, 0.1) !important; }

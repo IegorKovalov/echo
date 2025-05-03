@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Card, Col, Container, Row, Tab } from "react-bootstrap";
+import { Card, Col, Container, Nav, Row, Tab } from "react-bootstrap"; // Import Nav
 import { FaUserClock, FaUserFriends, FaUserPlus } from "react-icons/fa";
+import UserAvatar from "../../components/common/UserAvatar"; // Import UserAvatar
 import { useAuth } from "../../context/AuthContext";
 
 const FriendsPage = () => {
@@ -17,18 +18,20 @@ const FriendsPage = () => {
 			</div>
 
 			<Tab.Container activeKey={activeTab} onSelect={(k) => setActiveTab(k)}>
-				<Row>
-					<Col lg={3} md={4} className="mb-4">
+				<Row className="g-4">
+					{" "}
+					{/* Added gap */}
+					<Col lg={3} md={4}>
 						<Card className="shadow-sm border-0 rounded-4 overflow-hidden">
 							<Card.Body className="p-0">
 								<div className="p-4 text-center border-bottom">
 									<div className="mb-3">
-										<div
-											className="avatar-placeholder d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle p-3"
-											style={{ width: "80px", height: "80px" }}
-										>
-											<FaUserFriends size={36} className="text-primary" />
-										</div>
+										{/* User Avatar */}
+										<UserAvatar
+											fullName={currentUser?.fullName}
+											src={currentUser?.profilePicture}
+											variant="settings" // Use settings variant for larger size
+										/>
 									</div>
 									<h5 className="mb-1 fw-bold">{currentUser?.fullName}</h5>
 									<p className="text-secondary mb-0">
@@ -36,39 +39,39 @@ const FriendsPage = () => {
 									</p>
 								</div>
 
-								<div className="friends-nav p-2">
-									<div
-										className={`friends-nav-item d-flex align-items-center p-3 rounded-3 mb-1 cursor-pointer ${
-											activeTab === "friends" ? "bg-primary text-white" : ""
-										}`}
-										onClick={() => setActiveTab("friends")}
-									>
-										<FaUserFriends className="me-3" />
-										Friends
-									</div>
-									<div
-										className={`friends-nav-item d-flex align-items-center p-3 rounded-3 mb-1 cursor-pointer ${
-											activeTab === "requests" ? "bg-primary text-white" : ""
-										}`}
-										onClick={() => setActiveTab("requests")}
-									>
-										<FaUserClock className="me-3" />
-										Friend Requests
-									</div>
-									<div
-										className={`friends-nav-item d-flex align-items-center p-3 rounded-3 cursor-pointer ${
-											activeTab === "suggestions" ? "bg-primary text-white" : ""
-										}`}
-										onClick={() => setActiveTab("suggestions")}
-									>
-										<FaUserPlus className="me-3" />
-										Suggestions
-									</div>
-								</div>
+								{/* Friends Navigation Tabs */}
+								<Nav variant="pills" className="flex-column friends-nav p-2">
+									<Nav.Item>
+										<Nav.Link
+											eventKey="friends"
+											className="d-flex align-items-center p-3 rounded-3 mb-1 cursor-pointer"
+										>
+											<FaUserFriends className="me-3" />
+											Friends
+										</Nav.Link>
+									</Nav.Item>
+									<Nav.Item>
+										<Nav.Link
+											eventKey="requests"
+											className="d-flex align-items-center p-3 rounded-3 mb-1 cursor-pointer"
+										>
+											<FaUserClock className="me-3" />
+											Friend Requests
+										</Nav.Link>
+									</Nav.Item>
+									<Nav.Item>
+										<Nav.Link
+											eventKey="suggestions"
+											className="d-flex align-items-center p-3 rounded-3 cursor-pointer"
+										>
+											<FaUserPlus className="me-3" />
+											Suggestions
+										</Nav.Link>
+									</Nav.Item>
+								</Nav>
 							</Card.Body>
 						</Card>
 					</Col>
-
 					<Col lg={9} md={8}>
 						<Tab.Content>
 							<Tab.Pane eventKey="friends">
