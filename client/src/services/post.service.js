@@ -65,7 +65,7 @@ const PostService = {
 
 		const response = await api.post(
 			`${POSTS_URL}/${id}/comments`,
-			commentContent,
+			{ commentContent }, // Changed to send object instead of raw string
 			{
 				headers,
 			}
@@ -111,6 +111,19 @@ const PostService = {
 		const response = await api.patch(
 			`${POSTS_URL}/${id}/view`,
 			{},
+			{ headers }
+		);
+		return response.data;
+	},
+
+	// New method for batch view tracking
+	batchIncrementViews: async (postIds) => {
+		const token = localStorage.getItem("token");
+		const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+		const response = await api.post(
+			`${POSTS_URL}/batch-view`,
+			{ postIds },
 			{ headers }
 		);
 		return response.data;

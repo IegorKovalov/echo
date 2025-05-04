@@ -2,9 +2,11 @@ import { Eye, Lock, Mail, Sparkles, User } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 export default function SignupPage() {
 	const { signup, loading } = useAuth();
+	const { showSuccess, showError } = useToast();
 	const [formData, setFormData] = useState({
 		firstName: "",
 		lastName: "",
@@ -37,21 +39,25 @@ export default function SignupPage() {
 			!formData.confirmPassword
 		) {
 			setFormError("Please fill in all fields");
+			showError("Please fill in all fields");
 			return;
 		}
 
 		if (formData.password.length < 8) {
 			setFormError("Password must be at least 8 characters long");
+			showError("Password must be at least 8 characters long");
 			return;
 		}
 
 		if (formData.password !== formData.confirmPassword) {
 			setFormError("Passwords do not match");
+			showError("Passwords do not match");
 			return;
 		}
 
 		if (!agreeToTerms) {
 			setFormError("You must agree to the terms of service");
+			showError("You must agree to the terms of service");
 			return;
 		}
 
@@ -64,9 +70,12 @@ export default function SignupPage() {
 				fullName: `${formData.firstName} ${formData.lastName}`,
 			};
 			await signup(userData);
+			showSuccess("Account created successfully! Welcome to Echo.");
 			// Redirect is handled in AuthContext
 		} catch (err) {
-			setFormError(err.message || "Signup failed. Please try again.");
+			const errorMessage = err.message || "Signup failed. Please try again.";
+			setFormError(errorMessage);
+			showError(errorMessage);
 		}
 	};
 

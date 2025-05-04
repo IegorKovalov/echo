@@ -408,6 +408,40 @@ exports.incrementViews = async (req, res) => {
 	}
 };
 
+// Batch increment views for multiple posts
+exports.batchIncrementViews = async (req, res) => {
+	try {
+		const { postIds } = req.body;
+
+		if (!postIds || !Array.isArray(postIds) || postIds.length === 0) {
+			return res.status(400).json({
+				status: "failed",
+				message: "Valid postIds array is required",
+			});
+		}
+
+		// Update the view count for all posts in a single operation
+		const result = await Post.updateMany(
+			{ _id: { $in: postIds } },
+			{ $inc: { views: 1 } }
+		);
+
+		res.status(200).json({
+			status: "success",
+			data: {
+				modifiedCount: result.modifiedCount,
+				message: `Updated views for ${result.modifiedCount} posts`,
+			},
+		});
+	} catch (error) {
+		res.status(500).json({
+			status: "failed",
+			message: "Error updating post views in batch",
+			error: process.env.NODE_ENV === "development" ? error.message : undefined,
+		});
+	}
+};
+
 // Get trending posts based on views and recency
 exports.getTrendingPosts = async (req, res) => {
 	try {

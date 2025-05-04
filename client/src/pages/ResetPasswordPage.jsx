@@ -2,10 +2,12 @@ import { ArrowLeft, Eye, Lock, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 export default function ResetPasswordPage() {
 	const { token } = useParams();
 	const { resetPassword, loading } = useAuth();
+	const { showSuccess, showError } = useToast();
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
@@ -17,24 +19,33 @@ export default function ResetPasswordPage() {
 
 		if (!password || !confirmPassword) {
 			setFormError("Please enter both password fields");
+			showError("Please enter both password fields");
 			return;
 		}
 
 		if (password.length < 8) {
 			setFormError("Password must be at least 8 characters long");
+			showError("Password must be at least 8 characters long");
 			return;
 		}
 
 		if (password !== confirmPassword) {
 			setFormError("Passwords do not match");
+			showError("Passwords do not match");
 			return;
 		}
 
 		try {
 			await resetPassword(token, password, confirmPassword);
+			showSuccess(
+				"Password reset successful! You can now login with your new password."
+			);
 			// Redirect is handled in AuthContext
 		} catch (err) {
-			setFormError(err.message || "Password reset failed. Please try again.");
+			const errorMessage =
+				err.message || "Password reset failed. Please try again.";
+			setFormError(errorMessage);
+			showError(errorMessage);
 		}
 	};
 

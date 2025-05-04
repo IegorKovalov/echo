@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import FollowersModal from "../components/UI/FollowersModal";
 import PostForm from "../components/UI/PostForm";
 import PostItem from "../components/UI/PostItem";
 import ProfileAvatar from "../components/UI/ProfileAvatar";
@@ -30,6 +31,8 @@ export default function ProfilePage() {
 	const [activeTab, setActiveTab] = useState("posts");
 	const [showExpiredPosts, setShowExpiredPosts] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
+	const [followersModalTab, setFollowersModalTab] = useState("");
 
 	// Redirect if not logged in
 	useEffect(() => {
@@ -114,6 +117,18 @@ export default function ProfilePage() {
 		} catch (error) {
 			console.error("Error renewing post:", error);
 		}
+	};
+
+	// Handle opening followers modal
+	const openFollowersModal = (tab) => {
+		setFollowersModalTab(tab);
+		setIsFollowersModalOpen(true);
+	};
+
+	// Handle closing followers modal
+	const closeFollowersModal = () => {
+		setFollowersModalTab("");
+		setIsFollowersModalOpen(false);
 	};
 
 	// Loading state
@@ -221,14 +236,20 @@ export default function ProfilePage() {
 								<div className="font-bold text-white">{posts.length}</div>
 								<div className="text-sm text-gray-400">Echoes</div>
 							</div>
-							<div className="text-center">
+							<button
+								onClick={() => openFollowersModal("following")}
+								className="text-center hover:opacity-80 transition-opacity"
+							>
 								<div className="font-bold text-white">0</div>
 								<div className="text-sm text-gray-400">Following</div>
-							</div>
-							<div className="text-center">
+							</button>
+							<button
+								onClick={() => openFollowersModal("followers")}
+								className="text-center hover:opacity-80 transition-opacity"
+							>
 								<div className="font-bold text-white">0</div>
 								<div className="text-sm text-gray-400">Followers</div>
-							</div>
+							</button>
 						</div>
 
 						{/* Tabs */}
@@ -362,6 +383,13 @@ export default function ProfilePage() {
 					</div>
 				</div>
 			</main>
+
+			{/* Followers/Following Modal */}
+			<FollowersModal
+				isOpen={isFollowersModalOpen}
+				onClose={closeFollowersModal}
+				initialTab={followersModalTab}
+			/>
 		</div>
 	);
 }

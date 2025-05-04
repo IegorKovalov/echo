@@ -2,9 +2,11 @@ import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 export default function LoginPage() {
-	const { login, error, loading } = useAuth();
+	const { login, loading } = useAuth();
+	const { showSuccess, showError } = useToast();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [formError, setFormError] = useState("");
@@ -15,14 +17,18 @@ export default function LoginPage() {
 
 		if (!email || !password) {
 			setFormError("Please enter both email and password");
+			showError("Please enter both email and password");
 			return;
 		}
 
 		try {
 			await login(email, password);
+			showSuccess("Login successful! Welcome back.");
 			// Redirect is handled in the auth context
 		} catch (err) {
-			setFormError(err.message || "Login failed. Please try again.");
+			const errorMessage = err.message || "Login failed. Please try again.";
+			setFormError(errorMessage);
+			showError(errorMessage);
 		}
 	};
 
