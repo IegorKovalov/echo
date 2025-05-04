@@ -13,8 +13,6 @@ const UserAvatar = ({
 	const [imageLoaded, setImageLoaded] = useState(false);
 
 	const imageSrc = src || profileImage || null;
-
-	// Determine size and font size based on variant
 	let size, fontSize, bgColorClass;
 
 	switch (variant) {

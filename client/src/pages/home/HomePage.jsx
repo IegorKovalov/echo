@@ -169,9 +169,6 @@ const HomePage = () => {
 						<h1 className="fw-bold text-primary mb-3">
 							{greeting}, {currentUser?.fullName?.split(" ")[0] || "User"}!
 						</h1>
-						<p className="text-secondary">
-							Welcome to your personalized home feed. Here's what's happening.
-						</p>
 					</div>
 				</Col>
 			</Row>
