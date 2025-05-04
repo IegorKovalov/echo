@@ -1,78 +1,132 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import AuthService from "../services/auth.service";
+import { useNavigate } from "react-router-dom";
+import authService from "../services/auth.service";
 
+// Create context
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-	const [currentUser, setCurrentUser] = useState(null);
+	const [user, setUser] = useState(null);
 	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState(null);
+	const navigate = useNavigate();
 
+	// Check if user is already logged in
 	useEffect(() => {
+		const currentUser = authService.getCurrentUser();
+		if (currentUser) {
+			setUser(currentUser);
+		}
+		setLoading(false);
+	}, []);
+
+	// Login function
+	const login = async (email, password) => {
 		try {
-			const user = AuthService.getCurrentUser();
-			if (user) {
-				setCurrentUser(user);
-			}
-		} catch (error) {
-			console.error("Error initializing auth state:", error);
+			setLoading(true);
+			setError(null);
+			const response = await authService.login(email, password);
+			setUser(response.data.user);
+			navigate("/");
+			return response;
+		} catch (err) {
+			setError(err.message);
+			throw err;
 		} finally {
 			setLoading(false);
 		}
-	}, []);
+	};
 
-	const login = async (email, password) => {
+	// Signup function
+	const signup = async (userData) => {
 		try {
-			const response = await AuthService.login(email, password);
-			if (response && response.data && response.data.user) {
-				setCurrentUser(response.data.user);
-			}
+			setLoading(true);
+			setError(null);
+			const response = await authService.signup(userData);
+			setUser(response.data.user);
+			navigate("/"); // Navigate to home page instead of verification
 			return response;
-		} catch (error) {
-			console.error("Login error in context:", error);
-			throw error;
+		} catch (err) {
+			setError(err.message);
+			throw err;
+		} finally {
+			setLoading(false);
 		}
 	};
 
-	const register = async (userData) => {
-		try {
-			const response = await AuthService.register(userData);
-			if (response && response.data && response.data.user) {
-				setCurrentUser(response.data.user);
-			}
-			return response;
-		} catch (error) {
-			console.error("Register error in context:", error);
-			throw error;
-		}
-	};
-
+	// Logout function
 	const logout = async () => {
 		try {
-			await AuthService.logout();
-			setCurrentUser(null);
-			return { success: true };
-		} catch (error) {
-			console.error("Logout error in context:", error);
-			return { success: false, error };
+			setLoading(true);
+			setError(null);
+			await authService.logout();
+			setUser(null);
+			navigate("/login");
+		} catch (err) {
+			setError(err.message);
+			throw err;
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// Forgot password function
+	const forgotPassword = async (email) => {
+		try {
+			setLoading(true);
+			setError(null);
+			const response = await authService.forgotPassword(email);
+			return response;
+		} catch (err) {
+			setError(err.message);
+			throw err;
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// Reset password function
+	const resetPassword = async (token, password, passwordConfirm) => {
+		try {
+			setLoading(true);
+			setError(null);
+			const response = await authService.resetPassword(
+				token,
+				password,
+				passwordConfirm
+			);
+			setUser(response.data.user);
+			navigate("/success");
+			return response;
+		} catch (err) {
+			setError(err.message);
+			throw err;
+		} finally {
+			setLoading(false);
 		}
 	};
 
 	const value = {
-		currentUser,
-		setCurrentUser,
+		user,
+		loading,
+		error,
 		login,
-		register,
+		signup,
 		logout,
-		isAuthenticated: () => AuthService.isAuthenticated(),
+		forgotPassword,
+		resetPassword,
 	};
 
-	return (
-		<AuthContext.Provider value={value}>
-			{!loading && children}
-		</AuthContext.Provider>
-	);
+	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
-	return useContext(AuthContext);
-}
+// Custom hook to use auth context
+export const useAuth = () => {
+	const context = useContext(AuthContext);
+	if (!context) {
+		throw new Error("useAuth must be used within an AuthProvider");
+	}
+	return context;
+};
+
+export default AuthContext;

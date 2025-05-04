@@ -1,68 +1,85 @@
 import api from "./api";
 
-const AUTH_URL = "http://localhost:8000/api/v1/users";
-
 const AuthService = {
-	register: async (userData) => {
+	signup: async (userData) => {
 		try {
-			const response = await api.post(`${AUTH_URL}/signup`, userData);
+			const response = await api.post(`/users/signup`, userData);
 			if (response.data.token) {
 				localStorage.setItem("token", response.data.token);
 				localStorage.setItem("user", JSON.stringify(response.data.data.user));
 			}
 			return response.data;
 		} catch (error) {
-			console.error("Registration error:", error);
-			throw error;
+			const errorMessage =
+				error.response?.data?.message ||
+				"Registration failed. Please try again.";
+			console.error("Registration error:", errorMessage);
+			throw new Error(errorMessage);
 		}
 	},
 
 	login: async (email, password) => {
 		try {
-			const response = await api.post(`${AUTH_URL}/login`, { email, password });
+			const response = await api.post(`/users/login`, { email, password });
 			if (response.data.token) {
 				localStorage.setItem("token", response.data.token);
 				localStorage.setItem("user", JSON.stringify(response.data.data.user));
 			}
 			return response.data;
 		} catch (error) {
-			console.error("Login error:", error);
-			throw error;
+			const errorMessage =
+				error.response?.data?.message ||
+				"Login failed. Please check your credentials.";
+			console.error("Login error:", errorMessage);
+			throw new Error(errorMessage);
 		}
 	},
 
 	logout: async () => {
 		try {
-			await api.get(`${AUTH_URL}/logout`, {
-				withCredentials: true,
-			});
+			await api.get(`/users/logout`);
 			localStorage.removeItem("token");
 			localStorage.removeItem("user");
 			return { success: true };
 		} catch (error) {
 			console.error("Logout error:", error);
+			// Still remove items from localStorage even if API call fails
+			localStorage.removeItem("token");
+			localStorage.removeItem("user");
 			return { success: false, error };
 		}
 	},
 
 	forgotPassword: async (email) => {
 		try {
-			return await api.post(`${AUTH_URL}/forgot-password`, { email });
+			const response = await api.post(`/users/forgot-password`, { email });
+			return response.data;
 		} catch (error) {
-			console.error("Forgot password error:", error);
-			throw error;
+			const errorMessage =
+				error.response?.data?.message ||
+				"Failed to send password reset email. Please try again.";
+			console.error("Forgot password error:", errorMessage);
+			throw new Error(errorMessage);
 		}
 	},
 
 	resetPassword: async (token, password, passwordConfirm) => {
 		try {
-			return await api.patch(`${AUTH_URL}/reset-password/${token}`, {
+			const response = await api.patch(`/users/reset-password/${token}`, {
 				password,
 				passwordConfirm,
 			});
+			if (response.data.token) {
+				localStorage.setItem("token", response.data.token);
+				localStorage.setItem("user", JSON.stringify(response.data.data.user));
+			}
+			return response.data;
 		} catch (error) {
-			console.error("Reset password error:", error);
-			throw error;
+			const errorMessage =
+				error.response?.data?.message ||
+				"Password reset failed. Please try again.";
+			console.error("Reset password error:", errorMessage);
+			throw new Error(errorMessage);
 		}
 	},
 

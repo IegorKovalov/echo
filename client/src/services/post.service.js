@@ -59,22 +59,6 @@ const PostService = {
 		return response.data;
 	},
 
-	likePost: async (id) => {
-		const token = localStorage.getItem("token");
-		const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-		const response = await api.post(`${POSTS_URL}/${id}/like`, {}, { headers });
-		return response;
-	},
-
-	unlikePost: async (id) => {
-		const token = localStorage.getItem("token");
-		const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-		const response = await api.delete(`${POSTS_URL}/${id}/like`, { headers });
-		return response;
-	},
-
 	addComment: async (id, commentContent) => {
 		const token = localStorage.getItem("token");
 		const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -107,6 +91,26 @@ const PostService = {
 		const response = await api.post(
 			`${POSTS_URL}/${id}/renew`,
 			{ hours },
+			{ headers }
+		);
+		return response.data;
+	},
+
+	getTrendingPosts: async () => {
+		const token = localStorage.getItem("token");
+		const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+		const response = await api.get(`${POSTS_URL}/trending`, { headers });
+		return response.data;
+	},
+
+	incrementViews: async (id) => {
+		const token = localStorage.getItem("token");
+		const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+		const response = await api.patch(
+			`${POSTS_URL}/${id}/view`,
+			{},
 			{ headers }
 		);
 		return response.data;

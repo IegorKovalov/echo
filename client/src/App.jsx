@@ -1,96 +1,89 @@
-import {
-	Navigate,
-	Route,
-	BrowserRouter as Router,
-	Routes,
-} from "react-router-dom";
-import ProtectedRoute from "./components/layout/ProtectedRoute";
-import { useAuth } from "./context/AuthContext";
-import { ProfileProvider } from "./context/ProfileContext";
-import { ToastProvider } from "./context/ToastContext";
-import AppLayout from "./layouts/AppLayout";
-import AuthLayout from "./layouts/AuthLayout";
-
-import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
-import LoginPage from "./pages/auth/LoginPage";
-import RegisterPage from "./pages/auth/RegisterPage";
-import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
-import FriendsPage from "./pages/friends/FriendsPage";
-import HomePage from "./pages/home/HomePage";
-import NotFoundPage from "./pages/not-found/NotFoundPage";
-import UserProfilePage from "./pages/user/UserProfilePage";
-import UserSettingsPage from "./pages/user/UserSettingsPage";
-
-import "./styles";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import Layout from "./components/Layout/Layout";
+import { AuthProvider } from "./context/AuthContext";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
+import ProfilePage from "./pages/ProfilePage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import SettingsPage from "./pages/SettingsPage";
+import SignupPage from "./pages/SignupPage";
+import SuccessPage from "./pages/SuccessPage";
 
 function App() {
-	const auth = useAuth();
-	const isAuthenticated = auth ? auth.isAuthenticated() : false;
-
 	return (
 		<Router>
-			<ToastProvider>
-				<ProfileProvider>
-					<Routes>
-						{/* Auth Routes with Auth Layout */}
-						<Route element={<AuthLayout />}>
-							<Route
-								path="/login"
-								element={
-									isAuthenticated ? <Navigate to="/home" /> : <LoginPage />
-								}
-							/>
-							<Route
-								path="/register"
-								element={
-									isAuthenticated ? <Navigate to="/home" /> : <RegisterPage />
-								}
-							/>
-							<Route
-								path="/forgot-password"
-								element={
-									isAuthenticated ? (
-										<Navigate to="/home" />
-									) : (
-										<ForgotPasswordPage />
-									)
-								}
-							/>
-							<Route
-								path="/reset-password/:token"
-								element={
-									isAuthenticated ? (
-										<Navigate to="/home" />
-									) : (
-										<ResetPasswordPage />
-									)
-								}
-							/>
-						</Route>
+			<AuthProvider>
+				<Routes>
+					{/* Protected routes */}
+					<Route
+						path="/"
+						element={
+							<Layout requireAuth={true}>
+								<HomePage />
+							</Layout>
+						}
+					/>
+					<Route
+						path="/profile"
+						element={
+							<Layout requireAuth={true}>
+								<ProfilePage />
+							</Layout>
+						}
+					/>
+					<Route
+						path="/settings"
+						element={
+							<Layout requireAuth={true}>
+								<SettingsPage />
+							</Layout>
+						}
+					/>
 
-						{/* Protected */}
-						<Route element={<ProtectedRoute />}>
-							<Route element={<AppLayout />}>
-								<Route path="/home" element={<HomePage />} />
-								<Route path="/profile" element={<UserProfilePage />} />
-								<Route path="/settings" element={<UserSettingsPage />} />
-								<Route path="/friends" element={<FriendsPage />} />
-							</Route>
-						</Route>
-
-						{/* Root redirect */}
-						<Route
-							path="/"
-							element={
-								<Navigate to={isAuthenticated ? "/home" : "/login"} replace />
-							}
-						/>
-
-						{/* Not Found route */}
-						<Route path="*" element={<NotFoundPage />} />
-					</Routes>
-				</ProfileProvider>
-			</ToastProvider>
+					{/* Public routes */}
+					<Route
+						path="/login"
+						element={
+							<Layout requireAuth={false} showHeader={false}>
+								<LoginPage />
+							</Layout>
+						}
+					/>
+					<Route
+						path="/signup"
+						element={
+							<Layout requireAuth={false} showHeader={false}>
+								<SignupPage />
+							</Layout>
+						}
+					/>
+					<Route
+						path="/forgot-password"
+						element={
+							<Layout requireAuth={false} showHeader={false}>
+								<ForgotPasswordPage />
+							</Layout>
+						}
+					/>
+					<Route
+						path="/reset-password/:token"
+						element={
+							<Layout requireAuth={false} showHeader={false}>
+								<ResetPasswordPage />
+							</Layout>
+						}
+					/>
+					<Route
+						path="/success"
+						element={
+							<Layout requireAuth={false} showHeader={false}>
+								<SuccessPage />
+							</Layout>
+						}
+					/>
+				</Routes>
+			</AuthProvider>
 		</Router>
 	);
 }
