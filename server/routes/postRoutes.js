@@ -5,6 +5,9 @@ const router = express.Router();
 
 router.use(authController.protect);
 
+// Get trending posts route - placed before other routes for visibility
+router.get("/trending", postController.getTrendingPosts);
+
 router
 	.route("/")
 	.post(postController.createPost)
@@ -18,12 +21,10 @@ router
 	.patch(postController.updatePost)
 	.delete(postController.deletePost);
 
-router.post("/:id/renew", postController.renewPost);
+// View counter route
+router.patch("/:id/view", postController.incrementViews);
 
-router
-	.route("/:id/like")
-	.post(postController.likePost)
-	.delete(postController.deleteLike);
+router.post("/:id/renew", postController.renewPost);
 
 router.post("/:id/comments", postController.addComment);
 

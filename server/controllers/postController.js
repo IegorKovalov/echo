@@ -232,86 +232,6 @@ exports.deletePost = async (req, res) => {
 	}
 };
 
-exports.likePost = async (req, res) => {
-	try {
-		let post = await Post.findById(req.params.id);
-
-		if (!post) {
-			return res.status(404).json({
-				status: "failed",
-				message: "Post not found",
-			});
-		}
-
-		if (post.likedBy.includes(req.user._id)) {
-			return res.status(400).json({
-				status: "failed",
-				message: "You have already liked this post",
-			});
-		}
-
-		post.likedBy.push(req.user._id);
-		post.likes = post.likedBy.length;
-		await post.save();
-
-		post = await populatePostFields(Post.findById(post._id));
-
-		res.status(200).json({
-			status: "success",
-			data: {
-				post,
-			},
-		});
-	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error liking post",
-			error: process.env.NODE_ENV === "development" ? error.message : undefined,
-		});
-	}
-};
-
-exports.deleteLike = async (req, res) => {
-	try {
-		let post = await Post.findById(req.params.id);
-
-		if (!post) {
-			return res.status(404).json({
-				status: "failed",
-				message: "Post not found",
-			});
-		}
-
-		if (!post.likedBy.includes(req.user._id)) {
-			return res.status(400).json({
-				status: "failed",
-				message: "You have not liked this post",
-			});
-		}
-
-		post.likedBy = post.likedBy.filter(
-			(userId) => userId.toString() !== req.user._id.toString()
-		);
-		post.likes = post.likedBy.length;
-		await post.save();
-
-		post = await populatePostFields(Post.findById(post._id));
-
-		res.status(200).json({
-			status: "success",
-			data: {
-				post,
-			},
-		});
-	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error unliking post",
-			error: process.env.NODE_ENV === "development" ? error.message : undefined,
-		});
-	}
-};
-
 exports.addComment = async (req, res) => {
 	try {
 		const { commentContent } = req.body;
@@ -452,6 +372,81 @@ exports.renewPost = async (req, res) => {
 		res.status(500).json({
 			status: "failed",
 			message: "Error renewing post",
+			error: process.env.NODE_ENV === "development" ? error.message : undefined,
+		});
+	}
+};
+
+// Increment the views counter for a post
+exports.incrementViews = async (req, res) => {
+	try {
+		const post = await Post.findByIdAndUpdate(
+			req.params.id,
+			{ $inc: { views: 1 } },
+			{ new: true }
+		);
+
+		if (!post) {
+			return res.status(404).json({
+				status: "failed",
+				message: "Post not found",
+			});
+		}
+
+		res.status(200).json({
+			status: "success",
+			data: {
+				views: post.views,
+			},
+		});
+	} catch (error) {
+		res.status(500).json({
+			status: "failed",
+			message: "Error updating post views",
+			error: process.env.NODE_ENV === "development" ? error.message : undefined,
+		});
+	}
+};
+
+// Get trending posts based on views and recency
+exports.getTrendingPosts = async (req, res) => {
+	try {
+		// Calculate date 48 hours ago for trending window
+		const trendingWindow = new Date(Date.now() - 48 * 60 * 60 * 1000);
+
+		// Find non-expired posts created within the trending window
+		const posts = await Post.find({
+			createdAt: { $gte: trendingWindow },
+			expiresAt: { $gt: new Date() }, // Only non-expired posts
+		})
+			.populate({
+				path: "user",
+				select: "username fullName profilePicture",
+			})
+			// Sort by views and creation date only (removed likes)
+			.sort({ views: -1, createdAt: -1 })
+			.limit(5); // Get top 5 trending posts
+
+		// Enhance posts with virtual properties
+		const enhancedPosts = posts.map((post) => {
+			const postObj = post.toObject({ virtuals: true });
+			postObj.isExpired = post.isExpired;
+			postObj.remainingTime = post.remainingTime;
+			postObj.expirationProgress = post.expirationProgress;
+			return postObj;
+		});
+
+		res.status(200).json({
+			status: "success",
+			results: enhancedPosts.length,
+			data: {
+				posts: enhancedPosts,
+			},
+		});
+	} catch (error) {
+		res.status(500).json({
+			status: "failed",
+			message: "Error retrieving trending posts",
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
