@@ -1,5 +1,6 @@
 import { Clock, Image, Mic } from "lucide-react";
 import { useState } from "react";
+import { useToast } from "../../context/ToastContext";
 import Card from "./Card";
 import ProfileAvatar from "./ProfileAvatar";
 
@@ -18,10 +19,17 @@ export default function PostForm({
 	const [duration, setDuration] = useState(initialDuration);
 	const [image, setImage] = useState(null);
 	const [imagePreview, setImagePreview] = useState(null);
+	const { showSuccess, showError, showLoading, showInfo } = useToast();
 
 	const handleImageChange = (e) => {
 		const file = e.target.files[0];
 		if (!file) return;
+
+		// Check file size (limit to 5MB)
+		if (file.size > 5 * 1024 * 1024) {
+			showError("Image is too large. Maximum size is 5MB.");
+			return;
+		}
 
 		// Preview image
 		const reader = new FileReader();
@@ -30,11 +38,13 @@ export default function PostForm({
 		};
 		reader.readAsDataURL(file);
 		setImage(file);
+		showSuccess("Image added successfully");
 	};
 
 	const removeImage = () => {
 		setImage(null);
 		setImagePreview(null);
+		showInfo("Image removed");
 	};
 
 	const handleSubmit = async (e) => {
@@ -49,13 +59,25 @@ export default function PostForm({
 			formData.append("image", image);
 		}
 
-		await onSubmit(formData);
+		try {
+			// Use promise-based toast for the submission
+			await showLoading(onSubmit(formData), {
+				loading: isEditing ? "Updating post..." : "Creating post...",
+				success: isEditing
+					? "Post updated successfully!"
+					: "Post created successfully!",
+				error: (err) => `Error: ${err.message || "Something went wrong"}`,
+			});
 
-		// Reset form if not editing
-		if (!isEditing) {
-			setContent("");
-			setImage(null);
-			setImagePreview(null);
+			// Reset form if not editing
+			if (!isEditing) {
+				setContent("");
+				setImage(null);
+				setImagePreview(null);
+			}
+		} catch (error) {
+			// Error is handled by the showLoading toast
+			console.error("Post submission error:", error);
 		}
 	};
 

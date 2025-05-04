@@ -2,9 +2,11 @@ import { ArrowLeft, Mail, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 export default function ForgotPasswordPage() {
 	const { forgotPassword, loading } = useAuth();
+	const { showSuccess, showError } = useToast();
 	const [email, setEmail] = useState("");
 	const [formError, setFormError] = useState("");
 	const [submitted, setSubmitted] = useState(false);
@@ -15,16 +17,19 @@ export default function ForgotPasswordPage() {
 
 		if (!email) {
 			setFormError("Please enter your email address");
+			showError("Please enter your email address");
 			return;
 		}
 
 		try {
 			await forgotPassword(email);
+			showSuccess("Reset link sent! Check your email for instructions.");
 			setSubmitted(true);
 		} catch (err) {
-			setFormError(
-				err.message || "Failed to send reset email. Please try again."
-			);
+			const errorMessage =
+				err.message || "Failed to send reset email. Please try again.";
+			setFormError(errorMessage);
+			showError(errorMessage);
 		}
 	};
 

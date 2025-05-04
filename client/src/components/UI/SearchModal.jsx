@@ -1,8 +1,8 @@
-import { Search, Sparkles, User, Users, X } from "lucide-react";
+import { Search, Sparkles, User, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Card from "./Card";
 
-export default function SearchModal({ isOpen, onClose }) {
+export default function SearchModal({ isOpen, onClose, anchorRect }) {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [searchResults, setSearchResults] = useState([]);
 	const [searching, setSearching] = useState(false);
@@ -50,18 +50,6 @@ export default function SearchModal({ isOpen, onClose }) {
 		};
 	}, [isOpen, onClose]);
 
-	// Prevent scrolling when modal is open
-	useEffect(() => {
-		if (isOpen) {
-			document.body.style.overflow = "hidden";
-		} else {
-			document.body.style.overflow = "";
-		}
-		return () => {
-			document.body.style.overflow = "";
-		};
-	}, [isOpen]);
-
 	// This is a placeholder function that will be replaced with actual search logic later
 	const handleSearch = (e) => {
 		e.preventDefault();
@@ -79,99 +67,119 @@ export default function SearchModal({ isOpen, onClose }) {
 
 	if (!isOpen) return null;
 
+	// Position the search bubble relative to the navbar button
+	const style = anchorRect
+		? {
+				position: "fixed",
+				top: `${anchorRect.bottom + 12}px`,
+				left: "50%",
+				transform: "translateX(-50%)",
+				zIndex: 100,
+				maxWidth: "500px",
+				width: "90%",
+		  }
+		: {};
+
 	return (
-		<div className="fixed inset-0 z-50 overflow-y-auto flex items-start justify-center p-4 bg-gray-950/60 backdrop-blur-sm transition-opacity duration-300 ease-in-out">
+		<>
+			<div
+				className="fixed inset-0 z-40 bg-transparent"
+				onClick={onClose}
+			></div>
 			<div
 				ref={modalRef}
-				className="bg-gray-900/90 border border-purple-500/20 rounded-3xl shadow-2xl w-full max-w-2xl mt-16 transform transition-all duration-300 ease-out shadow-purple-500/10"
+				className="rounded-xl border border-gray-800 bg-gray-900 shadow-lg transform transition-all duration-200 ease-out z-50"
 				style={{
-					boxShadow: "0 10px 25px -5px rgba(168, 85, 247, 0.2)",
-					backdropFilter: "blur(12px)",
+					...style,
+					boxShadow: "0 10px 25px rgba(0, 0, 0, 0.3)",
 				}}
 			>
-				<div className="p-6">
-					{/* Header */}
-					<div className="flex justify-between items-center mb-6">
-						<h2 className="text-xl font-semibold text-white bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-							Search Echo
-						</h2>
-						<button
-							onClick={onClose}
-							className="p-2 rounded-full hover:bg-gray-800/50 text-gray-400 hover:text-purple-400 transition-colors duration-200"
-						>
-							<X className="h-5 w-5" />
-						</button>
-					</div>
+				{/* Small decorative arrow pointing up to navbar */}
+				<div
+					className="absolute w-4 h-4 bg-gray-900 border-t border-l border-gray-800 transform rotate-45 -translate-y-2"
+					style={{
+						top: "0",
+						left: "50%",
+						marginLeft: "-8px",
+					}}
+				></div>
 
+				<div className="p-4">
 					{/* Search Form */}
-					<form onSubmit={handleSearch} className="flex gap-2 mb-5">
+					<form onSubmit={handleSearch} className="flex gap-2 mb-3">
 						<div className="relative flex-1">
 							<input
 								ref={inputRef}
 								type="text"
 								placeholder="Search for users, posts, or topics..."
-								className="w-full rounded-full border border-purple-500/30 bg-gray-800/70 pl-12 pr-4 py-3.5 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all duration-200"
+								className="w-full rounded-lg border border-gray-800 bg-gray-800 pl-10 pr-4 py-2 text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
 							/>
-							<div className="absolute left-4 top-1/2 -translate-y-1/2 text-purple-400">
-								<Search className="h-5 w-5" />
-							</div>
+							<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
 						</div>
 						<button
 							type="submit"
-							className="rounded-full bg-gradient-to-r from-purple-600 to-blue-500 px-6 py-2 font-medium text-white hover:from-purple-700 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 transition-all duration-200 shadow-lg shadow-purple-500/20"
+							className="rounded-lg bg-gradient-to-r from-purple-600 to-blue-500 px-4 py-2 text-sm font-medium text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900"
 							disabled={searching || !searchQuery.trim()}
 						>
 							{searching ? "Searching..." : "Search"}
 						</button>
 					</form>
 
-					<p className="text-sm text-gray-400 mb-5 italic">
+					<p className="text-xs text-gray-400 mb-3">
 						This is a placeholder. Search functionality will be implemented
 						later.
 					</p>
 
 					{/* Search Results */}
-					<div className="max-h-96 overflow-y-auto px-2">
+					<div
+						className="max-h-80 overflow-y-auto"
+						style={{ minHeight: searchQuery ? "100px" : "0" }}
+					>
 						{searching ? (
-							<div className="text-center py-10">
-								<div className="flex justify-center">
-									<div className="relative">
-										<div className="absolute inset-0 rounded-full bg-purple-500/20 animate-ping"></div>
-										<Sparkles className="relative h-8 w-8 text-purple-500" />
-									</div>
-								</div>
-								<p className="mt-4 text-gray-400">Searching...</p>
+							<div className="text-center py-8">
+								<Sparkles className="mx-auto h-6 w-6 animate-pulse text-purple-500" />
+								<p className="mt-3 text-sm text-gray-400">Searching...</p>
 							</div>
 						) : searchQuery && searchResults.length === 0 ? (
-							<div className="bg-gray-800/50 rounded-2xl p-6 text-center border border-gray-700/50">
-								<div className="mx-auto mb-4 h-14 w-14 rounded-full bg-gray-700/50 p-3 flex items-center justify-center">
-									<Users className="h-8 w-8 text-gray-500" />
+							<div className="rounded-lg bg-gray-900 border border-gray-800 p-4 text-center">
+								<div className="mx-auto mb-3 h-10 w-10 rounded-full bg-gray-800 p-2 flex items-center justify-center">
+									<Users className="h-5 w-5 text-gray-600" />
 								</div>
-								<h3 className="text-lg font-medium text-white">
+								<h3 className="text-sm font-medium text-white">
 									No results found
 								</h3>
-								<p className="mt-2 text-gray-400">
-									No matches found for "{searchQuery}". Try different keywords.
+								<p className="mt-1 text-xs text-gray-400">
+									No matches for "{searchQuery}"
 								</p>
 							</div>
 						) : searchQuery ? (
-							<div className="bg-gray-800/50 rounded-2xl p-6 text-center border border-gray-700/50">
-								<div className="mx-auto mb-4 h-14 w-14 rounded-full bg-gradient-to-br from-purple-900/50 to-blue-900/50 p-3 flex items-center justify-center">
-									<User className="h-8 w-8 text-purple-300" />
-								</div>
-								<h3 className="text-lg font-medium text-white">
-									Search is a placeholder
-								</h3>
-								<p className="mt-2 text-gray-400">
-									Search functionality will be implemented in a future update.
-								</p>
+							<div className="space-y-3">
+								<Card className="p-2">
+									<div className="p-2 flex items-center gap-3">
+										<div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-900/50 to-blue-900/50 flex items-center justify-center">
+											<User className="h-5 w-5 text-gray-300" />
+										</div>
+										<div>
+											<h4 className="font-medium text-white">User Name</h4>
+											<p className="text-xs text-gray-400">@username</p>
+										</div>
+									</div>
+								</Card>
+
+								<Card>
+									<div className="text-center py-4">
+										<p className="text-sm text-gray-400">
+											Actual search functionality coming soon
+										</p>
+									</div>
+								</Card>
 							</div>
 						) : null}
 					</div>
 				</div>
 			</div>
-		</div>
+		</>
 	);
 }

@@ -21,8 +21,9 @@ router
 	.patch(postController.updatePost)
 	.delete(postController.deletePost);
 
-// View counter route
+// View counter routes
 router.patch("/:id/view", postController.incrementViews);
+router.post("/batch-view", postController.batchIncrementViews); // New batch endpoint
 
 router.post("/:id/renew", postController.renewPost);
 

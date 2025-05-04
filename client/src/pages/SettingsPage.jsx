@@ -11,12 +11,14 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import UserService from "../services/user.service";
 
 export default function SettingsPage() {
 	const { user, loading } = useAuth();
 	const navigate = useNavigate();
 	const fileInputRef = useRef(null);
+	const { showSuccess, showError } = useToast();
 
 	const [activeTab, setActiveTab] = useState("profile");
 	const [profileData, setProfileData] = useState(null);
@@ -34,8 +36,6 @@ export default function SettingsPage() {
 		confirmPassword: "",
 	});
 	const [showPassword, setShowPassword] = useState(false);
-	const [formError, setFormError] = useState("");
-	const [formSuccess, setFormSuccess] = useState("");
 	const [isSaving, setIsSaving] = useState(false);
 	const [profilePreview, setProfilePreview] = useState(null);
 	const [profileFile, setProfileFile] = useState(null);
@@ -72,13 +72,13 @@ export default function SettingsPage() {
 					}
 				} catch (error) {
 					console.error("Error fetching profile:", error);
-					setFormError("Failed to load profile data");
+					showError("Failed to load profile data");
 				}
 			};
 
 			fetchProfileData();
 		}
-	}, [user]);
+	}, [user, showError]);
 
 	const handleProfileChange = (e) => {
 		const { name, value } = e.target;
@@ -98,8 +98,6 @@ export default function SettingsPage() {
 
 	const handleProfileSubmit = async (e) => {
 		e.preventDefault();
-		setFormError("");
-		setFormSuccess("");
 		setIsSaving(true);
 
 		try {
@@ -121,10 +119,10 @@ export default function SettingsPage() {
 				website: formData.website,
 			});
 
-			setFormSuccess("Profile successfully updated");
+			showSuccess("Profile successfully updated");
 		} catch (err) {
 			console.error("Profile update error:", err);
-			setFormError(err.message || "Failed to update profile");
+			showError(err.message || "Failed to update profile");
 		} finally {
 			setIsSaving(false);
 		}
@@ -132,8 +130,6 @@ export default function SettingsPage() {
 
 	const handlePasswordSubmit = async (e) => {
 		e.preventDefault();
-		setFormError("");
-		setFormSuccess("");
 		setIsSaving(true);
 
 		// Validation
@@ -142,19 +138,19 @@ export default function SettingsPage() {
 			!passwordData.newPassword ||
 			!passwordData.confirmPassword
 		) {
-			setFormError("Please fill in all password fields");
+			showError("Please fill in all password fields");
 			setIsSaving(false);
 			return;
 		}
 
 		if (passwordData.newPassword.length < 8) {
-			setFormError("New password must be at least 8 characters long");
+			showError("New password must be at least 8 characters long");
 			setIsSaving(false);
 			return;
 		}
 
 		if (passwordData.newPassword !== passwordData.confirmPassword) {
-			setFormError("New passwords do not match");
+			showError("New passwords do not match");
 			setIsSaving(false);
 			return;
 		}
@@ -166,7 +162,7 @@ export default function SettingsPage() {
 				passwordData.confirmPassword
 			);
 
-			setFormSuccess("Password successfully updated");
+			showSuccess("Password successfully updated");
 
 			// Clear password fields
 			setPasswordData({
@@ -176,7 +172,7 @@ export default function SettingsPage() {
 			});
 		} catch (err) {
 			console.error("Password update error:", err);
-			setFormError(err.message || "Failed to update password");
+			showError(err.message || "Failed to update password");
 		} finally {
 			setIsSaving(false);
 		}
@@ -199,18 +195,16 @@ export default function SettingsPage() {
 		if (!profileFile) return;
 
 		setIsSaving(true);
-		setFormError("");
-		setFormSuccess("");
 
 		try {
 			const formData = new FormData();
 			formData.append("profilePicture", profileFile);
 
 			await UserService.updateProfilePicture(formData);
-			setFormSuccess("Profile picture updated successfully");
+			showSuccess("Profile picture updated successfully");
 		} catch (err) {
 			console.error("Profile picture update error:", err);
-			setFormError("Failed to upload profile picture");
+			showError("Failed to upload profile picture");
 		} finally {
 			setIsSaving(false);
 		}
@@ -224,17 +218,15 @@ export default function SettingsPage() {
 		}
 
 		setIsSaving(true);
-		setFormError("");
-		setFormSuccess("");
 
 		try {
 			await UserService.deleteProfilePicture();
 			setProfilePreview(null);
 			setProfileFile(null);
-			setFormSuccess("Profile picture removed successfully");
+			showSuccess("Profile picture removed successfully");
 		} catch (err) {
 			console.error("Profile picture deletion error:", err);
-			setFormError("Failed to remove profile picture");
+			showError("Failed to remove profile picture");
 		} finally {
 			setIsSaving(false);
 		}
@@ -320,318 +312,352 @@ export default function SettingsPage() {
 						</button>
 					</div>
 
-					{/* Success/Error Messages */}
-					{formError && (
-						<div className="mb-6 rounded-lg border border-red-900 bg-red-900/20 p-4">
-							<p className="text-red-400">{formError}</p>
-						</div>
-					)}
-
-					{formSuccess && (
-						<div className="mb-6 rounded-lg border border-green-900 bg-green-900/20 p-4">
-							<p className="text-green-400">{formSuccess}</p>
-						</div>
-					)}
-
 					{/* Profile Settings Section */}
 					{activeTab === "profile" && (
-						<div className="rounded-lg border border-gray-800 bg-gray-900 p-6">
-							<h2 className="mb-6 text-xl font-bold text-white">
-								Edit Profile
-							</h2>
-							<form onSubmit={handleProfileSubmit} className="space-y-6">
-								<div className="space-y-2">
-									<label
-										htmlFor="fullName"
-										className="block text-sm font-medium text-gray-300"
-									>
-										Full Name
-									</label>
-									<div className="relative">
-										<input
-											id="fullName"
-											name="fullName"
-											type="text"
-											value={formData.fullName}
-											onChange={handleProfileChange}
-											className="w-full rounded-md border border-gray-800 bg-gray-800 pl-10 py-2 text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-										/>
-										<User className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
+						<form onSubmit={handleProfileSubmit} className="space-y-6">
+							<div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900 p-4">
+								<h2 className="text-xl font-semibold text-white">
+									Basic Information
+								</h2>
+								<div className="grid gap-4 sm:grid-cols-2">
+									<div className="space-y-2">
+										<label
+											htmlFor="fullName"
+											className="text-sm font-medium text-gray-300"
+										>
+											Full Name
+										</label>
+										<div className="relative">
+											<span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+												<User className="h-5 w-5" />
+											</span>
+											<input
+												type="text"
+												id="fullName"
+												name="fullName"
+												value={formData.fullName}
+												onChange={handleProfileChange}
+												className="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-4 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+												placeholder="Your full name"
+											/>
+										</div>
+									</div>
+									<div className="space-y-2">
+										<label
+											htmlFor="username"
+											className="text-sm font-medium text-gray-300"
+										>
+											Username
+										</label>
+										<div className="relative">
+											<span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+												<span className="text-gray-500">@</span>
+											</span>
+											<input
+												type="text"
+												id="username"
+												name="username"
+												value={formData.username}
+												onChange={handleProfileChange}
+												className="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-4 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+												placeholder="username"
+											/>
+										</div>
 									</div>
 								</div>
-
-								<div className="space-y-2">
-									<label
-										htmlFor="username"
-										className="block text-sm font-medium text-gray-300"
-									>
-										Username
-									</label>
-									<div className="relative">
-										<span className="absolute left-3 top-2.5 text-gray-500">
-											@
-										</span>
-										<input
-											id="username"
-											name="username"
-											type="text"
-											value={formData.username}
-											onChange={handleProfileChange}
-											className="w-full rounded-md border border-gray-800 bg-gray-800 pl-10 py-2 text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-										/>
-									</div>
-								</div>
-
 								<div className="space-y-2">
 									<label
 										htmlFor="email"
-										className="block text-sm font-medium text-gray-300"
+										className="text-sm font-medium text-gray-300"
 									>
-										Email
+										Email Address
 									</label>
 									<div className="relative">
+										<span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+											<Mail className="h-5 w-5" />
+										</span>
 										<input
+											type="email"
 											id="email"
 											name="email"
-											type="email"
 											value={formData.email}
+											onChange={handleProfileChange}
 											disabled
-											className="w-full rounded-md border border-gray-800 bg-gray-900 pl-10 py-2 text-white opacity-60 cursor-not-allowed"
+											className="w-full cursor-not-allowed rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-4 text-gray-400 focus:outline-none"
 										/>
-										<Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
 									</div>
 									<p className="text-xs text-gray-500">
-										Email cannot be changed directly. Contact support if needed.
+										Email address cannot be changed
 									</p>
 								</div>
+							</div>
 
+							<div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900 p-4">
+								<h2 className="text-xl font-semibold text-white">
+									Profile Details
+								</h2>
 								<div className="space-y-2">
 									<label
 										htmlFor="bio"
-										className="block text-sm font-medium text-gray-300"
+										className="text-sm font-medium text-gray-300"
 									>
 										Bio
 									</label>
 									<textarea
 										id="bio"
 										name="bio"
-										rows={4}
 										value={formData.bio}
 										onChange={handleProfileChange}
-										placeholder="Tell others a bit about yourself"
-										className="w-full rounded-md border border-gray-800 bg-gray-800 p-3 text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+										rows="3"
+										className="w-full rounded-lg border border-gray-700 bg-gray-800 p-2.5 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+										placeholder="Write a short bio about yourself..."
 									/>
 								</div>
-
-								<div className="space-y-2">
-									<label
-										htmlFor="location"
-										className="block text-sm font-medium text-gray-300"
-									>
-										Location
-									</label>
-									<input
-										id="location"
-										name="location"
-										type="text"
-										value={formData.location}
-										onChange={handleProfileChange}
-										placeholder="New York, USA"
-										className="w-full rounded-md border border-gray-800 bg-gray-800 p-3 text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-									/>
+								<div className="grid gap-4 sm:grid-cols-2">
+									<div className="space-y-2">
+										<label
+											htmlFor="location"
+											className="text-sm font-medium text-gray-300"
+										>
+											Location
+										</label>
+										<input
+											type="text"
+											id="location"
+											name="location"
+											value={formData.location}
+											onChange={handleProfileChange}
+											className="w-full rounded-lg border border-gray-700 bg-gray-800 p-2.5 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+											placeholder="City, Country"
+										/>
+									</div>
+									<div className="space-y-2">
+										<label
+											htmlFor="website"
+											className="text-sm font-medium text-gray-300"
+										>
+											Website
+										</label>
+										<input
+											type="text"
+											id="website"
+											name="website"
+											value={formData.website}
+											onChange={handleProfileChange}
+											className="w-full rounded-lg border border-gray-700 bg-gray-800 p-2.5 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+											placeholder="https://yourwebsite.com"
+										/>
+									</div>
 								</div>
+							</div>
 
-								<div className="space-y-2">
-									<label
-										htmlFor="website"
-										className="block text-sm font-medium text-gray-300"
-									>
-										Website
-									</label>
-									<input
-										id="website"
-										name="website"
-										type="url"
-										value={formData.website}
-										onChange={handleProfileChange}
-										placeholder="https://example.com"
-										className="w-full rounded-md border border-gray-800 bg-gray-800 p-3 text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-									/>
-								</div>
-
-								<button
-									type="submit"
-									disabled={isSaving}
-									className="flex w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-purple-600 to-blue-600 py-2 text-sm font-medium text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-70"
-								>
-									<Save className="h-4 w-4" />
-									{isSaving ? "Saving..." : "Save Profile"}
-								</button>
-							</form>
-						</div>
+							<button
+								type="submit"
+								disabled={isSaving}
+								className="flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600 px-5 py-2.5 text-center font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-4 focus:ring-purple-500/20 disabled:opacity-60"
+							>
+								{isSaving ? (
+									"Saving..."
+								) : (
+									<>
+										<Save className="h-5 w-5" />
+										Save Profile Changes
+									</>
+								)}
+							</button>
+						</form>
 					)}
 
-					{/* Account/Profile Picture Section */}
+					{/* Profile Picture Section */}
 					{activeTab === "account" && (
-						<div className="rounded-lg border border-gray-800 bg-gray-900 p-6">
-							<h2 className="mb-6 text-xl font-bold text-white">
-								Profile Picture
-							</h2>
+						<div className="space-y-6">
+							<div className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+								<h2 className="mb-4 text-xl font-semibold text-white">
+									Profile Picture
+								</h2>
 
-							<div className="flex flex-col items-center">
-								<div className="mb-8 h-40 w-40 overflow-hidden rounded-full border-4 border-gray-700 bg-gray-800">
-									{profilePreview ? (
-										<img
-											src={profilePreview}
-											alt="Profile"
-											className="h-full w-full object-cover"
+								<div className="flex flex-col items-center space-y-4">
+									<div className="relative">
+										<div className="h-32 w-32 overflow-hidden rounded-full border-4 border-purple-600">
+											{profilePreview ? (
+												<img
+													src={profilePreview}
+													alt="Profile"
+													className="h-full w-full object-cover"
+												/>
+											) : (
+												<div className="flex h-full w-full items-center justify-center bg-gray-800">
+													<User className="h-16 w-16 text-gray-400" />
+												</div>
+											)}
+										</div>
+									</div>
+
+									<div className="flex flex-wrap gap-2">
+										<input
+											type="file"
+											ref={fileInputRef}
+											accept="image/*"
+											onChange={handleProfilePictureChange}
+											className="hidden"
 										/>
-									) : (
-										<div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-purple-900 to-gray-800">
-											<span className="text-6xl font-bold uppercase text-gray-300">
-												{user.fullName ? user.fullName.charAt(0) : "U"}
-											</span>
+										<button
+											type="button"
+											onClick={() => fileInputRef.current.click()}
+											className="flex items-center gap-2 rounded-full bg-purple-600 px-4 py-2 font-medium text-white hover:bg-purple-700"
+										>
+											<Upload className="h-4 w-4" />
+											Upload New Picture
+										</button>
+										{profilePreview && (
+											<button
+												type="button"
+												onClick={deleteProfilePicture}
+												className="flex items-center gap-2 rounded-full bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-700"
+											>
+												Remove Picture
+											</button>
+										)}
+									</div>
+									{profileFile && (
+										<div className="mt-2 text-sm text-gray-300">
+											Selected: {profileFile.name}
 										</div>
 									)}
 								</div>
 
-								<div className="flex w-full max-w-xs flex-col gap-4">
-									<input
-										type="file"
-										accept="image/*"
-										ref={fileInputRef}
-										onChange={handleProfilePictureChange}
-										className="hidden"
-									/>
-
-									<button
-										type="button"
-										onClick={() => fileInputRef.current.click()}
-										className="flex items-center justify-center gap-2 rounded-md bg-gradient-to-r from-purple-600 to-blue-600 py-2 px-4 text-sm font-medium text-white hover:from-purple-700 hover:to-blue-700"
-									>
-										<Upload className="h-4 w-4" />
-										Choose New Photo
-									</button>
-
-									{profilePreview && (
-										<button
-											type="button"
-											onClick={deleteProfilePicture}
-											className="flex items-center justify-center gap-2 rounded-md border border-red-800 bg-red-900/20 py-2 px-4 text-sm font-medium text-red-400 hover:bg-red-900/30"
-										>
-											Remove Photo
-										</button>
-									)}
+								<div className="mt-4 rounded-lg bg-gray-800 p-3 text-sm text-gray-300">
+									<p>
+										Recommended: Square image, at least 400x400 pixels. Maximum
+										size: 2MB.
+									</p>
 								</div>
-
-								{profileFile && (
-									<div className="mt-6 text-center">
-										<p className="mb-2 text-sm text-purple-400">
-											New photo selected
-										</p>
-										<button
-											onClick={uploadProfilePicture}
-											disabled={isSaving}
-											className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"
-										>
-											{isSaving ? "Uploading..." : "Upload Photo"}
-										</button>
-									</div>
-								)}
 							</div>
+
+							{profileFile && (
+								<button
+									onClick={uploadProfilePicture}
+									disabled={isSaving}
+									className="flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600 px-5 py-2.5 text-center font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-4 focus:ring-purple-500/20 disabled:opacity-60"
+								>
+									{isSaving ? (
+										"Uploading..."
+									) : (
+										<>
+											<Save className="h-5 w-5" />
+											Save New Profile Picture
+										</>
+									)}
+								</button>
+							)}
 						</div>
 					)}
 
 					{/* Password Section */}
 					{activeTab === "password" && (
-						<div className="rounded-lg border border-gray-800 bg-gray-900 p-6">
-							<h2 className="mb-6 text-xl font-bold text-white">
-								Change Password
-							</h2>
-							<form onSubmit={handlePasswordSubmit} className="space-y-6">
-								<div className="space-y-2">
-									<label
-										htmlFor="currentPassword"
-										className="block text-sm font-medium text-gray-300"
-									>
-										Current Password
-									</label>
-									<div className="relative">
-										<input
-											id="currentPassword"
-											name="currentPassword"
-											type={showPassword ? "text" : "password"}
-											value={passwordData.currentPassword}
-											onChange={handlePasswordChange}
-											className="w-full rounded-md border border-gray-800 bg-gray-800 pl-10 pr-10 py-2 text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-										/>
-										<Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
-									</div>
-								</div>
+						<form onSubmit={handlePasswordSubmit} className="space-y-6">
+							<div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900 p-4">
+								<h2 className="text-xl font-semibold text-white">
+									Change Password
+								</h2>
 
-								<div className="space-y-2">
-									<label
-										htmlFor="newPassword"
-										className="block text-sm font-medium text-gray-300"
-									>
-										New Password
-									</label>
-									<div className="relative">
-										<input
-											id="newPassword"
-											name="newPassword"
-											type={showPassword ? "text" : "password"}
-											value={passwordData.newPassword}
-											onChange={handlePasswordChange}
-											className="w-full rounded-md border border-gray-800 bg-gray-800 pl-10 pr-10 py-2 text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-										/>
-										<Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
-									</div>
-									<p className="text-xs text-gray-500">
-										Password must be at least 8 characters long
-									</p>
-								</div>
-
-								<div className="space-y-2">
-									<label
-										htmlFor="confirmPassword"
-										className="block text-sm font-medium text-gray-300"
-									>
-										Confirm New Password
-									</label>
-									<div className="relative">
-										<input
-											id="confirmPassword"
-											name="confirmPassword"
-											type={showPassword ? "text" : "password"}
-											value={passwordData.confirmPassword}
-											onChange={handlePasswordChange}
-											className="w-full rounded-md border border-gray-800 bg-gray-800 pl-10 pr-10 py-2 text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-										/>
-										<Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
-										<button
-											type="button"
-											onClick={() => setShowPassword(!showPassword)}
-											className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-300"
+								<div className="space-y-4">
+									<div className="space-y-2">
+										<label
+											htmlFor="currentPassword"
+											className="text-sm font-medium text-gray-300"
 										>
-											<Eye className="h-5 w-5" />
-											<span className="sr-only">
-												{showPassword ? "Hide" : "Show"} password
+											Current Password
+										</label>
+										<div className="relative">
+											<span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+												<Lock className="h-5 w-5" />
 											</span>
-										</button>
+											<input
+												type={showPassword ? "text" : "password"}
+												id="currentPassword"
+												name="currentPassword"
+												value={passwordData.currentPassword}
+												onChange={handlePasswordChange}
+												className="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-10 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+												placeholder="Enter your current password"
+											/>
+											<button
+												type="button"
+												className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400"
+												onClick={() => setShowPassword(!showPassword)}
+											>
+												<Eye className="h-5 w-5" />
+											</button>
+										</div>
+									</div>
+
+									<div className="space-y-2">
+										<label
+											htmlFor="newPassword"
+											className="text-sm font-medium text-gray-300"
+										>
+											New Password
+										</label>
+										<div className="relative">
+											<span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+												<Lock className="h-5 w-5" />
+											</span>
+											<input
+												type={showPassword ? "text" : "password"}
+												id="newPassword"
+												name="newPassword"
+												value={passwordData.newPassword}
+												onChange={handlePasswordChange}
+												className="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-10 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+												placeholder="Enter new password"
+											/>
+										</div>
+										<p className="text-xs text-gray-500">
+											Password must be at least 8 characters long
+										</p>
+									</div>
+
+									<div className="space-y-2">
+										<label
+											htmlFor="confirmPassword"
+											className="text-sm font-medium text-gray-300"
+										>
+											Confirm New Password
+										</label>
+										<div className="relative">
+											<span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+												<Lock className="h-5 w-5" />
+											</span>
+											<input
+												type={showPassword ? "text" : "password"}
+												id="confirmPassword"
+												name="confirmPassword"
+												value={passwordData.confirmPassword}
+												onChange={handlePasswordChange}
+												className="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-10 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+												placeholder="Confirm new password"
+											/>
+										</div>
 									</div>
 								</div>
+							</div>
 
-								<button
-									type="submit"
-									disabled={isSaving}
-									className="flex w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-purple-600 to-blue-600 py-2 text-sm font-medium text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-70"
-								>
-									<Save className="h-4 w-4" />
-									{isSaving ? "Updating..." : "Update Password"}
-								</button>
-							</form>
-						</div>
+							<button
+								type="submit"
+								disabled={isSaving}
+								className="flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600 px-5 py-2.5 text-center font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-4 focus:ring-purple-500/20 disabled:opacity-60"
+							>
+								{isSaving ? (
+									"Updating..."
+								) : (
+									<>
+										<Save className="h-5 w-5" />
+										Update Password
+									</>
+								)}
+							</button>
+						</form>
 					)}
 				</div>
 			</main>
