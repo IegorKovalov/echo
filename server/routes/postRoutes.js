@@ -1,6 +1,7 @@
 const express = require("express");
 const authController = require("../controllers/authController");
 const postController = require("../controllers/postController");
+const upload = require("../middlewares/uploadMiddleware");
 const router = express.Router();
 
 router.use(authController.protect);
@@ -10,7 +11,7 @@ router.get("/trending", postController.getTrendingPosts);
 
 router
 	.route("/")
-	.post(postController.createPost)
+	.post(upload.single("image"), postController.createPost)
 	.get(postController.getAllPosts);
 
 router.get("/user/:userId", postController.getUserPosts);
@@ -18,7 +19,7 @@ router.get("/user/:userId", postController.getUserPosts);
 router
 	.route("/:id")
 	.get(postController.getPost)
-	.patch(postController.updatePost)
+	.patch(upload.single("image"), postController.updatePost)
 	.delete(postController.deletePost);
 
 // View counter routes

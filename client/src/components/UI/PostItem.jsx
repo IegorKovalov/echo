@@ -31,9 +31,15 @@ export default function PostItem({
 	const [showComments, setShowComments] = useState(false);
 	const [commentCount, setCommentCount] = useState(post.comments?.length || 0);
 	const [isEditing, setIsEditing] = useState(false);
+	const [currentPost, setCurrentPost] = useState(post); // Track the current post state locally
 	const { showSuccess, showError, showInfo } = useToast();
 	const { trackView, getViewCount, initializeViewCount } = useViewTracking();
 	const initializedRef = useRef(false);
+
+	// Update local post state when prop changes
+	useEffect(() => {
+		setCurrentPost(post);
+	}, [post]);
 
 	// Initialize view count - using the ref to prevent multiple calls
 	useEffect(() => {
@@ -41,33 +47,33 @@ export default function PostItem({
 		if (!initializedRef.current) {
 			initializedRef.current = true;
 			// Initialize with the post's current view count
-			initializeViewCount(post._id, post.views || 0);
+			initializeViewCount(currentPost._id, currentPost.views || 0);
 		}
-	}, [post._id, post.views, initializeViewCount]);
+	}, [currentPost._id, currentPost.views, initializeViewCount]);
 
 	// Update comment count when post comments change
 	useEffect(() => {
-		if (post.comments) {
-			setCommentCount(post.comments.length);
+		if (currentPost.comments) {
+			setCommentCount(currentPost.comments.length);
 		}
-	}, [post.comments]);
+	}, [currentPost.comments]);
 
 	// Track view once per component mount using the batch system
 	useEffect(() => {
-		if (!hasTrackedView && !post.expired) {
-			trackView(post._id);
+		if (!hasTrackedView && !currentPost.expired) {
+			trackView(currentPost._id);
 			setHasTrackedView(true);
 		}
-	}, [post._id, post.expired, hasTrackedView, trackView]);
+	}, [currentPost._id, currentPost.expired, hasTrackedView, trackView]);
 
 	// Get the current view count for this post
-	const viewCount = getViewCount(post._id) || post.views || 0;
+	const viewCount = getViewCount(currentPost._id) || currentPost.views || 0;
 
 	const handleDelete = async () => {
 		if (window.confirm("Are you sure you want to delete this post?")) {
 			setIsDeleting(true);
 			try {
-				await onDelete(post._id);
+				await onDelete(currentPost._id);
 				showSuccess("Post deleted successfully");
 			} catch (error) {
 				showError(error.response?.data?.message || "Failed to delete post");
@@ -80,7 +86,15 @@ export default function PostItem({
 	const handleRenew = async () => {
 		setIsRenewing(true);
 		try {
-			await onRenew(post._id);
+			await onRenew(currentPost._id);
+			const renewedPost = {
+				...currentPost,
+				expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+			};
+			setCurrentPost(renewedPost);
+			if (onEdit) {
+				onEdit(renewedPost);
+			}
 			showSuccess("Post renewed for another 24 hours");
 		} catch (error) {
 			showError(error.response?.data?.message || "Failed to renew post");
@@ -91,15 +105,30 @@ export default function PostItem({
 
 	const handleEdit = async (updatedPostData) => {
 		try {
-			const updatedPost = await PostService.updatePost(
-				post._id,
+			const response = await PostService.updatePost(
+				currentPost._id,
 				updatedPostData
 			);
+
+			// Extract the updated post from the response data
+			// The server response structure is { status, data: { post: {...} } }
+			const updatedPost = response.data?.post || {};
+
+			// Ensure date fields are properly preserved from the original post if missing
+			const processedPost = {
+				...updatedPost,
+				createdAt: updatedPost.createdAt || currentPost.createdAt,
+				expiresAt: updatedPost.expiresAt || currentPost.expiresAt,
+				// Make sure content is preserved if somehow missing in the response
+				content: updatedPost.content || currentPost.content,
+			};
+
+			setCurrentPost(processedPost);
 			setIsEditing(false);
 			if (onEdit) {
-				onEdit(updatedPost);
+				onEdit(processedPost);
 			}
-			showSuccess("Post updated successfully");
+			// Success notification is shown in PostForm component
 		} catch (error) {
 			showError(error.response?.data?.message || "Failed to update post");
 		}
@@ -108,11 +137,17 @@ export default function PostItem({
 	// Handle comment count updates
 	const handleCommentUpdate = (updatedComments) => {
 		setCommentCount(updatedComments.length);
+		// Update the local post state with new comments
+		setCurrentPost((prev) => ({ ...prev, comments: updatedComments }));
+		// Propagate changes upward if onEdit is provided
+		if (onEdit) {
+			onEdit({ ...currentPost, comments: updatedComments });
+		}
 	};
 
 	const handleShare = () => {
 		// Copy post URL to clipboard
-		const postUrl = `${window.location.origin}/post/${post._id}`;
+		const postUrl = `${window.location.origin}/post/${currentPost._id}`;
 		navigator.clipboard
 			.writeText(postUrl)
 			.then(() => {
@@ -125,9 +160,9 @@ export default function PostItem({
 
 	// Hours left until expiration
 	const getHoursLeft = () => {
-		if (!post.expiresAt) return 0;
+		if (!currentPost.expiresAt) return 0;
 		return Math.ceil(
-			(new Date(post.expiresAt) - new Date()) / (1000 * 60 * 60)
+			(new Date(currentPost.expiresAt) - new Date()) / (1000 * 60 * 60)
 		);
 	};
 
@@ -146,7 +181,7 @@ export default function PostItem({
 			<Card className="mb-4">
 				<div className="mb-3 flex items-center justify-between">
 					<div className="flex items-center gap-3">
-						<ProfileAvatar user={post.user || currentUser} size="sm" />
+						<ProfileAvatar user={currentPost.user || currentUser} size="sm" />
 						<h3 className="font-medium text-white">Edit Post</h3>
 					</div>
 					<button
@@ -159,8 +194,9 @@ export default function PostItem({
 
 				<PostForm
 					user={currentUser}
-					initialContent={post.content}
+					initialContent={currentPost.content}
 					initialDuration={getHoursLeft()}
+					initialImage={currentPost.image} // Pass the existing image URL
 					isEditing={true}
 					onSubmit={handleEdit}
 				/>
@@ -172,18 +208,18 @@ export default function PostItem({
 		<Card className="mb-4">
 			<div className="mb-3 flex items-center justify-between">
 				<div className="flex items-center gap-3">
-					<ProfileAvatar user={post.user || currentUser} size="sm" />
+					<ProfileAvatar user={currentPost.user || currentUser} size="sm" />
 					<div>
 						<h3 className="font-medium text-white">
-							{post.user?.fullName || currentUser?.fullName || "User"}
+							{currentPost.user?.fullName || currentUser?.fullName || "User"}
 						</h3>
 						<p className="text-xs text-gray-400">
-							{formatDate(post.createdAt)}
+							{formatDate(currentPost.createdAt)}
 						</p>
 					</div>
 				</div>
 
-				{!post.expired ? (
+				{!currentPost.expired ? (
 					<div className="flex items-center gap-1 rounded-full bg-purple-900/30 px-2 py-1 text-xs font-medium text-purple-400">
 						<Clock className="h-3 w-3" />
 						<span>{getHoursLeft()}h left</span>
@@ -196,11 +232,11 @@ export default function PostItem({
 				)}
 			</div>
 
-			<p className="mb-4 text-sm text-gray-200">{post.content}</p>
+			<p className="mb-4 text-sm text-gray-200">{currentPost.content}</p>
 
-			{post.image && (
+			{currentPost.image && (
 				<img
-					src={post.image}
+					src={currentPost.image}
 					alt="Post"
 					className="mb-4 h-64 w-full rounded-lg object-cover"
 				/>
@@ -237,7 +273,7 @@ export default function PostItem({
 					</div>
 
 					<div className="flex gap-2">
-						{!post.expired && onRenew && (
+						{!currentPost.expired && onRenew && (
 							<button
 								onClick={handleRenew}
 								disabled={isRenewing}
@@ -248,20 +284,22 @@ export default function PostItem({
 						)}
 
 						{/* Edit button - only show if the post belongs to the current user */}
-						{currentUser && post.user && currentUser._id === post.user._id && (
-							<button
-								onClick={() => setIsEditing(true)}
-								className="rounded-full bg-blue-600/20 p-1 text-blue-400 hover:bg-blue-600/40"
-							>
-								<Edit2 className="h-4 w-4" />
-								<span className="sr-only">Edit</span>
-							</button>
-						)}
+						{currentUser &&
+							currentPost.user &&
+							currentUser._id === currentPost.user._id && (
+								<button
+									onClick={() => setIsEditing(true)}
+									className="rounded-full bg-blue-600/20 p-1 text-blue-400 hover:bg-blue-600/40"
+								>
+									<Edit2 className="h-4 w-4" />
+									<span className="sr-only">Edit</span>
+								</button>
+							)}
 
 						{onDelete &&
 							currentUser &&
-							post.user &&
-							currentUser._id === post.user._id && (
+							currentPost.user &&
+							currentUser._id === currentPost.user._id && (
 								<button
 									onClick={handleDelete}
 									disabled={isDeleting}
@@ -278,7 +316,7 @@ export default function PostItem({
 			{/* Comments Section */}
 			{showComments && (
 				<CommentSection
-					post={post}
+					post={currentPost}
 					currentUser={currentUser}
 					onCommentUpdate={handleCommentUpdate}
 				/>

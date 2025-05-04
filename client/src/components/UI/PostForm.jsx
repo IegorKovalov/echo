@@ -1,5 +1,5 @@
 import { Clock, Image, Mic } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "../../context/ToastContext";
 import Card from "./Card";
 import ProfileAvatar from "./ProfileAvatar";
@@ -11,6 +11,7 @@ export default function PostForm({
 	user,
 	initialContent = "",
 	initialDuration = 24,
+	initialImage = null, // Add prop for handling existing image
 	isEditing = false,
 	onSubmit,
 	isSubmitting = false,
@@ -18,8 +19,19 @@ export default function PostForm({
 	const [content, setContent] = useState(initialContent);
 	const [duration, setDuration] = useState(initialDuration);
 	const [image, setImage] = useState(null);
-	const [imagePreview, setImagePreview] = useState(null);
+	const [imagePreview, setImagePreview] = useState(initialImage); // Initialize with existing image
+	const [keepExistingImage, setKeepExistingImage] = useState(!!initialImage);
 	const { showSuccess, showError, showLoading, showInfo } = useToast();
+
+	// Update form state when props change (useful for re-renders)
+	useEffect(() => {
+		setContent(initialContent);
+		setDuration(initialDuration);
+		if (initialImage && !imagePreview) {
+			setImagePreview(initialImage);
+			setKeepExistingImage(true);
+		}
+	}, [initialContent, initialDuration, initialImage]);
 
 	const handleImageChange = (e) => {
 		const file = e.target.files[0];
@@ -35,6 +47,7 @@ export default function PostForm({
 		const reader = new FileReader();
 		reader.onloadend = () => {
 			setImagePreview(reader.result);
+			setKeepExistingImage(false);
 		};
 		reader.readAsDataURL(file);
 		setImage(file);
@@ -44,6 +57,7 @@ export default function PostForm({
 	const removeImage = () => {
 		setImage(null);
 		setImagePreview(null);
+		setKeepExistingImage(false);
 		showInfo("Image removed");
 	};
 
@@ -52,28 +66,48 @@ export default function PostForm({
 
 		if (!content.trim()) return;
 
+		// Create FormData object for submission
 		const formData = new FormData();
 		formData.append("content", content);
 		formData.append("duration", duration);
+
+		// Handle image logic
 		if (image) {
+			// New image selected
 			formData.append("image", image);
+		} else if (isEditing) {
+			// Editing mode - explicitly tell the server what to do with the image
+			formData.append("keepExistingImage", keepExistingImage.toString());
 		}
 
 		try {
-			// Use promise-based toast for the submission
-			await showLoading(onSubmit(formData), {
-				loading: isEditing ? "Updating post..." : "Creating post...",
-				success: isEditing
-					? "Post updated successfully!"
-					: "Post created successfully!",
-				error: (err) => `Error: ${err.message || "Something went wrong"}`,
-			});
+			await showLoading(
+				new Promise((resolve, reject) => {
+					// Call the onSubmit function
+					const result = onSubmit(formData);
+
+					// Handle both Promise and non-Promise return values
+					if (result instanceof Promise) {
+						result.then(resolve).catch(reject);
+					} else {
+						resolve(result);
+					}
+				}),
+				{
+					loading: isEditing ? "Updating post..." : "Creating post...",
+					success: isEditing
+						? "Post updated successfully!"
+						: "Post created successfully!",
+					error: (err) => `Error: ${err.message || "Something went wrong"}`,
+				}
+			);
 
 			// Reset form if not editing
 			if (!isEditing) {
 				setContent("");
 				setImage(null);
 				setImagePreview(null);
+				setKeepExistingImage(false);
 			}
 		} catch (error) {
 			// Error is handled by the showLoading toast
