@@ -30,7 +30,7 @@ export default function PostItem({
 	const [isRenewing, setIsRenewing] = useState(false);
 	const [hasTrackedView, setHasTrackedView] = useState(false);
 	const [showComments, setShowComments] = useState(false);
-	const [commentCount, setCommentCount] = useState(post.comments?.length || 0);
+	const [commentCount, setCommentCount] = useState(0);
 	const [isEditing, setIsEditing] = useState(false);
 	const [currentPost, setCurrentPost] = useState(post);
 	const { showSuccess, showError, showInfo } = useToast();

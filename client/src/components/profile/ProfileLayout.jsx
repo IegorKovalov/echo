@@ -63,7 +63,7 @@ export default function ProfileLayout({ userId }) {
 
 			fetchProfileData();
 		}
-	}, [user, userId, navigate]);
+	}, [user, userId]);
 
 	// Load user posts
 	useEffect(() => {
