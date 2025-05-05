@@ -1,0 +1,117 @@
+import {
+	Calendar,
+	Camera,
+	Edit,
+	Mail,
+	MapPin,
+	UserMinus,
+	UserPlus,
+} from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import ProfileAvatar from "../UI/ProfileAvatar";
+
+export default function ProfileContent({ profileData, isOwnProfile }) {
+	const [isFollowing, setIsFollowing] = useState(false);
+
+	const handleFollowToggle = () => {
+		// This would make an API call to follow/unfollow the user
+		setIsFollowing(!isFollowing);
+	};
+
+	return (
+		<div>
+			{/* Cover Image */}
+			<div className="h-40 w-full bg-gradient-to-r from-purple-900 to-blue-900 md:h-60" />
+
+			{/* Profile Image and Basic Info */}
+			<div className="container px-4">
+				<div className="relative -mt-16 flex flex-col items-center md:-mt-20 md:flex-row md:items-end">
+					<div className="relative">
+						<ProfileAvatar
+							user={profileData}
+							size="3xl"
+							className="border-4 border-gray-950"
+						/>
+						{isOwnProfile && (
+							<Link
+								to="/settings"
+								className="absolute bottom-0 right-0 rounded-full bg-purple-600 p-2 text-white shadow-lg hover:bg-purple-700"
+							>
+								<Camera className="h-4 w-4" />
+								<span className="sr-only">Change profile picture</span>
+							</Link>
+						)}
+					</div>
+
+					<div className="mt-4 text-center md:ml-6 md:text-left">
+						<h2 className="text-2xl font-bold text-white">
+							{profileData.fullName}
+						</h2>
+						<p className="text-gray-400">
+							@{profileData.username || "username"}
+						</p>
+					</div>
+
+					<div className="mt-4 md:ml-auto">
+						{isOwnProfile ? (
+							<Link
+								to="/settings"
+								className="flex items-center gap-1 rounded-full bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
+							>
+								<Edit className="h-4 w-4" />
+								<span>Edit Profile</span>
+							</Link>
+						) : (
+							<div className="flex gap-2">
+								<button
+									onClick={handleFollowToggle}
+									className={`flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium ${
+										isFollowing
+											? "bg-gray-700 text-white hover:bg-gray-600"
+											: "bg-purple-600 text-white hover:bg-purple-700"
+									}`}
+								>
+									{isFollowing ? (
+										<>
+											<UserMinus className="h-4 w-4" />
+											<span>Unfollow</span>
+										</>
+									) : (
+										<>
+											<UserPlus className="h-4 w-4" />
+											<span>Follow</span>
+										</>
+									)}
+								</button>
+								<button className="flex items-center gap-1 rounded-full bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
+									<Mail className="h-4 w-4" />
+									<span>Message</span>
+								</button>
+							</div>
+						)}
+					</div>
+				</div>
+
+				{/* Profile Bio */}
+				<div className="mt-6 max-w-2xl">
+					<p className="text-gray-300">{profileData.bio || "No bio yet."}</p>
+					<div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-400">
+						{profileData.location && (
+							<div className="flex items-center gap-1">
+								<MapPin className="h-4 w-4" />
+								<span>{profileData.location}</span>
+							</div>
+						)}
+						<div className="flex items-center gap-1">
+							<Calendar className="h-4 w-4" />
+							<span>
+								Joined {new Date(profileData.createdAt).toLocaleDateString()}
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}

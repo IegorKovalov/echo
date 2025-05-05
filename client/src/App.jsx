@@ -38,6 +38,14 @@ function App() {
 								}
 							/>
 							<Route
+								path="/profile/:userId"
+								element={
+									<Layout requireAuth={true}>
+										<ProfilePage />
+									</Layout>
+								}
+							/>
+							<Route
 								path="/settings"
 								element={
 									<Layout requireAuth={true}>

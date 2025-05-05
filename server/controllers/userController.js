@@ -182,6 +182,7 @@ exports.updateProfilePicture = async (req, res) => {
 		});
 	}
 };
+
 exports.updateProfileInfo = async (req, res) => {
 	try {
 		const allowedFields = [
@@ -224,6 +225,38 @@ exports.updateProfileInfo = async (req, res) => {
 		});
 	}
 };
+
+exports.getUserById = async (req, res) => {
+	try {
+		const userId = req.params.id;
+
+		const user = await User.findById(userId).select(
+			"-__v -passwordChangedAt -passwordResetToken -passwordResetExpires"
+		);
+
+		if (!user) {
+			return res.status(404).json({
+				status: "failed",
+				message: "User not found",
+			});
+		}
+
+		res.status(200).json({
+			status: "success",
+			data: {
+				user,
+			},
+		});
+	} catch (error) {
+		return res.status(500).json({
+			status: "failed",
+			message: "Error retrieving user profile",
+			error:
+				process.env.NODE_ENV === "development" ? error.message : "Server error",
+		});
+	}
+};
+
 exports.deleteProfilePicture = async (req, res) => {
 	try {
 		const user = req.user;

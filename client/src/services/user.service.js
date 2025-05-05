@@ -11,6 +11,14 @@ const UserService = {
 		return response.data;
 	},
 
+	getUserProfile: async (userId) => {
+		const token = localStorage.getItem("token");
+		const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+		const response = await api.get(`${USER_URL}/${userId}`, { headers });
+		return response.data;
+	},
+
 	updateMe: async (userData) => {
 		const token = localStorage.getItem("token");
 		const headers = token ? { Authorization: `Bearer ${token}` } : {};

@@ -4,12 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import Header from "./Header";
 
-/**
- * Main layout component that handles:
- * - Protected routes (redirects to login if not authenticated)
- * - Common layout structure with header
- * - Loading states
- */
 export default function Layout({
 	children,
 	requireAuth = true,
@@ -18,7 +12,6 @@ export default function Layout({
 	const { user, loading } = useAuth();
 	const navigate = useNavigate();
 
-	// Handle authentication requirement
 	useEffect(() => {
 		if (!loading && requireAuth && !user) {
 			navigate("/login");

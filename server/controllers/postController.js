@@ -61,11 +61,22 @@ exports.getUserPosts = async (req, res) => {
 	try {
 		const userId = req.params.userId;
 		const { includeExpired } = req.query;
+		const isCurrentUser = userId === req.user._id.toString();
 
 		let query = Post.find({ user: userId });
-
-		if (includeExpired === "true") {
-			query = query.where({ includeExpired: true });
+		if (includeExpired === "true" && isCurrentUser) {
+			query = Post.find({
+				user: userId,
+				includeExpired: true,
+			});
+		} else {
+			query = Post.find({
+				user: userId,
+				$or: [
+					{ expiresAt: { $gt: new Date() } },
+					{ expiresAt: { $exists: false } },
+				],
+			});
 		}
 
 		const posts = await populatePostFields(query).sort({
@@ -169,9 +180,6 @@ exports.getPost = async (req, res) => {
 };
 exports.updatePost = async (req, res) => {
 	try {
-		console.log("Update Post Request Body:", req.body);
-		console.log("Update Post Request File:", req.file);
-
 		const content = req.body.content;
 		const duration = req.body.duration;
 		const keepExistingImage = req.body.keepExistingImage;
@@ -182,8 +190,6 @@ exports.updatePost = async (req, res) => {
 				message: "Post content is required",
 			});
 		}
-
-		// Find the post first to get its current data
 		const post = await Post.findOne({
 			_id: req.params.id,
 			user: req.user._id,
@@ -195,11 +201,7 @@ exports.updatePost = async (req, res) => {
 				message: "Post not found or you're not authorized to update it",
 			});
 		}
-
-		// Prepare the update object with the content
 		post.content = content.trim();
-
-		// Update duration/expiration if provided
 		if (duration) {
 			const durationHours = parseFloat(duration);
 			if (!isNaN(durationHours) && durationHours > 0 && durationHours <= 168) {
@@ -210,26 +212,14 @@ exports.updatePost = async (req, res) => {
 			}
 		}
 
-		// Handle image update if there's a file
 		if (req.file) {
-			// If there's a new image, update the image field
 			post.image = req.file.path;
 		} else if (keepExistingImage === "false") {
-			// If explicitly told to remove the image
 			post.image = null;
 		}
-		// Otherwise, keep the existing image
 
-		// Save the post directly to ensure all fields are updated properly
 		await post.save({ timestamps: false });
-
-		// Fetch the freshly updated post with populated fields
 		const updatedPost = await populatePostFields(Post.findById(post._id));
-
-		// Check the updated post before sending response
-		console.log("Updated post content:", updatedPost.content);
-
-		// Convert to object and add virtual properties
 		const postObj = updatedPost.toObject({ virtuals: true });
 		postObj.isExpired = updatedPost.isExpired;
 		postObj.remainingTime = updatedPost.remainingTime;

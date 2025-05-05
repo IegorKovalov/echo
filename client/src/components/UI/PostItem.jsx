@@ -31,7 +31,7 @@ export default function PostItem({
 	const [showComments, setShowComments] = useState(false);
 	const [commentCount, setCommentCount] = useState(post.comments?.length || 0);
 	const [isEditing, setIsEditing] = useState(false);
-	const [currentPost, setCurrentPost] = useState(post); // Track the current post state locally
+	const [currentPost, setCurrentPost] = useState(post);
 	const { showSuccess, showError, showInfo } = useToast();
 	const { trackView, getViewCount, initializeViewCount } = useViewTracking();
 	const initializedRef = useRef(false);
@@ -284,7 +284,8 @@ export default function PostItem({
 						)}
 
 						{/* Edit button - only show if the post belongs to the current user */}
-						{currentUser &&
+						{onEdit &&
+							currentUser &&
 							currentPost.user &&
 							currentUser._id === currentPost.user._id && (
 								<button
