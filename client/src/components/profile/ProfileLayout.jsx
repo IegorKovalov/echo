@@ -1,8 +1,8 @@
 import { Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import PostService from "../../services/post.service";
+import { usePost } from "../../context/PostContext";
 import UserService from "../../services/user.service";
 import FollowersModal from "../UI/FollowersModal";
 import ProfileContent from "./ProfileContent";
@@ -14,6 +14,7 @@ import ProfileTabs from "./ProfileTabs";
 
 export default function ProfileLayout({ userId }) {
 	const { user, loading } = useAuth();
+	const { fetchUserPosts, createPost, deletePost, renewPost } = usePost();
 	const navigate = useNavigate();
 
 	// State management
@@ -26,6 +27,13 @@ export default function ProfileLayout({ userId }) {
 	const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
 	const [followersModalTab, setFollowersModalTab] = useState("");
 	const [isOwnProfile, setIsOwnProfile] = useState(true);
+
+	// Refs for tracking state changes to prevent unnecessary fetches
+	const fetchPostsRef = useRef({
+		profileId: null,
+		showExpired: false,
+		fetchCount: 0,
+	});
 
 	// Redirect if not logged in
 	useEffect(() => {
@@ -63,30 +71,44 @@ export default function ProfileLayout({ userId }) {
 
 			fetchProfileData();
 		}
-	}, [user, userId]);
+	}, [user, userId, navigate]);
 
-	// Load user posts
+	// Load user posts using PostContext - with proper dependency handling
 	useEffect(() => {
-		if (user && profileData) {
-			const fetchPosts = async () => {
-				try {
-					setLoadingPosts(true);
-					// Fetch posts for the profile we're viewing (either own or another user's)
-					const data = await PostService.getUserPosts(
-						profileData._id,
-						showExpiredPosts && isOwnProfile // Only show expired posts on own profile
-					);
-					setPosts(data.data.posts || []);
-				} catch (error) {
-					console.error("Error fetching posts:", error);
-				} finally {
-					setLoadingPosts(false);
-				}
-			};
+		if (!user || !profileData) return;
 
-			fetchPosts();
-		}
-	}, [user, profileData, showExpiredPosts, isOwnProfile]);
+		// Check if we need to fetch posts again
+		const shouldFetchPosts =
+			profileData._id !== fetchPostsRef.current.profileId ||
+			showExpiredPosts !== fetchPostsRef.current.showExpired;
+
+		if (!shouldFetchPosts) return;
+
+		// Update ref to avoid redundant fetches
+		fetchPostsRef.current = {
+			profileId: profileData._id,
+			showExpired: showExpiredPosts,
+			fetchCount: fetchPostsRef.current.fetchCount + 1,
+		};
+
+		const loadUserPosts = async () => {
+			try {
+				setLoadingPosts(true);
+				// Fetch posts for the profile we're viewing
+				const userPosts = await fetchUserPosts(
+					profileData._id,
+					showExpiredPosts && isOwnProfile
+				);
+				setPosts(userPosts || []);
+			} catch (error) {
+				console.error("Error fetching posts:", error);
+			} finally {
+				setLoadingPosts(false);
+			}
+		};
+
+		loadUserPosts();
+	}, [user, profileData, showExpiredPosts, isOwnProfile, fetchUserPosts]);
 
 	// Handle post creation - only available on own profile
 	const handleCreatePost = async (formData) => {
@@ -94,11 +116,14 @@ export default function ProfileLayout({ userId }) {
 
 		try {
 			setIsSubmitting(true);
-			await PostService.createPost(formData);
+			await createPost(formData);
+
+			// Track that we need to fetch posts again
+			fetchPostsRef.current.fetchCount += 1;
 
 			// Refresh posts after creating a new one
-			const data = await PostService.getUserPosts(user._id, showExpiredPosts);
-			setPosts(data.data.posts || []);
+			const userPosts = await fetchUserPosts(user._id, showExpiredPosts);
+			setPosts(userPosts || []);
 		} catch (error) {
 			console.error("Error creating post:", error);
 		} finally {
@@ -111,13 +136,9 @@ export default function ProfileLayout({ userId }) {
 		if (!isOwnProfile) return;
 
 		try {
-			await PostService.deletePost(postId);
-			// Refresh posts after deleting
-			const data = await PostService.getUserPosts(
-				profileData._id,
-				showExpiredPosts
-			);
-			setPosts(data.data.posts || []);
+			await deletePost(postId);
+			// Filter out the deleted post from the local state instead of refetching
+			setPosts((prevPosts) => prevPosts.filter((post) => post._id !== postId));
 		} catch (error) {
 			console.error("Error deleting post:", error);
 		}
@@ -128,13 +149,11 @@ export default function ProfileLayout({ userId }) {
 		if (!isOwnProfile) return;
 
 		try {
-			await PostService.renewPost(postId);
-			// Refresh posts after renewing
-			const data = await PostService.getUserPosts(
-				profileData._id,
-				showExpiredPosts
+			const renewedPost = await renewPost(postId);
+			// Update the post in local state instead of refetching
+			setPosts((prevPosts) =>
+				prevPosts.map((post) => (post._id === postId ? renewedPost : post))
 			);
-			setPosts(data.data.posts || []);
 		} catch (error) {
 			console.error("Error renewing post:", error);
 		}

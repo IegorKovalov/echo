@@ -16,7 +16,7 @@ export default function PostForm({
 	const [content, setContent] = useState(initialContent);
 	const [duration, setDuration] = useState(initialDuration);
 	const [image, setImage] = useState(null);
-	const [imagePreview, setImagePreview] = useState(initialImage); // Initialize with existing image
+	const [imagePreview, setImagePreview] = useState(initialImage);
 	const [keepExistingImage, setKeepExistingImage] = useState(!!initialImage);
 	const { showSuccess, showError, showLoading, showInfo } = useToast();
 

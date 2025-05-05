@@ -1,19 +1,27 @@
 import { Send } from "lucide-react";
 import { useEffect, useState } from "react";
+import { usePost } from "../../context/PostContext";
 import { useToast } from "../../context/ToastContext";
-import PostService from "../../services/post.service";
 import CommentItem from "./CommentItem";
 import ProfileAvatar from "./ProfileAvatar";
 
 /**
  * Component for displaying and managing comments on a post
  */
-export default function CommentSection({ post, currentUser, onCommentUpdate }) {
+export default function CommentSection({
+	post,
+	currentUser,
+	onCommentUpdate,
+	onAddComment,
+	onDeleteComment,
+}) {
 	const [comments, setComments] = useState(post.comments || []);
 	const [commentContent, setCommentContent] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isExpanded, setIsExpanded] = useState(false);
 	const { showSuccess, showError } = useToast();
+	// Use post context if props aren't provided
+	const postContext = usePost();
 
 	// Sync comments with post prop when it changes
 	useEffect(() => {
@@ -27,27 +35,48 @@ export default function CommentSection({ post, currentUser, onCommentUpdate }) {
 
 		setIsSubmitting(true);
 		try {
-			const response = await PostService.addComment(
-				post._id,
-				commentContent.trim()
-			);
+			// Use the provided onAddComment or the postContext method
+			const addCommentFn = onAddComment || postContext.addComment;
+			const response = await addCommentFn(post._id, commentContent.trim());
 
-			if (response.data && response.data.post && response.data.post.comments) {
-				const updatedComments = response.data.post.comments;
-				setComments(updatedComments);
-
-				// Notify parent component that comments have been updated
-				if (onCommentUpdate) {
-					onCommentUpdate(updatedComments);
-				}
-
-				// Show success toast
-				showSuccess("Comment added successfully");
+			// Handle the response data properly
+			let updatedComments;
+			if (
+				response &&
+				response.data &&
+				response.data.post &&
+				response.data.post.comments
+			) {
+				updatedComments = response.data.post.comments;
+			} else if (response && response.comments) {
+				updatedComments = response.comments;
+			} else if (response) {
+				// If direct post object returned
+				updatedComments = response.comments || [];
+			} else {
+				// Fallback: Add the new comment locally
+				const newComment = {
+					_id: Date.now().toString(), // Temporary ID
+					content: commentContent.trim(),
+					user: currentUser,
+					createdAt: new Date().toISOString(),
+				};
+				updatedComments = [...comments, newComment];
 			}
+
+			setComments(updatedComments);
+
+			// Notify parent component that comments have been updated
+			if (onCommentUpdate) {
+				onCommentUpdate(updatedComments);
+			}
+
+			// Show success toast
+			showSuccess("Comment added successfully");
 			setCommentContent("");
 		} catch (error) {
 			console.error("Error adding comment:", error);
-			showError(error.response?.data?.message || "Failed to add comment");
+			showError(error.message || "Failed to add comment");
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -56,34 +85,41 @@ export default function CommentSection({ post, currentUser, onCommentUpdate }) {
 	// Delete a comment
 	const handleDeleteComment = async (postId, commentId) => {
 		try {
-			const response = await PostService.deleteComment(postId, commentId);
+			// Use the provided onDeleteComment or the postContext method
+			const deleteCommentFn = onDeleteComment || postContext.deleteComment;
+			const response = await deleteCommentFn(postId, commentId);
 
-			if (response.data && response.data.post && response.data.post.comments) {
-				const updatedComments = response.data.post.comments;
-				setComments(updatedComments);
-
-				// Notify parent component that comments have been updated
-				if (onCommentUpdate) {
-					onCommentUpdate(updatedComments);
-				}
-
-				// Show success toast
-				showSuccess("Comment deleted successfully");
+			// Handle the response data properly
+			let updatedComments;
+			if (
+				response &&
+				response.data &&
+				response.data.post &&
+				response.data.post.comments
+			) {
+				updatedComments = response.data.post.comments;
+			} else if (response && response.comments) {
+				updatedComments = response.comments;
+			} else if (response) {
+				// If direct post object returned
+				updatedComments = response.comments || [];
 			} else {
 				// Fallback: Remove the comment locally if API doesn't return updated comments
-				const filteredComments = comments.filter((c) => c._id !== commentId);
-				setComments(filteredComments);
-
-				if (onCommentUpdate) {
-					onCommentUpdate(filteredComments);
-				}
-
-				// Show success toast for the fallback case
-				showSuccess("Comment deleted successfully");
+				updatedComments = comments.filter((c) => c._id !== commentId);
 			}
+
+			setComments(updatedComments);
+
+			// Notify parent component that comments have been updated
+			if (onCommentUpdate) {
+				onCommentUpdate(updatedComments);
+			}
+
+			// Show success toast
+			showSuccess("Comment deleted successfully");
 		} catch (error) {
 			console.error("Error deleting comment:", error);
-			showError(error.response?.data?.message || "Failed to delete comment");
+			showError(error.message || "Failed to delete comment");
 		}
 	};
 

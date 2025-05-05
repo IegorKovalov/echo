@@ -12,80 +12,36 @@ import {
 	TrendingUp,
 	Users,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import PostForm from "../components/UI/PostForm";
 import PostItem from "../components/UI/PostItem";
 import ProfileAvatar from "../components/UI/ProfileAvatar";
 import { useAuth } from "../context/AuthContext";
-import PostService from "../services/post.service";
+import { usePost } from "../context/PostContext";
 
 export default function HomePage() {
 	const { user, loading } = useAuth();
-	const [posts, setPosts] = useState([]);
-	const [trendingPosts, setTrendingPosts] = useState([]);
-	const [loadingPosts, setLoadingPosts] = useState(true);
-	const [loadingTrending, setLoadingTrending] = useState(true);
+	const {
+		posts,
+		trendingPosts,
+		loadingPosts,
+		loadingTrending,
+		createPost,
+		getHoursLeft,
+	} = usePost();
 	const [isSubmitting, setIsSubmitting] = useState(false);
-
-	// Load posts from API
-	useEffect(() => {
-		const fetchPosts = async () => {
-			if (!user) return;
-
-			try {
-				setLoadingPosts(true);
-				const response = await PostService.getAllPosts();
-				setPosts(response.data.posts || []);
-			} catch (error) {
-				console.error("Error fetching posts:", error);
-			} finally {
-				setLoadingPosts(false);
-			}
-		};
-
-		fetchPosts();
-	}, [user]);
-
-	// Load trending posts
-	useEffect(() => {
-		const fetchTrendingPosts = async () => {
-			if (!user) return;
-
-			try {
-				setLoadingTrending(true);
-				const response = await PostService.getTrendingPosts();
-				setTrendingPosts(response.data.posts || []);
-			} catch (error) {
-				console.error("Error fetching trending posts:", error);
-			} finally {
-				setLoadingTrending(false);
-			}
-		};
-
-		fetchTrendingPosts();
-	}, [user]);
 
 	// Handle post creation
 	const handleCreatePost = async (formData) => {
 		try {
 			setIsSubmitting(true);
-			await PostService.createPost(formData);
-
-			// Refresh posts after creating a new one
-			const response = await PostService.getAllPosts();
-			setPosts(response.data.posts || []);
+			await createPost(formData);
 		} catch (error) {
 			console.error("Error creating post:", error);
 		} finally {
 			setIsSubmitting(false);
 		}
-	};
-
-	// Get hours left until expiration
-	const getHoursLeft = (expiresAt) => {
-		if (!expiresAt) return 0;
-		return Math.ceil((new Date(expiresAt) - new Date()) / (1000 * 60 * 60));
 	};
 
 	// If still loading, show loading state

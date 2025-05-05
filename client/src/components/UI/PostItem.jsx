@@ -10,9 +10,9 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom"; // Ensure Link is imported
+import { usePost } from "../../context/PostContext";
 import { useToast } from "../../context/ToastContext";
 import { useViewTracking } from "../../context/ViewTrackingContext";
-import PostService from "../../services/post.service";
 import Card from "./Card";
 import CommentSection from "./CommentSection";
 import PostForm from "./PostForm";
@@ -35,7 +35,13 @@ export default function PostItem({
 	const [currentPost, setCurrentPost] = useState(post);
 	const { showSuccess, showError, showInfo } = useToast();
 	const { trackView, getViewCount, initializeViewCount } = useViewTracking();
+	const { updatePost, deletePost, renewPost, addComment, deleteComment } =
+		usePost();
 	const initializedRef = useRef(false);
+
+	// Check if current user owns this post
+	const isOwnPost =
+		currentUser && currentPost.user && currentUser._id === currentPost.user._id;
 
 	// Update local post state when prop changes
 	useEffect(() => {
@@ -74,10 +80,13 @@ export default function PostItem({
 		if (window.confirm("Are you sure you want to delete this post?")) {
 			setIsDeleting(true);
 			try {
-				await onDelete(currentPost._id);
-				showSuccess("Post deleted successfully");
+				await deletePost(currentPost._id);
+				// If parent component provided a custom onDelete handler, call it too
+				if (onDelete) {
+					onDelete(currentPost._id);
+				}
 			} catch (error) {
-				showError(error.response?.data?.message || "Failed to delete post");
+				console.error("Error deleting post:", error);
 			} finally {
 				setIsDeleting(false);
 			}
@@ -87,18 +96,14 @@ export default function PostItem({
 	const handleRenew = async () => {
 		setIsRenewing(true);
 		try {
-			await onRenew(currentPost._id);
-			const renewedPost = {
-				...currentPost,
-				expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-			};
+			const renewedPost = await renewPost(currentPost._id);
 			setCurrentPost(renewedPost);
-			if (onEdit) {
-				onEdit(renewedPost);
+			// If parent component provided a custom onRenew handler, call it too
+			if (onRenew) {
+				onRenew(currentPost._id);
 			}
-			showSuccess("Post renewed for another 24 hours");
 		} catch (error) {
-			showError(error.response?.data?.message || "Failed to renew post");
+			console.error("Error renewing post:", error);
 		} finally {
 			setIsRenewing(false);
 		}
@@ -106,37 +111,20 @@ export default function PostItem({
 
 	const handleEdit = async (updatedPostData) => {
 		try {
-			const response = await PostService.updatePost(
-				currentPost._id,
-				updatedPostData
-			);
-
-			// Extract the updated post from the response data
-			// The server response structure is { status, data: { post: {...} } }
-			const updatedPost = response.data?.post || {};
-
-			// Ensure date fields are properly preserved from the original post if missing
-			const processedPost = {
-				...updatedPost,
-				createdAt: updatedPost.createdAt || currentPost.createdAt,
-				expiresAt: updatedPost.expiresAt || currentPost.expiresAt,
-				// Make sure content is preserved if somehow missing in the response
-				content: updatedPost.content || currentPost.content,
-			};
-
-			setCurrentPost(processedPost);
+			const updatedPost = await updatePost(currentPost._id, updatedPostData);
+			setCurrentPost(updatedPost);
 			setIsEditing(false);
+			// If parent component provided a custom onEdit handler, call it too
 			if (onEdit) {
-				onEdit(processedPost);
+				onEdit(updatedPost);
 			}
-			// Success notification is shown in PostForm component
 		} catch (error) {
-			showError(error.response?.data?.message || "Failed to update post");
+			console.error("Error updating post:", error);
 		}
 	};
 
 	// Handle comment count updates
-	const handleCommentUpdate = (updatedComments) => {
+	const handleCommentUpdate = async (updatedComments) => {
 		setCommentCount(updatedComments.length);
 		// Update the local post state with new comments
 		setCurrentPost((prev) => ({ ...prev, comments: updatedComments }));
@@ -284,7 +272,7 @@ export default function PostItem({
 					</div>
 
 					<div className="flex gap-2">
-						{!currentPost.expired && onRenew && (
+						{!currentPost.expired && isOwnPost && (
 							<button
 								onClick={handleRenew}
 								disabled={isRenewing}
@@ -295,32 +283,26 @@ export default function PostItem({
 						)}
 
 						{/* Edit button - only show if the post belongs to the current user */}
-						{onEdit &&
-							currentUser &&
-							currentPost.user &&
-							currentUser._id === currentPost.user._id && (
-								<button
-									onClick={() => setIsEditing(true)}
-									className="rounded-full bg-blue-600/20 p-1 text-blue-400 hover:bg-blue-600/40"
-								>
-									<Edit2 className="h-4 w-4" />
-									<span className="sr-only">Edit</span>
-								</button>
-							)}
+						{isOwnPost && (
+							<button
+								onClick={() => setIsEditing(true)}
+								className="rounded-full bg-blue-600/20 p-1 text-blue-400 hover:bg-blue-600/40"
+							>
+								<Edit2 className="h-4 w-4" />
+								<span className="sr-only">Edit</span>
+							</button>
+						)}
 
-						{onDelete &&
-							currentUser &&
-							currentPost.user &&
-							currentUser._id === currentPost.user._id && (
-								<button
-									onClick={handleDelete}
-									disabled={isDeleting}
-									className="rounded-full bg-red-600/20 p-1 text-red-400 hover:bg-red-600/40 disabled:opacity-50"
-								>
-									<Trash2 className="h-4 w-4" />
-									<span className="sr-only">Delete</span>
-								</button>
-							)}
+						{isOwnPost && (
+							<button
+								onClick={handleDelete}
+								disabled={isDeleting}
+								className="rounded-full bg-red-600/20 p-1 text-red-400 hover:bg-red-600/40 disabled:opacity-50"
+							>
+								<Trash2 className="h-4 w-4" />
+								<span className="sr-only">Delete</span>
+							</button>
+						)}
 					</div>
 				</div>
 			)}
@@ -331,6 +313,8 @@ export default function PostItem({
 					post={currentPost}
 					currentUser={currentUser}
 					onCommentUpdate={handleCommentUpdate}
+					onAddComment={addComment}
+					onDeleteComment={deleteComment}
 				/>
 			)}
 		</Card>
