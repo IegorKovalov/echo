@@ -1,5 +1,6 @@
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom"; // Make sure Link is imported
 import { useAuth } from "../../context/AuthContext";
 import ProfileAvatar from "./ProfileAvatar";
 
@@ -46,14 +47,31 @@ export default function CommentItem({ comment, postId, onDelete }) {
 
 	return (
 		<div className="flex gap-3 py-4 px-2">
-			<ProfileAvatar user={comment.user} size="xs" />
+			{/* Make avatar clickable too */}
+			{comment.user && comment.user._id ? (
+				<Link to={`/profile/${comment.user._id}`}>
+					<ProfileAvatar user={comment.user} size="xs" />
+				</Link>
+			) : (
+				<ProfileAvatar user={comment.user} size="xs" />
+			)}
 
 			<div className="flex-1 min-w-0">
 				<div className="flex items-start justify-between">
 					<div>
-						<span className="font-medium text-white">
-							{comment.user?.fullName || "User"}
-						</span>
+						{/* Make username clickable */}
+						{comment.user && comment.user._id ? (
+							<Link
+								to={`/profile/${comment.user._id}`}
+								className="font-medium text-white hover:text-purple-400 transition-colors"
+							>
+								{comment.user?.fullName || "User"}
+							</Link>
+						) : (
+							<span className="font-medium text-white">
+								{comment.user?.fullName || "User"}
+							</span>
+						)}
 						<span className="ml-2 text-xs text-gray-400">
 							{formatDate(comment.createdAt)}
 						</span>

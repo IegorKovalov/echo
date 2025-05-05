@@ -6,6 +6,7 @@ import { ViewTrackingProvider } from "./context/ViewTrackingContext";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
+import NotFoundPage from "./pages/NotFoundPage";
 import ProfilePage from "./pages/ProfilePage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import SearchPage from "./pages/SearchPage";
@@ -100,6 +101,16 @@ function App() {
 								element={
 									<Layout requireAuth={false} showHeader={false}>
 										<SuccessPage />
+									</Layout>
+								}
+							/>
+
+							{/* 404 - Not Found Page (catch all) */}
+							<Route
+								path="*"
+								element={
+									<Layout requireAuth={false} showHeader={false}>
+										<NotFoundPage />
 									</Layout>
 								}
 							/>

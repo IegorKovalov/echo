@@ -9,6 +9,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom"; // Ensure Link is imported
 import { useToast } from "../../context/ToastContext";
 import { useViewTracking } from "../../context/ViewTrackingContext";
 import PostService from "../../services/post.service";
@@ -210,9 +211,19 @@ export default function PostItem({
 				<div className="flex items-center gap-3">
 					<ProfileAvatar user={currentPost.user || currentUser} size="sm" />
 					<div>
-						<h3 className="font-medium text-white">
-							{currentPost.user?.fullName || currentUser?.fullName || "User"}
-						</h3>
+						{/* Make user name clickable and navigate to their profile */}
+						{currentPost.user && currentPost.user._id ? (
+							<Link
+								to={`/profile/${currentPost.user._id}`}
+								className="font-medium text-white hover:text-purple-400 transition-colors"
+							>
+								{currentPost.user?.fullName || currentUser?.fullName || "User"}
+							</Link>
+						) : (
+							<h3 className="font-medium text-white">
+								{currentPost.user?.fullName || currentUser?.fullName || "User"}
+							</h3>
+						)}
 						<p className="text-xs text-gray-400">
 							{formatDate(currentPost.createdAt)}
 						</p>
