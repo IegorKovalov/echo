@@ -70,6 +70,27 @@ export function AuthProvider({ children }) {
 		}
 	};
 
+	// Update user function
+	const updateUser = (userData) => {
+		if (user) {
+			// Update the user data in context
+			setUser((prevUser) => ({
+				...prevUser,
+				...userData,
+			}));
+
+			// Also update the user in localStorage to persist changes
+			const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+			localStorage.setItem(
+				"user",
+				JSON.stringify({
+					...storedUser,
+					...userData,
+				})
+			);
+		}
+	};
+
 	// Forgot password function
 	const forgotPassword = async (email) => {
 		try {
@@ -115,6 +136,7 @@ export function AuthProvider({ children }) {
 		logout,
 		forgotPassword,
 		resetPassword,
+		updateUser, // Add updateUser to context value
 	};
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

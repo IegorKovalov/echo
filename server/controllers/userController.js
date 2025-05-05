@@ -103,7 +103,7 @@ exports.updatePassword = async (req, res) => {
 		}
 
 		user.password = password;
-		user.passwordConfirm = passwordConfirm;
+		user.passwordConfirm = passwordConfirm; // This will use the virtual setter
 		await user.save();
 
 		sendToken(user, 200, res);

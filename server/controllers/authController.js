@@ -173,11 +173,12 @@ exports.resetPassword = async (req, res) => {
 			});
 		}
 
+		// Update user with new password and reset token fields
 		user.passwordResetExpires = undefined;
 		user.passwordResetToken = undefined;
 		user.passwordChangedAt = Date.now();
 		user.password = password;
-		user.passwordConfirm = passwordConfirm;
+		user.passwordConfirm = passwordConfirm; // This now sets the virtual field
 		await user.save();
 
 		sendToken(user, 200, res);

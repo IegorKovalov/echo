@@ -4,14 +4,11 @@ import { useToast } from "../../context/ToastContext";
 import Card from "./Card";
 import ProfileAvatar from "./ProfileAvatar";
 
-/**
- * Reusable form component for creating and editing posts
- */
 export default function PostForm({
 	user,
 	initialContent = "",
 	initialDuration = 24,
-	initialImage = null, // Add prop for handling existing image
+	initialImage = null,
 	isEditing = false,
 	onSubmit,
 	isSubmitting = false,
@@ -23,7 +20,6 @@ export default function PostForm({
 	const [keepExistingImage, setKeepExistingImage] = useState(!!initialImage);
 	const { showSuccess, showError, showLoading, showInfo } = useToast();
 
-	// Update form state when props change (useful for re-renders)
 	useEffect(() => {
 		setContent(initialContent);
 		setDuration(initialDuration);

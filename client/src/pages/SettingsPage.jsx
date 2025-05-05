@@ -15,7 +15,7 @@ import { useToast } from "../context/ToastContext";
 import UserService from "../services/user.service";
 
 export default function SettingsPage() {
-	const { user, loading } = useAuth();
+	const { user, loading, updateUser } = useAuth();
 	const navigate = useNavigate();
 	const fileInputRef = useRef(null);
 	const { showSuccess, showError } = useToast();
@@ -102,27 +102,24 @@ export default function SettingsPage() {
 
 		try {
 			// Update profile information
-			await UserService.updateProfileInfo({
+			const response = await UserService.updateMe({
 				fullName: formData.fullName,
 				username: formData.username,
-				bio: formData.bio,
-				location: formData.location,
-				website: formData.website,
 			});
 
-			// Update user in local storage for immediate UI update
-			UserService.updateUserInStorage({
-				fullName: formData.fullName,
-				username: formData.username,
-				bio: formData.bio,
-				location: formData.location,
-				website: formData.website,
-			});
+			// Check if the server response has user data and update accordingly
+			if (response.data && response.data.user) {
+				// Update user in AuthContext so it's reflected throughout the app
+				updateUser({
+					fullName: response.data.user.fullName,
+					username: response.data.user.username,
+				});
+			}
 
 			showSuccess("Profile successfully updated");
 		} catch (err) {
 			console.error("Profile update error:", err);
-			showError(err.message || "Failed to update profile");
+			showError(err.response?.data?.message || "Failed to update profile");
 		} finally {
 			setIsSaving(false);
 		}
@@ -200,7 +197,13 @@ export default function SettingsPage() {
 			const formData = new FormData();
 			formData.append("profilePicture", profileFile);
 
-			await UserService.updateProfilePicture(formData);
+			const response = await UserService.updateProfilePicture(formData);
+
+			// Update profile picture in AuthContext
+			if (response.data && response.data.user) {
+				updateUser({ profilePicture: response.data.user.profilePicture });
+			}
+
 			showSuccess("Profile picture updated successfully");
 		} catch (err) {
 			console.error("Profile picture update error:", err);
@@ -220,7 +223,13 @@ export default function SettingsPage() {
 		setIsSaving(true);
 
 		try {
-			await UserService.deleteProfilePicture();
+			const response = await UserService.deleteProfilePicture();
+
+			// Update profile picture in AuthContext to null
+			if (response.data && response.data.user) {
+				updateUser({ profilePicture: null });
+			}
+
 			setProfilePreview(null);
 			setProfileFile(null);
 			showSuccess("Profile picture removed successfully");

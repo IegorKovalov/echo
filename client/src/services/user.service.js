@@ -11,16 +11,47 @@ const UserService = {
 		return response.data;
 	},
 
-	updateProfile: async (userData) => {
+	updateMe: async (userData) => {
 		const token = localStorage.getItem("token");
 		const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
 		const response = await api.patch(`${USER_URL}/updateMe`, userData, {
 			headers,
 		});
-		if (response.data.data.user) {
-			localStorage.setItem("user", JSON.stringify(response.data.data.user));
+
+		if (response.data && response.data.data && response.data.data.user) {
+			// Update user in local storage for immediate UI update
+			const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+			const updatedUser = {
+				...currentUser,
+				...response.data.data.user,
+			};
+			localStorage.setItem("user", JSON.stringify(updatedUser));
 		}
+
+		return response.data;
+	},
+
+	updateProfileInfo: async (profileData) => {
+		const token = localStorage.getItem("token");
+		const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+		const response = await api.patch(
+			`${USER_URL}/updateProfileInfo`,
+			profileData,
+			{ headers }
+		);
+
+		if (response.data && response.data.data && response.data.data.user) {
+			// Update user in local storage for immediate UI update
+			const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+			const updatedUser = {
+				...currentUser,
+				...response.data.data.user,
+			};
+			localStorage.setItem("user", JSON.stringify(updatedUser));
+		}
+
 		return response.data;
 	},
 
@@ -43,18 +74,6 @@ const UserService = {
 		return response.data;
 	},
 
-	updateProfileInfo: async (profileData) => {
-		const token = localStorage.getItem("token");
-		const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-		const response = await api.patch(
-			`${USER_URL}/updateProfileInfo`,
-			profileData,
-			{ headers }
-		);
-		return response.data;
-	},
-
 	updateProfilePicture: async (formData) => {
 		try {
 			const token = localStorage.getItem("token");
@@ -69,10 +88,14 @@ const UserService = {
 				}
 			);
 
-			if (response.data.data.user) {
-				const currentUser = JSON.parse(localStorage.getItem("user"));
-				currentUser.profilePicture = response.data.data.user.profilePicture;
-				localStorage.setItem("user", JSON.stringify(currentUser));
+			if (response.data && response.data.data && response.data.data.user) {
+				// Update user in local storage
+				const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+				const updatedUser = {
+					...currentUser,
+					profilePicture: response.data.data.user.profilePicture,
+				};
+				localStorage.setItem("user", JSON.stringify(updatedUser));
 			}
 
 			return response.data;
@@ -91,10 +114,11 @@ const UserService = {
 				},
 			});
 
-			if (response.data.data.user) {
-				const currentUser = JSON.parse(localStorage.getItem("user"));
-				currentUser.profilePicture = null;
-				localStorage.setItem("user", JSON.stringify(currentUser));
+			if (response.data && response.data.data && response.data.data.user) {
+				// Update user in local storage
+				const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+				const updatedUser = { ...currentUser, profilePicture: null };
+				localStorage.setItem("user", JSON.stringify(updatedUser));
 			}
 
 			return response.data;
@@ -102,12 +126,6 @@ const UserService = {
 			console.error("Delete profile picture error:", error);
 			throw error;
 		}
-	},
-
-	updateUserInStorage: (userData) => {
-		const currentUser = JSON.parse(localStorage.getItem("user"));
-		const updatedUser = { ...currentUser, ...userData };
-		localStorage.setItem("user", JSON.stringify(updatedUser));
 	},
 };
 

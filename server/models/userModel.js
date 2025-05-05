@@ -40,16 +40,6 @@ const userSchema = new Schema(
 			minlength: [8, "Password must be at least 8 characters"],
 			select: false,
 		},
-		passwordConfirm: {
-			type: String,
-			required: [true, "Please confirm your password"],
-			validate: {
-				validator: function (el) {
-					return el === this.password;
-				},
-				message: "Passwords are not the same",
-			},
-		},
 		fullName: {
 			type: String,
 			required: [true, "Full name is required"],
@@ -109,12 +99,31 @@ const userSchema = new Schema(
 	}
 );
 
+// Add passwordConfirm as a virtual - it will not be saved to the database
+userSchema
+	.virtual("passwordConfirm")
+	.get(function () {
+		return this._passwordConfirm;
+	})
+	.set(function (value) {
+		this._passwordConfirm = value;
+	});
+
+// Add validation for password confirmation
+userSchema.pre("validate", function (next) {
+	if (this.isNew || this.isModified("password")) {
+		if (this._passwordConfirm !== this.password) {
+			this.invalidate("passwordConfirm", "Passwords do not match");
+		}
+	}
+	next();
+});
+
 userSchema.pre("save", async function (next) {
 	if (!this.isModified("password")) {
 		return next();
 	}
 	this.password = await bcrypt.hash(this.password, 12);
-	this.passwordConfirm = undefined;
 	next();
 });
 
