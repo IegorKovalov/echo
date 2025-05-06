@@ -12,7 +12,7 @@ import {
 	TrendingUp,
 	Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import PostForm from "../components/UI/PostForm";
 import PostItem from "../components/UI/PostItem";
@@ -33,7 +33,7 @@ export default function HomePage() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	// Handle post creation
-	const handleCreatePost = async (formData) => {
+	const handleCreatePost = useCallback(async (formData)  => {
 		try {
 			setIsSubmitting(true);
 			await createPost(formData);
@@ -42,7 +42,7 @@ export default function HomePage() {
 		} finally {
 			setIsSubmitting(false);
 		}
-	};
+	},[createPost]);
 
 	// If still loading, show loading state
 	if (loading) {
@@ -74,7 +74,7 @@ export default function HomePage() {
 								</button>
 							</div>
 
-							<div className="relative mb-4">
+							<div className>
 								<input
 									type="text"
 									placeholder="Search messages"
@@ -128,6 +128,7 @@ export default function HomePage() {
 							user={user}
 							onSubmit={handleCreatePost}
 							isSubmitting={isSubmitting}
+							initialMedia={[]}
 						/>
 
 						{/* Posts Feed */}

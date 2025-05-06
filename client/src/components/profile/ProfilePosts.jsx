@@ -24,6 +24,7 @@ export default function ProfilePosts({
 						user={profileData}
 						onSubmit={handleCreatePost}
 						isSubmitting={isSubmitting}
+						initialMedia={[]}
 					/>
 				</div>
 			)}

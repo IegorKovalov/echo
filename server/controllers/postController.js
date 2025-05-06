@@ -1,4 +1,6 @@
 const Post = require("../models/postModel");
+const cloudinary = require("../utils/cloudinary");
+const fs = require("fs");
 
 const populatePostFields = (query) => {
 	return query
@@ -14,6 +16,7 @@ const populatePostFields = (query) => {
 
 exports.createPost = async (req, res) => {
 	try {
+		console.log(req.body);
 		const { content, expirationTime } = req.body;
 		if (!content) {
 			return res.status(400).json({
@@ -36,6 +39,20 @@ exports.createPost = async (req, res) => {
 
 			const now = new Date();
 			postData.expiresAt = new Date(now.getTime() + hours * 60 * 60 * 1000);
+		}
+		postData.media = [];
+		if (req.files && req.files.length > 0) {
+			for (const file of req.files) {
+				const result = await cloudinary.uploader.upload(file.path, {
+					resource_type: file.mimetype.startsWith("video/") ? "video" : "image",
+					folder: "posts",
+				});
+				postData.media.push({
+					url: result.secure_url,
+					type: file.mimetype.startsWith("video/") ? "video" : "image",
+				});
+				fs.unlinkSync(file.path); // Remove temp file
+			}
 		}
 
 		const newPost = await Post.create(postData);
@@ -212,10 +229,46 @@ exports.updatePost = async (req, res) => {
 			}
 		}
 
-		if (req.file) {
-			post.image = req.file.path;
+		if (req.files && req.files.length > 0) {
+			// Delete old media from Cloudinary
+			if (post.media && post.media.length > 0) {
+				for (const mediaItem of post.media) {
+					try {
+						await cloudinary.uploader.destroy(mediaItem.publicId, {
+							resource_type: mediaItem.type,
+						});
+					} catch (err) {
+						console.error("Error deleting Cloudinary media:", err);
+					}
+				}
+			}
+			post.media = [];
+			for (const file of req.files) {
+				const result = await cloudinary.uploader.upload(file.path, {
+					resource_type: file.mimetype.startsWith("video/") ? "video" : "image",
+					folder: "posts",
+				});
+				post.media.push({
+					url: result.secure_url,
+					type: file.mimetype.startsWith("video/") ? "video" : "image",
+					publicId: result.public_id,
+				});
+				fs.unlinkSync(file.path); // Remove temp file
+			}
 		} else if (keepExistingImage === "false") {
-			post.image = null;
+			// Delete old media from Cloudinary
+			if (post.media && post.media.length > 0) {
+				for (const mediaItem of post.media) {
+					try {
+						await cloudinary.uploader.destroy(mediaItem.publicId, {
+							resource_type: mediaItem.type,
+						});
+					} catch (err) {
+						console.error("Error deleting Cloudinary media:", err);
+					}
+				}
+			}
+			post.media = [];
 		}
 
 		await post.save({ timestamps: false });

@@ -13,6 +13,13 @@ const postSchema = new Schema(
 			required: [true, "Post must have content"],
 			trim: true,
 		},
+		media: [
+			{
+				url: { type: String, required: true },
+				type: { type: String, enum: ["image", "video"], required: true },
+				publicId: { type: String, required: true }
+			}
+		],
 		views: {
 			type: Number,
 			default: 0,

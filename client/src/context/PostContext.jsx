@@ -52,8 +52,6 @@ export const PostProvider = ({ children }) => {
 		},
 		[user]
 	);
-
-	// Fetch user posts - using useCallback to prevent dependency cycles
 	const fetchUserPosts = useCallback(
 		async (userId, includeExpired = false) => {
 			if (!user) return [];
@@ -61,8 +59,6 @@ export const PostProvider = ({ children }) => {
 			try {
 				setLoadingPosts(true);
 				const response = await PostService.getUserPosts(userId, includeExpired);
-
-				// Ensure we're properly extracting the posts array from the response
 				let userPosts = [];
 				if (response && response.data) {
 					if (Array.isArray(response.data.posts)) {
@@ -101,22 +97,18 @@ export const PostProvider = ({ children }) => {
 		}
 	}, [user]);
 
-	// Create a new post - using useCallback
 	const createPost = useCallback(
 		async (postData) => {
 			try {
 				const response = await PostService.createPost(postData);
-				// Get the created post data
 				let newPost;
 				if (response.data && response.data.post) {
 					newPost = response.data.post;
 				} else {
 					newPost = response.data;
 				}
-				
-				// Add the new post to the beginning of the posts array
 				setPosts((prevPosts) => [newPost, ...prevPosts]);
-				
+
 				showSuccess("Post created successfully!");
 				return newPost;
 			} catch (error) {
@@ -128,12 +120,10 @@ export const PostProvider = ({ children }) => {
 		[showSuccess, showError]
 	);
 
-	// Update an existing post - using useCallback
 	const updatePost = useCallback(
 		async (postId, postData) => {
 			try {
 				const response = await PostService.updatePost(postId, postData);
-				// Get the updated post data
 				let updatedPost;
 				if (response.data && response.data.post) {
 					updatedPost = response.data.post;

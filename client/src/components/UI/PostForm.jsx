@@ -1,5 +1,6 @@
-import { Clock, Image, Mic } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Clock, Image, XCircle } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { usePost } from "../../context/PostContext";
 import { useToast } from "../../context/ToastContext";
 import Card from "./Card";
 import ProfileAvatar from "./ProfileAvatar";
@@ -8,106 +9,104 @@ export default function PostForm({
 	user,
 	initialContent = "",
 	initialDuration = 24,
-	initialImage = null,
+	initialMedia = [],
 	isEditing = false,
 	onSubmit,
 	isSubmitting = false,
 }) {
+	const { createPost } = usePost();
+	const { showLoading, showError, showInfo } = useToast();
 	const [content, setContent] = useState(initialContent);
 	const [duration, setDuration] = useState(initialDuration);
-	const [image, setImage] = useState(null);
-	const [imagePreview, setImagePreview] = useState(initialImage);
-	const [keepExistingImage, setKeepExistingImage] = useState(!!initialImage);
-	const { showSuccess, showError, showLoading, showInfo } = useToast();
+	const [mediaItems, setMediaItems] = useState([]);
 
 	useEffect(() => {
 		setContent(initialContent);
 		setDuration(initialDuration);
-		if (initialImage && !imagePreview) {
-			setImagePreview(initialImage);
-			setKeepExistingImage(true);
-		}
-	}, [initialContent, initialDuration, initialImage]);
+		const initialExistingMedia = initialMedia.map((item) => ({
+			id: item.id,
+			url: item.url,
+			isExisting: true,
+		}));
+		setMediaItems(initialExistingMedia);
+	}, [initialContent, initialDuration, initialMedia]);
 
-	const handleImageChange = (e) => {
-		const file = e.target.files[0];
-		if (!file) return;
+	useEffect(() => {
+		const urlsToRevoke = mediaItems
+			.filter((item) => !item.isExisting && item.previewUrl)
+			.map((item) => item.previewUrl);
 
-		// Check file size (limit to 5MB)
-		if (file.size > 5 * 1024 * 1024) {
-			showError("Image is too large. Maximum size is 5MB.");
-			return;
-		}
-
-		// Preview image
-		const reader = new FileReader();
-		reader.onloadend = () => {
-			setImagePreview(reader.result);
-			setKeepExistingImage(false);
+		return () => {
+			urlsToRevoke.forEach((url) => URL.revokeObjectURL(url));
 		};
-		reader.readAsDataURL(file);
-		setImage(file);
-		showSuccess("Image added successfully");
+	}, [mediaItems]);
+
+	const handleFileChange = (e) => {
+		const selectedFiles = Array.from(e.target.files);
+
+		for (const file of selectedFiles) {
+			if (!(file.type.startsWith("image/") || file.type.startsWith("video/"))) {
+				showError("Only images and videos are allowed.");
+				e.target.value = null;
+				return;
+			}
+			if (file.size > 50 * 1024 * 1024) {
+				showError("Each file must be less than 50MB.");
+				e.target.value = null;
+				return;
+			}
+		}
+
+		const newMedia = selectedFiles.map((file) => ({
+			file: file,
+			previewUrl: URL.createObjectURL(file),
+			isExisting: false,
+			tempId: Date.now() + Math.random(),
+		}));
+
+		setMediaItems((prevMedia) => [...prevMedia, ...newMedia]);
+		e.target.value = null;
 	};
 
-	const removeImage = () => {
-		setImage(null);
-		setImagePreview(null);
-		setKeepExistingImage(false);
-		showInfo("Image removed");
-	};
+	const removeMedia = useCallback((itemToRemove) => {
+		setMediaItems((prevMediaItems) => {
+			const newMediaItems = prevMediaItems.filter(
+				(item) => item !== itemToRemove
+			);
+			return newMediaItems;
+		});
+		showInfo("Media removed");
+	}, []);
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+		if (!content.trim()) {
+			showInfo("Content cannot be empty.");
+			return;
+		}
 
-		if (!content.trim()) return;
-
-		// Create FormData object for submission
 		const formData = new FormData();
 		formData.append("content", content);
 		formData.append("duration", duration);
 
-		// Handle image logic
-		if (image) {
-			// New image selected
-			formData.append("image", image);
-		} else if (isEditing) {
-			// Editing mode - explicitly tell the server what to do with the image
-			formData.append("keepExistingImage", keepExistingImage.toString());
-		}
+		const existingMediaIdsToKeep = [];
+		console.log("Media items to submit:", mediaItems);
+		mediaItems.forEach((item) => {
+			if (!item.isExisting) {
+				formData.append("media", item.file);
+			} else {
+				existingMediaIdsToKeep.push(item.id);
+			}
+		});
+		existingMediaIdsToKeep.forEach((id) =>
+			formData.append("existingMediaIds", id)
+		);
 
 		try {
-			await showLoading(
-				new Promise((resolve, reject) => {
-					// Call the onSubmit function
-					const result = onSubmit(formData);
-
-					// Handle both Promise and non-Promise return values
-					if (result instanceof Promise) {
-						result.then(resolve).catch(reject);
-					} else {
-						resolve(result);
-					}
-				}),
-				{
-					loading: isEditing ? "Updating post..." : "Creating post...",
-					success: isEditing
-						? "Post updated successfully!"
-						: "Post created successfully!",
-					error: (err) => `Error: ${err.message || "Something went wrong"}`,
-				}
-			);
-
-			// Reset form if not editing
-			if (!isEditing) {
-				setContent("");
-				setImage(null);
-				setImagePreview(null);
-				setKeepExistingImage(false);
-			}
+			const response = await createPost(formData);
+			console.log("Post created:", response);
 		} catch (error) {
-			// Error is handled by the showLoading toast
-			console.error("Post submission error:", error);
+			showError(error.message || "Failed to create post. Please try again.");
 		}
 	};
 
@@ -127,60 +126,97 @@ export default function PostForm({
 							onChange={(e) => setContent(e.target.value)}
 						/>
 
-						{imagePreview && (
-							<div className="mt-2 relative">
-								<img
-									src={imagePreview}
-									alt="Preview"
-									className="h-48 w-full rounded-lg object-cover"
-								/>
-								<button
-									type="button"
-									onClick={removeImage}
-									className="absolute top-2 right-2 rounded-full bg-gray-900/80 p-1 text-white hover:bg-gray-900"
-								>
-									<span className="sr-only">Remove</span>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										className="h-5 w-5"
-										viewBox="0 0 20 20"
-										fill="currentColor"
-									>
-										<path
-											fillRule="evenodd"
-											d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-											clipRule="evenodd"
-										/>
-									</svg>
-								</button>
+						{/* === MODERN MEDIA PREVIEWS START === */}
+						{mediaItems.length > 0 && (
+							<div className="mt-2 flex flex-wrap gap-2">
+								{mediaItems.map((item, idx) => {
+									// Determine the URL and media type based on item structure
+									const url = item.isExisting ? item.url : item.previewUrl;
+									const type = item.isExisting
+										? item.url.match(/\.(jpeg|jpg|gif|png|webp)$/i)
+											? "image"
+											: item.url.match(/\.(mp4|webm|ogg)$/i)
+											? "video"
+											: "unknown" // Basic type guess for existing URLs
+										: item.file.type; // Use file type for new items
+
+									if (!url) return null; // Should not happen with correctly structured state
+
+									return (
+										// Use a unique key: item.id for existing, tempId for new, fallback to index if needed
+										<div
+											key={item.id || item.tempId || idx}
+											className="relative group h-24 w-24"
+										>
+											{" "}
+											{/* Added h-24 w-24 for consistent container size */}
+											{type.startsWith("image/") ? (
+												<img
+													src={url}
+													alt={
+														item.isExisting
+															? "Existing media preview"
+															: `Preview of ${item.file.name}`
+													} // More descriptive alt text
+													className="h-full w-full rounded object-cover" // Image fills container
+												/>
+											) : type.startsWith("video/") ? (
+												<video
+													src={url}
+													controls // Add controls for video playback
+													className="h-full w-full rounded object-cover" // Video fills container
+												/>
+											) : (
+												// Placeholder for unsupported types
+												<div className="h-full w-full rounded bg-gray-700 text-white flex items-center justify-center text-center text-xs p-1">
+													Cannot preview{" "}
+													{item.isExisting
+														? `Media (${item.id})`
+														: item.file.name}
+												</div>
+											)}
+											{/* Remove button */}
+											<button
+												type="button"
+												onClick={() => removeMedia(item)} // Pass the specific item object
+												// Position and style the remove button (visible on hover)
+												className="absolute top-1 right-1 rounded-full bg-gray-900/80 text-white hover:bg-gray-900 p-1 transition-opacity opacity-0 group-hover:opacity-100"
+												aria-label="Remove media" // Accessibility label for screen readers
+											>
+												<XCircle className="h-4 w-4" aria-hidden="true" />{" "}
+												{/* Icon */}
+											</button>
+										</div>
+									);
+								})}
 							</div>
 						)}
+						{/* === MODERN MEDIA PREVIEWS END === */}
 
 						<div className="mt-2 flex items-center justify-between">
 							<div className="flex gap-2">
 								<label className="cursor-pointer rounded-full p-2 hover:bg-gray-800">
 									<input
 										type="file"
-										accept="image/*"
 										className="hidden"
-										onChange={handleImageChange}
+										name="media"
+										multiple
+										accept="image/*,video/*"
+										onChange={handleFileChange}
+										// The onClick={(e) => e.target.value = null} for file input is handled inside handleFileChange now
 									/>
-									<Image className="h-4 w-4 text-gray-500" />
-									<span className="sr-only">Add image</span>
+									<Image className="h-4 w-4 text-gray-500" aria-hidden="true" />
+									<span className="sr-only">Add media</span>
 								</label>
 
-								<button
-									type="button"
-									className="rounded-full p-2 hover:bg-gray-800"
-								>
-									<Mic className="h-4 w-4 text-gray-500" />
-									<span className="sr-only">Voice note</span>
-								</button>
-
 								<div className="flex items-center gap-1 rounded-lg border border-gray-800 px-2 py-1">
-									<Clock className="h-3 w-3 text-gray-500" />
+									<Clock className="h-3 w-3 text-gray-500" aria-hidden="true" />
+									<label htmlFor="duration-select" className="sr-only">
+										Post duration
+									</label>
 									<select
-										className="bg-transparent text-xs text-gray-500"
+										id="duration-select"
+										className="bg-transparent text-xs text-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500 rounded"
 										value={duration}
 										onChange={(e) => setDuration(Number(e.target.value))}
 									>
@@ -195,9 +231,15 @@ export default function PostForm({
 							<button
 								type="submit"
 								disabled={!content.trim() || isSubmitting}
-								className="rounded-full bg-gradient-to-r from-purple-600 to-blue-500 px-4 py-1 text-sm font-medium text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-60"
+								className="rounded-full bg-gradient-to-r from-purple-600 to-blue-500 px-4 py-1 text-sm font-medium text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-60 transition-opacity"
 							>
-								{isSubmitting ? "Posting..." : isEditing ? "Update" : "Echo"}
+								{isSubmitting
+									? isEditing
+										? "Updating..."
+										: "Posting..."
+									: isEditing
+									? "Update"
+									: "Echo"}
 							</button>
 						</div>
 					</div>
@@ -206,3 +248,29 @@ export default function PostForm({
 		</Card>
 	);
 }
+
+// await showLoading(
+//     new Promise((resolve, reject) => {
+//         const result = onSubmit(formData);
+//         if (result instanceof Promise) {
+//             result.then(resolve).catch(reject);
+//         } else {
+//             resolve(result);
+//         }
+//     }),
+//     {
+//         loading: isEditing ? "Updating post..." : "Creating post...",
+//         success: isEditing
+//             ? "Post updated successfully!"
+//             : "Post created successfully!",
+//         error: (err) => {
+//             console.error("Post submission failed:", err);
+//             return `Error: ${err.message || "Something went wrong"}`;
+//         },
+//     }
+// );
+
+// if (!isEditing) {
+//     setContent("");
+//     setMediaItems([]);
+// }

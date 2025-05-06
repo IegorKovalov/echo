@@ -28,18 +28,14 @@ export default function CommentSection({
 		setComments(post.comments || []);
 	}, [post.comments]);
 
-	// Add a new comment
 	const handleAddComment = async (e) => {
 		e.preventDefault();
 		if (!commentContent.trim()) return;
 
 		setIsSubmitting(true);
 		try {
-			// Use the provided onAddComment or the postContext method
 			const addCommentFn = onAddComment || postContext.addComment;
 			const response = await addCommentFn(post._id, commentContent.trim());
-
-			// Handle the response data properly
 			let updatedComments;
 			if (
 				response &&

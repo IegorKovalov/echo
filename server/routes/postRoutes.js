@@ -11,7 +11,7 @@ router.get("/trending", postController.getTrendingPosts);
 
 router
 	.route("/")
-	.post(upload.single("image"), postController.createPost)
+	.post(upload.array("media", 5), postController.createPost)
 	.get(postController.getAllPosts);
 
 router.get("/user/:userId", postController.getUserPosts);
@@ -19,7 +19,7 @@ router.get("/user/:userId", postController.getUserPosts);
 router
 	.route("/:id")
 	.get(postController.getPost)
-	.patch(upload.single("image"), postController.updatePost)
+	.patch(upload.array("media", 5), postController.updatePost)
 	.delete(postController.deletePost);
 
 // View counter routes

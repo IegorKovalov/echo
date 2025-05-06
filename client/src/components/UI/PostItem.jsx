@@ -9,7 +9,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom"; // Ensure Link is imported
+import { Link } from "react-router-dom";
 import { usePost } from "../../context/PostContext";
 import { useToast } from "../../context/ToastContext";
 import { useViewTracking } from "../../context/ViewTrackingContext";
@@ -39,7 +39,6 @@ export default function PostItem({
 		usePost();
 	const initializedRef = useRef(false);
 
-	// Check if current user owns this post
 	const isOwnPost =
 		currentUser && currentPost.user && currentUser._id === currentPost.user._id;
 
@@ -47,7 +46,6 @@ export default function PostItem({
 	useEffect(() => {
 		setCurrentPost(post);
 	}, [post]);
-
 	// Initialize view count - using the ref to prevent multiple calls
 	useEffect(() => {
 		// This will run only once per component mount
@@ -185,7 +183,7 @@ export default function PostItem({
 					user={currentUser}
 					initialContent={currentPost.content}
 					initialDuration={getHoursLeft()}
-					initialImage={currentPost.image} // Pass the existing image URL
+					initialMedia={currentPost.media || []} // Pass the existing media array
 					isEditing={true}
 					onSubmit={handleEdit}
 				/>
@@ -233,12 +231,37 @@ export default function PostItem({
 
 			<p className="mb-4 text-sm text-gray-200">{currentPost.content}</p>
 
-			{currentPost.image && (
-				<img
-					src={currentPost.image}
-					alt="Post"
-					className="mb-4 h-64 w-full rounded-lg object-cover"
-				/>
+			{/* Render media items (images or videos) */}
+			{currentPost.media && currentPost.media.length > 0 && (
+				<div className="mb-4 space-y-2">
+					{" "}
+					{/* Container for media items, adds space between them */}
+					{currentPost.media.map((mediaItem, index) => (
+						<div
+							key={mediaItem.publicId || index}
+							className="rounded-lg overflow-hidden"
+						>
+							{" "}
+							{/* Individual media item wrapper */}
+							{mediaItem.type === "image" && (
+								<img
+									src={mediaItem.url}
+									alt={`Post media ${index + 1}`}
+									className="h-auto w-full max-h-[600px] object-contain rounded-lg" // Max height, object-contain to show full image
+								/>
+							)}
+							{mediaItem.type === "video" && (
+								<video
+									src={mediaItem.url}
+									controls
+									className="h-auto w-full max-h-[600px] rounded-lg bg-black" // Max height, background color for letterboxing
+								>
+									Your browser does not support the video tag.
+								</video>
+							)}
+						</div>
+					))}
+				</div>
 			)}
 
 			{showActions && (

@@ -1,9 +1,3 @@
-/**
- * Reusable profile avatar component that handles:
- * - Image display if available
- * - Fallback to initials with gradient background if no image
- * - Multiple size options
- */
 export default function ProfileAvatar({
 	user = {},
 	size = "md",

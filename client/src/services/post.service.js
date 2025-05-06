@@ -33,21 +33,19 @@ const PostService = {
 		return response.data;
 	},
 
-	createPost: async (postData) => {
+	createPost: async (formData) => {
 		const token = localStorage.getItem("token");
 		const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-		const response = await api.post(POSTS_URL, postData, { headers });
+		const response = await api.post(POSTS_URL, formData, { headers });
 		return response.data;
 	},
 
-	updatePost: async (id, postData) => {
+	updatePost: async (id, formData) => {
 		const token = localStorage.getItem("token");
 		const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-		const response = await api.patch(`${POSTS_URL}/${id}`, postData, {
-			headers,
-		});
+		const response = await api.patch(`${POSTS_URL}/${id}`, formData, { headers });
 		return response.data;
 	},
 
@@ -65,7 +63,7 @@ const PostService = {
 
 		const response = await api.post(
 			`${POSTS_URL}/${id}/comments`,
-			{ commentContent }, // Changed to send object instead of raw string
+			{ commentContent }, 
 			{
 				headers,
 			}
