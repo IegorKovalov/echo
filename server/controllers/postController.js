@@ -200,6 +200,7 @@ exports.updatePost = async (req, res) => {
 		const content = req.body.content;
 		const duration = req.body.duration;
 		const keepExistingImage = req.body.keepExistingImage;
+		const existingMediaIds = req.body.existingMediaIds;
 
 		if (!content || content.trim() === "") {
 			return res.status(400).json({
@@ -229,20 +230,57 @@ exports.updatePost = async (req, res) => {
 			}
 		}
 
+		// Handle media updates
 		if (req.files && req.files.length > 0) {
-			// Delete old media from Cloudinary
-			if (post.media && post.media.length > 0) {
-				for (const mediaItem of post.media) {
+			// If new files are uploaded, handle existing media differently
+			if (
+				existingMediaIds &&
+				Array.isArray(existingMediaIds) &&
+				existingMediaIds.length > 0
+			) {
+				// Keep only the media items that match the existingMediaIds
+				const mediaToKeep = post.media.filter((item) =>
+					existingMediaIds.includes(item._id.toString())
+				);
+
+				// Delete media items not in existingMediaIds from Cloudinary
+				const mediaToDelete = post.media.filter(
+					(item) => !existingMediaIds.includes(item._id.toString())
+				);
+
+				for (const mediaItem of mediaToDelete) {
 					try {
-						await cloudinary.uploader.destroy(mediaItem.publicId, {
-							resource_type: mediaItem.type,
-						});
+						if (mediaItem.publicId) {
+							await cloudinary.uploader.destroy(mediaItem.publicId, {
+								resource_type: mediaItem.type,
+							});
+						}
 					} catch (err) {
 						console.error("Error deleting Cloudinary media:", err);
 					}
 				}
+
+				// Update post media to keep existing selected media
+				post.media = mediaToKeep;
+			} else {
+				// Delete all old media from Cloudinary if not specified to keep
+				if (post.media && post.media.length > 0) {
+					for (const mediaItem of post.media) {
+						try {
+							if (mediaItem.publicId) {
+								await cloudinary.uploader.destroy(mediaItem.publicId, {
+									resource_type: mediaItem.type,
+								});
+							}
+						} catch (err) {
+							console.error("Error deleting Cloudinary media:", err);
+						}
+					}
+				}
+				post.media = [];
 			}
-			post.media = [];
+
+			// Add new media uploads
 			for (const file of req.files) {
 				const result = await cloudinary.uploader.upload(file.path, {
 					resource_type: file.mimetype.startsWith("video/") ? "video" : "image",
@@ -255,14 +293,60 @@ exports.updatePost = async (req, res) => {
 				});
 				fs.unlinkSync(file.path); // Remove temp file
 			}
+		} else if (existingMediaIds && Array.isArray(existingMediaIds)) {
+			// No new files, but user might have removed some existing media
+			if (existingMediaIds.length > 0) {
+				// Keep only the media items that match the existingMediaIds
+				const mediaToKeep = post.media.filter((item) =>
+					existingMediaIds.includes(item._id.toString())
+				);
+
+				// Delete media items not in existingMediaIds from Cloudinary
+				const mediaToDelete = post.media.filter(
+					(item) => !existingMediaIds.includes(item._id.toString())
+				);
+
+				for (const mediaItem of mediaToDelete) {
+					try {
+						if (mediaItem.publicId) {
+							await cloudinary.uploader.destroy(mediaItem.publicId, {
+								resource_type: mediaItem.type,
+							});
+						}
+					} catch (err) {
+						console.error("Error deleting Cloudinary media:", err);
+					}
+				}
+
+				post.media = mediaToKeep;
+			} else if (existingMediaIds.length === 0) {
+				// All media was removed
+				// Delete all media from Cloudinary
+				if (post.media && post.media.length > 0) {
+					for (const mediaItem of post.media) {
+						try {
+							if (mediaItem.publicId) {
+								await cloudinary.uploader.destroy(mediaItem.publicId, {
+									resource_type: mediaItem.type,
+								});
+							}
+						} catch (err) {
+							console.error("Error deleting Cloudinary media:", err);
+						}
+					}
+				}
+				post.media = [];
+			}
 		} else if (keepExistingImage === "false") {
-			// Delete old media from Cloudinary
+			// Delete all media if keepExistingImage is false and no existingMediaIds provided
 			if (post.media && post.media.length > 0) {
 				for (const mediaItem of post.media) {
 					try {
-						await cloudinary.uploader.destroy(mediaItem.publicId, {
-							resource_type: mediaItem.type,
-						});
+						if (mediaItem.publicId) {
+							await cloudinary.uploader.destroy(mediaItem.publicId, {
+								resource_type: mediaItem.type,
+							});
+						}
 					} catch (err) {
 						console.error("Error deleting Cloudinary media:", err);
 					}

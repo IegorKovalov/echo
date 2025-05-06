@@ -33,7 +33,6 @@ export default function ProfileLayout({ userId }) {
 		fetchCount: 0,
 	});
 
-	// Load profile data from API
 	useEffect(() => {
 		if (user) {
 			const fetchProfileData = async () => {
@@ -41,13 +40,12 @@ export default function ProfileLayout({ userId }) {
 					setIsLoading(true);
 					let data;
 					if (userId && userId !== user._id) {
-						data = await UserService.getUserProfile(userId);
 						setIsOwnProfile(false);
+						data = await UserService.getUserProfile(userId);
 					} else {
-						data = await UserService.getProfile();
 						setIsOwnProfile(true);
+						data = await UserService.getProfile();
 					}
-
 					setProfileData(data.data.user);
 				} catch (error) {
 					console.error("Error fetching profile:", error);
@@ -172,7 +170,6 @@ export default function ProfileLayout({ userId }) {
 			</div>
 		);
 	}
-
 	return (
 		<div className="flex min-h-screen flex-col bg-gradient-to-b from-gray-900 to-gray-950">
 			<ProfileHeader profileUsername={profileData.username} />

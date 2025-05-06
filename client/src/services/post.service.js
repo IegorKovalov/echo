@@ -45,7 +45,9 @@ const PostService = {
 		const token = localStorage.getItem("token");
 		const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-		const response = await api.patch(`${POSTS_URL}/${id}`, formData, { headers });
+		const response = await api.patch(`${POSTS_URL}/${id}`, formData, {
+			headers,
+		});
 		return response.data;
 	},
 
@@ -63,7 +65,7 @@ const PostService = {
 
 		const response = await api.post(
 			`${POSTS_URL}/${id}/comments`,
-			{ commentContent }, 
+			{ commentContent },
 			{
 				headers,
 			}

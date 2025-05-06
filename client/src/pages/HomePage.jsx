@@ -12,7 +12,7 @@ import {
 	TrendingUp,
 	Users,
 } from "lucide-react";
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import PostForm from "../components/UI/PostForm";
 import PostItem from "../components/UI/PostItem";
@@ -32,19 +32,20 @@ export default function HomePage() {
 	} = usePost();
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	// Handle post creation
-	const handleCreatePost = useCallback(async (formData)  => {
-		try {
-			setIsSubmitting(true);
-			await createPost(formData);
-		} catch (error) {
-			console.error("Error creating post:", error);
-		} finally {
-			setIsSubmitting(false);
-		}
-	},[createPost]);
+	const handleCreatePost = useCallback(
+		async (formData) => {
+			try {
+				setIsSubmitting(true);
+				await createPost(formData);
+			} catch (error) {
+				console.error("Error creating post:", error);
+			} finally {
+				setIsSubmitting(false);
+			}
+		},
+		[createPost]
+	);
 
-	// If still loading, show loading state
 	if (loading) {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-gray-950">

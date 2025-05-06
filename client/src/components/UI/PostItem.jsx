@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { usePost } from "../../context/PostContext";
 import { useToast } from "../../context/ToastContext";
 import { useViewTracking } from "../../context/ViewTrackingContext";
@@ -26,6 +27,7 @@ export default function PostItem({
 	onRenew,
 	onEdit,
 }) {
+	const { user } = useAuth();
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [isRenewing, setIsRenewing] = useState(false);
 	const [hasTrackedView, setHasTrackedView] = useState(false);
@@ -38,11 +40,8 @@ export default function PostItem({
 	const { updatePost, deletePost, renewPost, addComment, deleteComment } =
 		usePost();
 	const initializedRef = useRef(false);
+	const isOwnPost = user._id === currentPost.user._id;
 
-	const isOwnPost =
-		currentUser && currentPost.user && currentUser._id === currentPost.user._id;
-
-	// Update local post state when prop changes
 	useEffect(() => {
 		setCurrentPost(post);
 	}, [post]);
@@ -78,11 +77,7 @@ export default function PostItem({
 		if (window.confirm("Are you sure you want to delete this post?")) {
 			setIsDeleting(true);
 			try {
-				await deletePost(currentPost._id);
-				// If parent component provided a custom onDelete handler, call it too
-				if (onDelete) {
-					onDelete(currentPost._id);
-				}
+				await onDelete(currentPost._id);
 			} catch (error) {
 				console.error("Error deleting post:", error);
 			} finally {

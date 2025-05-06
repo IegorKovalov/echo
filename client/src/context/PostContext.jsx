@@ -101,12 +101,7 @@ export const PostProvider = ({ children }) => {
 		async (postData) => {
 			try {
 				const response = await PostService.createPost(postData);
-				let newPost;
-				if (response.data && response.data.post) {
-					newPost = response.data.post;
-				} else {
-					newPost = response.data;
-				}
+				const newPost = response.data.post || response.data;
 				setPosts((prevPosts) => [newPost, ...prevPosts]);
 
 				showSuccess("Post created successfully!");
@@ -124,12 +119,8 @@ export const PostProvider = ({ children }) => {
 		async (postId, postData) => {
 			try {
 				const response = await PostService.updatePost(postId, postData);
-				let updatedPost;
-				if (response.data && response.data.post) {
-					updatedPost = response.data.post;
-				} else {
-					updatedPost = response.data;
-				}
+				// Standardize response handling
+				const updatedPost = response.data.post || response.data;
 
 				// Update the post in the local state
 				setPosts((prevPosts) =>
@@ -174,13 +165,8 @@ export const PostProvider = ({ children }) => {
 		async (postId, hours = 24) => {
 			try {
 				const response = await PostService.renewPost(postId, hours);
-				// Get the renewed post data
-				let renewedPost;
-				if (response.data && response.data.post) {
-					renewedPost = response.data.post;
-				} else {
-					renewedPost = response.data;
-				}
+				// Standardize response handling
+				const renewedPost = response.data.post || response.data;
 
 				// Update the post in the local state
 				setPosts((prevPosts) =>
@@ -205,14 +191,8 @@ export const PostProvider = ({ children }) => {
 		async (postId, commentContent) => {
 			try {
 				const response = await PostService.addComment(postId, commentContent);
-
-				// Get the updated post with new comment
-				let updatedPost;
-				if (response.data && response.data.post) {
-					updatedPost = response.data.post;
-				} else {
-					updatedPost = response.data;
-				}
+				// Standardize response handling
+				const updatedPost = response.data.post || response.data;
 
 				// Update the post in the local state
 				setPosts((prevPosts) =>
@@ -237,29 +217,49 @@ export const PostProvider = ({ children }) => {
 			try {
 				const response = await PostService.deleteComment(postId, commentId);
 
-				// Get the updated post after comment deletion
-				let updatedPost;
-				if (response.data && response.data.post) {
-					updatedPost = response.data.post;
+				// Safely handle the response regardless of structure
+				let updatedComments = [];
+
+				if (response && response.data && response.data.post) {
+					// If API returns proper structure with post object
+					updatedComments = response.data.post.comments || [];
+
+					// Update the post in the local state with the complete post object
+					setPosts((prevPosts) =>
+						prevPosts.map((post) =>
+							post._id === postId ? { ...post, ...response.data.post } : post
+						)
+					);
 				} else {
-					updatedPost = response.data;
+					setPosts((prevPosts) =>
+						prevPosts.map((post) => {
+							if (post._id === postId) {
+								return {
+									...post,
+									comments: (post.comments || []).filter(
+										(comment) => comment._id !== commentId
+									),
+								};
+							}
+							return post;
+						})
+					);
+
+					// Get the updated comments from our local state change
+					const updatedPost = posts.find((post) => post._id === postId);
+					if (updatedPost) {
+						updatedComments = updatedPost.comments || [];
+					}
 				}
 
-				// Update the post in the local state
-				setPosts((prevPosts) =>
-					prevPosts.map((post) =>
-						post._id === postId ? { ...post, ...updatedPost } : post
-					)
-				);
-
-				return updatedPost;
+				return { comments: updatedComments };
 			} catch (error) {
 				console.error("Error deleting comment:", error);
 				showError(error.message || "Failed to delete comment");
 				throw error;
 			}
 		},
-		[showError]
+		[showError, posts]
 	);
 
 	// Fetch initial data when the user is authenticated

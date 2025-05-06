@@ -1,6 +1,5 @@
 import { Clock, Image, XCircle } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { usePost } from "../../context/PostContext";
 import { useToast } from "../../context/ToastContext";
 import Card from "./Card";
 import ProfileAvatar from "./ProfileAvatar";
@@ -14,8 +13,7 @@ export default function PostForm({
 	onSubmit,
 	isSubmitting = false,
 }) {
-	const { createPost } = usePost();
-	const { showLoading, showError, showInfo } = useToast();
+	const { showError, showInfo } = useToast();
 	const [content, setContent] = useState(initialContent);
 	const [duration, setDuration] = useState(initialDuration);
 	const [mediaItems, setMediaItems] = useState([]);
@@ -26,10 +24,18 @@ export default function PostForm({
 		const initialExistingMedia = initialMedia.map((item) => ({
 			id: item.id,
 			url: item.url,
+			type: item.type || (item.url && determineMediaTypeFromUrl(item.url)),
 			isExisting: true,
 		}));
 		setMediaItems(initialExistingMedia);
 	}, [initialContent, initialDuration, initialMedia]);
+
+	const determineMediaTypeFromUrl = (url) => {
+		if (!url) return "unknown";
+		if (url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) return "image/jpeg";
+		if (url.match(/\.(mp4|webm|ogg)$/i)) return "video/mp4";
+		return "unknown";
+	};
 
 	useEffect(() => {
 		const urlsToRevoke = mediaItems
@@ -60,6 +66,7 @@ export default function PostForm({
 		const newMedia = selectedFiles.map((file) => ({
 			file: file,
 			previewUrl: URL.createObjectURL(file),
+			type: file.type, // Store the actual file type directly
 			isExisting: false,
 			tempId: Date.now() + Math.random(),
 		}));
@@ -68,15 +75,18 @@ export default function PostForm({
 		e.target.value = null;
 	};
 
-	const removeMedia = useCallback((itemToRemove) => {
-		setMediaItems((prevMediaItems) => {
-			const newMediaItems = prevMediaItems.filter(
-				(item) => item !== itemToRemove
-			);
-			return newMediaItems;
-		});
-		showInfo("Media removed");
-	}, []);
+	const removeMedia = useCallback(
+		(itemToRemove) => {
+			setMediaItems((prevMediaItems) => {
+				const newMediaItems = prevMediaItems.filter(
+					(item) => item !== itemToRemove
+				);
+				return newMediaItems;
+			});
+			showInfo("Media removed");
+		},
+		[showInfo]
+	);
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
@@ -103,7 +113,7 @@ export default function PostForm({
 		);
 
 		try {
-			const response = await createPost(formData);
+			const response = await onSubmit(formData);
 			console.log("Post created:", response);
 		} catch (error) {
 			showError(error.message || "Failed to create post. Please try again.");
@@ -126,48 +136,35 @@ export default function PostForm({
 							onChange={(e) => setContent(e.target.value)}
 						/>
 
-						{/* === MODERN MEDIA PREVIEWS START === */}
 						{mediaItems.length > 0 && (
 							<div className="mt-2 flex flex-wrap gap-2">
 								{mediaItems.map((item, idx) => {
-									// Determine the URL and media type based on item structure
 									const url = item.isExisting ? item.url : item.previewUrl;
-									const type = item.isExisting
-										? item.url.match(/\.(jpeg|jpg|gif|png|webp)$/i)
-											? "image"
-											: item.url.match(/\.(mp4|webm|ogg)$/i)
-											? "video"
-											: "unknown" // Basic type guess for existing URLs
-										: item.file.type; // Use file type for new items
 
-									if (!url) return null; // Should not happen with correctly structured state
+									if (!url) return null;
 
 									return (
-										// Use a unique key: item.id for existing, tempId for new, fallback to index if needed
 										<div
 											key={item.id || item.tempId || idx}
 											className="relative group h-24 w-24"
 										>
-											{" "}
-											{/* Added h-24 w-24 for consistent container size */}
-											{type.startsWith("image/") ? (
+											{item.type && item.type.startsWith("image") ? (
 												<img
 													src={url}
 													alt={
 														item.isExisting
-															? "Existing media preview"
+															? "Existing media"
 															: `Preview of ${item.file.name}`
-													} // More descriptive alt text
-													className="h-full w-full rounded object-cover" // Image fills container
+													}
+													className="h-full w-full rounded object-cover"
 												/>
-											) : type.startsWith("video/") ? (
+											) : item.type && item.type.startsWith("video") ? (
 												<video
 													src={url}
-													controls // Add controls for video playback
-													className="h-full w-full rounded object-cover" // Video fills container
+													controls
+													className="h-full w-full rounded object-cover"
 												/>
 											) : (
-												// Placeholder for unsupported types
 												<div className="h-full w-full rounded bg-gray-700 text-white flex items-center justify-center text-center text-xs p-1">
 													Cannot preview{" "}
 													{item.isExisting
@@ -175,23 +172,19 @@ export default function PostForm({
 														: item.file.name}
 												</div>
 											)}
-											{/* Remove button */}
 											<button
 												type="button"
-												onClick={() => removeMedia(item)} // Pass the specific item object
-												// Position and style the remove button (visible on hover)
+												onClick={() => removeMedia(item)}
 												className="absolute top-1 right-1 rounded-full bg-gray-900/80 text-white hover:bg-gray-900 p-1 transition-opacity opacity-0 group-hover:opacity-100"
-												aria-label="Remove media" // Accessibility label for screen readers
+												aria-label="Remove media"
 											>
-												<XCircle className="h-4 w-4" aria-hidden="true" />{" "}
-												{/* Icon */}
+												<XCircle className="h-4 w-4" aria-hidden="true" />
 											</button>
 										</div>
 									);
 								})}
 							</div>
 						)}
-						{/* === MODERN MEDIA PREVIEWS END === */}
 
 						<div className="mt-2 flex items-center justify-between">
 							<div className="flex gap-2">
@@ -203,7 +196,6 @@ export default function PostForm({
 										multiple
 										accept="image/*,video/*"
 										onChange={handleFileChange}
-										// The onClick={(e) => e.target.value = null} for file input is handled inside handleFileChange now
 									/>
 									<Image className="h-4 w-4 text-gray-500" aria-hidden="true" />
 									<span className="sr-only">Add media</span>
@@ -248,29 +240,3 @@ export default function PostForm({
 		</Card>
 	);
 }
-
-// await showLoading(
-//     new Promise((resolve, reject) => {
-//         const result = onSubmit(formData);
-//         if (result instanceof Promise) {
-//             result.then(resolve).catch(reject);
-//         } else {
-//             resolve(result);
-//         }
-//     }),
-//     {
-//         loading: isEditing ? "Updating post..." : "Creating post...",
-//         success: isEditing
-//             ? "Post updated successfully!"
-//             : "Post created successfully!",
-//         error: (err) => {
-//             console.error("Post submission failed:", err);
-//             return `Error: ${err.message || "Something went wrong"}`;
-//         },
-//     }
-// );
-
-// if (!isEditing) {
-//     setContent("");
-//     setMediaItems([]);
-// }
