@@ -1,14 +1,9 @@
-import { PostProvider } from "../../context/PostContext";
 import { useAuth } from "../../context/AuthContext";
+import { PostProvider } from "../../context/PostContext";
 import Header from "./Header";
 
-export default function Layout({
-	children,
-	showHeader = true,
-}) {
+export default function Layout({ children, showHeader = true }) {
 	const { user } = useAuth();
-
-	// Wrap children in PostProvider only for authenticated routes
 	const content = user ? <PostProvider>{children}</PostProvider> : children;
 
 	return (

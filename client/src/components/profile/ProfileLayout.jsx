@@ -1,5 +1,6 @@
 import { Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { usePost } from "../../context/PostContext";
 import UserService from "../../services/user.service";
@@ -13,9 +14,10 @@ import ProfileTabs from "./ProfileTabs";
 
 export default function ProfileLayout({ userId }) {
 	const { user } = useAuth();
+	const navigate = useNavigate();
 	const { fetchUserPosts, createPost, deletePost, renewPost } = usePost();
 
-	// State management
+	const [isLoading, setIsLoading] = useState(true);
 	const [profileData, setProfileData] = useState(null);
 	const [posts, setPosts] = useState([]);
 	const [loadingPosts, setLoadingPosts] = useState(true);
@@ -25,8 +27,6 @@ export default function ProfileLayout({ userId }) {
 	const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
 	const [followersModalTab, setFollowersModalTab] = useState("");
 	const [isOwnProfile, setIsOwnProfile] = useState(true);
-
-	// Refs for tracking state changes to prevent unnecessary fetches
 	const fetchPostsRef = useRef({
 		profileId: null,
 		showExpired: false,
@@ -38,14 +38,12 @@ export default function ProfileLayout({ userId }) {
 		if (user) {
 			const fetchProfileData = async () => {
 				try {
+					setIsLoading(true);
 					let data;
-
-					// If userId is provided and not the current user's ID, fetch that user's profile
 					if (userId && userId !== user._id) {
 						data = await UserService.getUserProfile(userId);
 						setIsOwnProfile(false);
 					} else {
-						// Otherwise fetch the current user's profile
 						data = await UserService.getProfile();
 						setIsOwnProfile(true);
 					}
@@ -53,10 +51,11 @@ export default function ProfileLayout({ userId }) {
 					setProfileData(data.data.user);
 				} catch (error) {
 					console.error("Error fetching profile:", error);
-					// If profile not found, redirect to own profile
 					if (error.response && error.response.status === 404) {
 						navigate("/profile");
 					}
+				} finally {
+					setIsLoading(false);
 				}
 			};
 
@@ -163,7 +162,7 @@ export default function ProfileLayout({ userId }) {
 	};
 
 	// Loading state
-	if (loading || !user || !profileData) {
+	if (isLoading || !user || !profileData) {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-gray-950">
 				<div className="text-center">
