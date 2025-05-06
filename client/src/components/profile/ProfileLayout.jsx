@@ -1,6 +1,5 @@
 import { Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { usePost } from "../../context/PostContext";
 import UserService from "../../services/user.service";
@@ -13,9 +12,8 @@ import ProfileStats from "./ProfileStats";
 import ProfileTabs from "./ProfileTabs";
 
 export default function ProfileLayout({ userId }) {
-	const { user, loading } = useAuth();
+	const { user } = useAuth();
 	const { fetchUserPosts, createPost, deletePost, renewPost } = usePost();
-	const navigate = useNavigate();
 
 	// State management
 	const [profileData, setProfileData] = useState(null);
@@ -34,13 +32,6 @@ export default function ProfileLayout({ userId }) {
 		showExpired: false,
 		fetchCount: 0,
 	});
-
-	// Redirect if not logged in
-	useEffect(() => {
-		if (!loading && !user) {
-			navigate("/login");
-		}
-	}, [user, loading, navigate]);
 
 	// Load profile data from API
 	useEffect(() => {

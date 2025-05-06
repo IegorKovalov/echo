@@ -1,5 +1,6 @@
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import Layout from "./components/Layout/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 import { ViewTrackingProvider } from "./context/ViewTrackingContext";
@@ -25,41 +26,51 @@ function App() {
 							<Route
 								path="/"
 								element={
-									<Layout requireAuth={true}>
-										<HomePage />
-									</Layout>
+									<ProtectedRoute>
+										<Layout>
+											<HomePage />
+										</Layout>
+									</ProtectedRoute>
 								}
 							/>
 							<Route
 								path="/profile"
 								element={
-									<Layout requireAuth={true}>
-										<ProfilePage />
-									</Layout>
+									<ProtectedRoute>
+										<Layout>
+											<ProfilePage />
+										</Layout>
+									</ProtectedRoute>
 								}
 							/>
 							<Route
 								path="/profile/:userId"
 								element={
-									<Layout requireAuth={true}>
-										<ProfilePage />
-									</Layout>
+									<ProtectedRoute>
+										<Layout>
+											<ProfilePage />
+										</Layout>
+									</ProtectedRoute>
 								}
 							/>
 							<Route
 								path="/settings"
 								element={
-									<Layout requireAuth={true}>
-										<SettingsPage />
-									</Layout>
+									<ProtectedRoute>
+										<Layout>
+											<SettingsPage />
+										</Layout>
+									</ProtectedRoute>
 								}
 							/>
 							<Route
 								path="/search"
 								element={
-									<Layout requireAuth={true}>
-										<SearchPage />
-									</Layout>
+									<ProtectedRoute>
+										<Layout>
+											<SearchPage />
+										</Layout>
+									</ProtectedRoute>
 								}
 							/>
 
@@ -67,7 +78,7 @@ function App() {
 							<Route
 								path="/login"
 								element={
-									<Layout requireAuth={false} showHeader={false}>
+									<Layout showHeader={false}>
 										<LoginPage />
 									</Layout>
 								}
@@ -75,7 +86,7 @@ function App() {
 							<Route
 								path="/signup"
 								element={
-									<Layout requireAuth={false} showHeader={false}>
+									<Layout showHeader={false}>
 										<SignupPage />
 									</Layout>
 								}
@@ -83,7 +94,7 @@ function App() {
 							<Route
 								path="/forgot-password"
 								element={
-									<Layout requireAuth={false} showHeader={false}>
+									<Layout showHeader={false}>
 										<ForgotPasswordPage />
 									</Layout>
 								}
@@ -91,7 +102,7 @@ function App() {
 							<Route
 								path="/reset-password/:token"
 								element={
-									<Layout requireAuth={false} showHeader={false}>
+									<Layout showHeader={false}>
 										<ResetPasswordPage />
 									</Layout>
 								}
@@ -99,7 +110,7 @@ function App() {
 							<Route
 								path="/success"
 								element={
-									<Layout requireAuth={false} showHeader={false}>
+									<Layout showHeader={false}>
 										<SuccessPage />
 									</Layout>
 								}
@@ -109,7 +120,7 @@ function App() {
 							<Route
 								path="*"
 								element={
-									<Layout requireAuth={false} showHeader={false}>
+									<Layout showHeader={false}>
 										<NotFoundPage />
 									</Layout>
 								}

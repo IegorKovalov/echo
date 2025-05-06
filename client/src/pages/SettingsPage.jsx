@@ -9,14 +9,13 @@ import {
 	User,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import UserService from "../services/user.service";
 
 export default function SettingsPage() {
-	const { user, loading, updateUser } = useAuth();
-	const navigate = useNavigate();
+	const { user, updateUser } = useAuth();
 	const fileInputRef = useRef(null);
 	const { showSuccess, showError } = useToast();
 
@@ -39,13 +38,6 @@ export default function SettingsPage() {
 	const [isSaving, setIsSaving] = useState(false);
 	const [profilePreview, setProfilePreview] = useState(null);
 	const [profileFile, setProfileFile] = useState(null);
-
-	// Redirect if not logged in
-	useEffect(() => {
-		if (!loading && !user) {
-			navigate("/login");
-		}
-	}, [user, loading, navigate]);
 
 	// Load profile data from API
 	useEffect(() => {
@@ -242,7 +234,7 @@ export default function SettingsPage() {
 	};
 
 	// Loading state
-	if (loading || !user || !profileData) {
+	if (!user || !profileData) {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-gray-950">
 				<div className="text-center">
