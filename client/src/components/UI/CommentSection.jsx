@@ -1,32 +1,25 @@
+// client/src/components/UI/CommentSection.jsx
 import { Send } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { usePost } from "../../context/PostContext";
 import { useToast } from "../../context/ToastContext";
 import CommentItem from "./CommentItem";
 import ProfileAvatar from "./ProfileAvatar";
 
-/**
- * Component for displaying and managing comments on a post
- */
 export default function CommentSection({
 	post,
 	currentUser,
-	onCommentUpdate,
 	onAddComment,
 	onDeleteComment,
 }) {
-	const [comments, setComments] = useState(post.comments || []);
 	const [commentContent, setCommentContent] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isExpanded, setIsExpanded] = useState(false);
 	const { showSuccess, showError } = useToast();
-	// Use post context if props aren't provided
 	const postContext = usePost();
 
-	// Sync comments with post prop when it changes
-	useEffect(() => {
-		setComments(post.comments || []);
-	}, [post.comments]);
+	// Use post.comments directly, no need to duplicate state
+	const comments = post.comments || [];
 
 	const handleAddComment = async (e) => {
 		e.preventDefault();
@@ -34,40 +27,9 @@ export default function CommentSection({
 
 		setIsSubmitting(true);
 		try {
+			// Use the provided callback or the context method
 			const addCommentFn = onAddComment || postContext.addComment;
-			const response = await addCommentFn(post._id, commentContent.trim());
-			let updatedComments;
-			if (
-				response &&
-				response.data &&
-				response.data.post &&
-				response.data.post.comments
-			) {
-				updatedComments = response.data.post.comments;
-			} else if (response && response.comments) {
-				updatedComments = response.comments;
-			} else if (response) {
-				// If direct post object returned
-				updatedComments = response.comments || [];
-			} else {
-				// Fallback: Add the new comment locally
-				const newComment = {
-					_id: Date.now().toString(), // Temporary ID
-					content: commentContent.trim(),
-					user: currentUser,
-					createdAt: new Date().toISOString(),
-				};
-				updatedComments = [...comments, newComment];
-			}
-
-			setComments(updatedComments);
-
-			// Notify parent component that comments have been updated
-			if (onCommentUpdate) {
-				onCommentUpdate(updatedComments);
-			}
-
-			// Show success toast
+			await addCommentFn(post._id, commentContent.trim());
 			showSuccess("Comment added successfully");
 			setCommentContent("");
 		} catch (error) {
@@ -78,40 +40,15 @@ export default function CommentSection({
 		}
 	};
 
-	// Delete a comment
 	const handleDeleteComment = async (postId, commentId) => {
 		try {
-			// Use the provided onDeleteComment or the postContext method
+			// Use the provided callback or the context method
 			const deleteCommentFn = onDeleteComment || postContext.deleteComment;
-			const response = await deleteCommentFn(postId, commentId);
+			await deleteCommentFn(postId, commentId);
 
-			// Handle the response data properly
-			let updatedComments;
-			if (
-				response &&
-				response.data &&
-				response.data.post &&
-				response.data.post.comments
-			) {
-				updatedComments = response.data.post.comments;
-			} else if (response && response.comments) {
-				updatedComments = response.comments;
-			} else if (response) {
-				// If direct post object returned
-				updatedComments = response.comments || [];
-			} else {
-				// Fallback: Remove the comment locally if API doesn't return updated comments
-				updatedComments = comments.filter((c) => c._id !== commentId);
-			}
+			// No need to update local state since we're using post.comments directly
+			// The context will update the post with new comments
 
-			setComments(updatedComments);
-
-			// Notify parent component that comments have been updated
-			if (onCommentUpdate) {
-				onCommentUpdate(updatedComments);
-			}
-
-			// Show success toast
 			showSuccess("Comment deleted successfully");
 		} catch (error) {
 			console.error("Error deleting comment:", error);

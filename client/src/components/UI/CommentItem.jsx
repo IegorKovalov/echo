@@ -1,6 +1,6 @@
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom"; // Make sure Link is imported
+import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import ProfileAvatar from "./ProfileAvatar";
 
@@ -36,7 +36,9 @@ export default function CommentItem({ comment, postId, onDelete }) {
 		if (window.confirm("Are you sure you want to delete this comment?")) {
 			setIsDeleting(true);
 			try {
+				// Call the onDelete function passed from the parent
 				await onDelete(postId, comment._id);
+				// Note: We don't need to manually update UI here - parent should handle it
 			} catch (error) {
 				console.error("Error deleting comment:", error);
 			} finally {
@@ -44,6 +46,18 @@ export default function CommentItem({ comment, postId, onDelete }) {
 			}
 		}
 	};
+
+	// If the comment is being deleted, you could show a visual indicator
+	if (isDeleting) {
+		return (
+			<div className="flex gap-3 py-4 px-2 opacity-50">
+				<ProfileAvatar user={comment.user} size="xs" />
+				<div className="flex-1 min-w-0">
+					<p className="text-sm text-gray-400">Deleting comment...</p>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="flex gap-3 py-4 px-2">

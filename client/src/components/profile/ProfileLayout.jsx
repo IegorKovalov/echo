@@ -1,5 +1,5 @@
 import { Sparkles } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { usePost } from "../../context/PostContext";
@@ -15,24 +15,22 @@ import ProfileTabs from "./ProfileTabs";
 export default function ProfileLayout({ userId }) {
 	const { user } = useAuth();
 	const navigate = useNavigate();
-	const { fetchUserPosts, createPost, deletePost, renewPost } = usePost();
+	const { fetchUserPosts, createPost, posts, loadingPosts, deletePost } =
+		usePost();
 
 	const [isLoading, setIsLoading] = useState(true);
 	const [profileData, setProfileData] = useState(null);
-	const [posts, setPosts] = useState([]);
-	const [loadingPosts, setLoadingPosts] = useState(true);
 	const [activeTab, setActiveTab] = useState("posts");
 	const [showExpiredPosts, setShowExpiredPosts] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
 	const [followersModalTab, setFollowersModalTab] = useState("");
 	const [isOwnProfile, setIsOwnProfile] = useState(true);
-	const fetchPostsRef = useRef({
-		profileId: null,
-		showExpired: false,
-		fetchCount: 0,
-	});
+	const [userPosts, setUserPosts] = useState([]);
 
+	const profilePostIds = useRef(new Set());
+
+	// Fetch profile data
 	useEffect(() => {
 		if (user) {
 			const fetchProfileData = async () => {
@@ -61,90 +59,97 @@ export default function ProfileLayout({ userId }) {
 		}
 	}, [user, userId, navigate]);
 
-	// Load user posts using PostContext - with proper dependency handling
+	// Load user posts using PostContext
 	useEffect(() => {
 		if (!user || !profileData) return;
 
-		// Check if we need to fetch posts again
-		const shouldFetchPosts =
-			profileData._id !== fetchPostsRef.current.profileId ||
-			showExpiredPosts !== fetchPostsRef.current.showExpired;
-
-		if (!shouldFetchPosts) return;
-
-		// Update ref to avoid redundant fetches
-		fetchPostsRef.current = {
-			profileId: profileData._id,
-			showExpired: showExpiredPosts,
-			fetchCount: fetchPostsRef.current.fetchCount + 1,
-		};
-
 		const loadUserPosts = async () => {
 			try {
-				setLoadingPosts(true);
 				// Fetch posts for the profile we're viewing
-				const userPosts = await fetchUserPosts(
+				const fetchedPosts = await fetchUserPosts(
 					profileData._id,
 					showExpiredPosts && isOwnProfile
 				);
-				setPosts(userPosts || []);
+				setUserPosts(fetchedPosts || []);
+
+				// Store the IDs of posts that belong to this profile
+				profilePostIds.current = new Set(fetchedPosts.map((post) => post._id));
 			} catch (error) {
 				console.error("Error fetching posts:", error);
-			} finally {
-				setLoadingPosts(false);
 			}
 		};
 
 		loadUserPosts();
 	}, [user, profileData, showExpiredPosts, isOwnProfile, fetchUserPosts]);
 
-	// Handle post creation - only available on own profile
-	const handleCreatePost = async (formData) => {
-		if (!isOwnProfile) return;
-
-		try {
-			setIsSubmitting(true);
-			await createPost(formData);
-
-			// Track that we need to fetch posts again
-			fetchPostsRef.current.fetchCount += 1;
-
-			// Refresh posts after creating a new one
-			const userPosts = await fetchUserPosts(user._id, showExpiredPosts);
-			setPosts(userPosts || []);
-		} catch (error) {
-			console.error("Error creating post:", error);
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
-
-	// Handle post deletion - only available on own profile
-	const handleDeletePost = async (postId) => {
-		if (!isOwnProfile) return;
-
-		try {
-			await deletePost(postId);
-			// Filter out the deleted post from the local state instead of refetching
-			setPosts((prevPosts) => prevPosts.filter((post) => post._id !== postId));
-		} catch (error) {
-			console.error("Error deleting post:", error);
-		}
-	};
-
-	// Handle post renewal - only available on own profile
-	const handleRenewPost = async (postId) => {
-		if (!isOwnProfile) return;
-
-		try {
-			const renewedPost = await renewPost(postId);
-			// Update the post in local state instead of refetching
-			setPosts((prevPosts) =>
-				prevPosts.map((post) => (post._id === postId ? renewedPost : post))
+	useEffect(() => {
+		if (posts.length && profilePostIds.current.size) {
+			const updatedProfilePosts = posts.filter((post) =>
+				profilePostIds.current.has(post._id)
 			);
-		} catch (error) {
-			console.error("Error renewing post:", error);
+
+			if (updatedProfilePosts.length) {
+				setUserPosts((prevPosts) => {
+					if (prevPosts.length !== updatedProfilePosts.length) {
+						return prevPosts;
+					}
+					return prevPosts.map((post) => {
+						const updatedPost = updatedProfilePosts.find(
+							(p) => p._id === post._id
+						);
+						return updatedPost || post;
+					});
+				});
+			}
 		}
+	}, [posts]);
+
+	const handleCreatePost = useCallback(
+		async (formData) => {
+			try {
+				setIsSubmitting(true);
+				const newPost = await createPost(formData);
+				setUserPosts((prevPosts) => [...prevPosts, newPost]);
+				profilePostIds.current.add(newPost._id);
+			} catch (error) {
+				console.error("Error creating post:", error);
+			} finally {
+				setIsSubmitting(false);
+			}
+		},
+		[createPost, setUserPosts, profilePostIds]
+	);
+
+	const handleDeletePost = useCallback(
+		async (postId) => {
+			if (!isOwnProfile) return;
+
+			try {
+				await deletePost(postId);
+				setUserPosts((prevPosts) =>
+					prevPosts.filter((post) => post._id !== postId)
+				);
+				profilePostIds.current.delete(postId);
+			} catch (error) {
+				console.error("Error deleting post:", error);
+			} finally {
+				setIsSubmitting(false);
+			}
+		},
+		[isOwnProfile, deletePost]
+	);
+
+	// Handle post renewal - handled by context directly
+	const handleRenewPost = async (postId) => {
+		// Post renewal handled by context, we update our local copy
+		const updatedPosts = await fetchUserPosts(
+			profileData._id,
+			showExpiredPosts && isOwnProfile
+		);
+		setUserPosts(updatedPosts || []);
+
+		// Update the tracked post IDs
+		profilePostIds.current = new Set(updatedPosts.map((post) => post._id));
 	};
 
 	// Handle opening followers modal
@@ -170,6 +175,7 @@ export default function ProfileLayout({ userId }) {
 			</div>
 		);
 	}
+
 	return (
 		<div className="flex min-h-screen flex-col bg-gradient-to-b from-gray-900 to-gray-950">
 			<ProfileHeader profileUsername={profileData.username} />
@@ -183,7 +189,7 @@ export default function ProfileLayout({ userId }) {
 
 					<div className="container px-4">
 						<ProfileStats
-							postsCount={posts.length}
+							postsCount={userPosts.length}
 							onOpenFollowersModal={openFollowersModal}
 						/>
 
@@ -193,7 +199,7 @@ export default function ProfileLayout({ userId }) {
 					{activeTab === "posts" ? (
 						<ProfilePosts
 							loadingPosts={loadingPosts}
-							posts={posts}
+							posts={userPosts}
 							profileData={profileData}
 							handleDeletePost={handleDeletePost}
 							handleRenewPost={handleRenewPost}
@@ -206,7 +212,7 @@ export default function ProfileLayout({ userId }) {
 					) : (
 						<ProfileMedia
 							loadingPosts={loadingPosts}
-							posts={posts}
+							posts={userPosts}
 							showExpiredPosts={showExpiredPosts}
 							setShowExpiredPosts={setShowExpiredPosts}
 							isOwnProfile={isOwnProfile}

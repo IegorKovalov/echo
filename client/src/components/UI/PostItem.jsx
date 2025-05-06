@@ -1,3 +1,4 @@
+// client/src/components/UI/PostItem.jsx
 import {
 	ChevronDown,
 	ChevronUp,
@@ -8,7 +9,7 @@ import {
 	Send,
 	Trash2,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { usePost } from "../../context/PostContext";
@@ -28,56 +29,53 @@ export default function PostItem({
 	onEdit,
 }) {
 	const { user } = useAuth();
+	// UI-specific state
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [isRenewing, setIsRenewing] = useState(false);
 	const [hasTrackedView, setHasTrackedView] = useState(false);
 	const [showComments, setShowComments] = useState(false);
-	const [commentCount, setCommentCount] = useState(0);
 	const [isEditing, setIsEditing] = useState(false);
-	const [currentPost, setCurrentPost] = useState(post);
+
 	const { showSuccess, showError, showInfo } = useToast();
 	const { trackView, getViewCount, initializeViewCount } = useViewTracking();
 	const { updatePost, deletePost, renewPost, addComment, deleteComment } =
 		usePost();
-	const initializedRef = useRef(false);
-	const isOwnPost = user._id === currentPost.user._id;
 
+	const initializedRef = useRef(false);
+	const isOwnPost = user._id === post.user._id;
+
+	// Derived state instead of managed state
+	const commentCount = post.comments ? post.comments.length : 0;
+
+	// Initialize view count once
 	useEffect(() => {
-		setCurrentPost(post);
-	}, [post]);
-	// Initialize view count - using the ref to prevent multiple calls
-	useEffect(() => {
-		// This will run only once per component mount
 		if (!initializedRef.current) {
 			initializedRef.current = true;
-			// Initialize with the post's current view count
-			initializeViewCount(currentPost._id, currentPost.views || 0);
+			initializeViewCount(post._id, post.views || 0);
 		}
-	}, [currentPost._id, currentPost.views, initializeViewCount]);
+	}, [post._id, post.views, initializeViewCount]);
 
-	// Update comment count when post comments change
+	// Track view once per component mount
 	useEffect(() => {
-		if (currentPost.comments) {
-			setCommentCount(currentPost.comments.length);
-		}
-	}, [currentPost.comments]);
-
-	// Track view once per component mount using the batch system
-	useEffect(() => {
-		if (!hasTrackedView && !currentPost.expired) {
-			trackView(currentPost._id);
+		if (!hasTrackedView && !post.expired) {
+			trackView(post._id);
 			setHasTrackedView(true);
 		}
-	}, [currentPost._id, currentPost.expired, hasTrackedView, trackView]);
+	}, [post._id, post.expired, hasTrackedView, trackView]);
 
 	// Get the current view count for this post
-	const viewCount = getViewCount(currentPost._id) || currentPost.views || 0;
+	const viewCount = getViewCount(post._id) || post.views || 0;
 
 	const handleDelete = async () => {
 		if (window.confirm("Are you sure you want to delete this post?")) {
 			setIsDeleting(true);
 			try {
-				await onDelete(currentPost._id);
+				// Use either passed callback or context function
+				if (onDelete) {
+					await onDelete(post._id);
+				} else {
+					await deletePost(post._id);
+				}
 			} catch (error) {
 				console.error("Error deleting post:", error);
 			} finally {
@@ -89,12 +87,12 @@ export default function PostItem({
 	const handleRenew = async () => {
 		setIsRenewing(true);
 		try {
-			const renewedPost = await renewPost(currentPost._id);
-			setCurrentPost(renewedPost);
+			const renewedPost = await renewPost(post._id);
 			// If parent component provided a custom onRenew handler, call it too
 			if (onRenew) {
-				onRenew(currentPost._id);
+				onRenew(post._id);
 			}
+			return renewedPost;
 		} catch (error) {
 			console.error("Error renewing post:", error);
 		} finally {
@@ -104,32 +102,21 @@ export default function PostItem({
 
 	const handleEdit = async (updatedPostData) => {
 		try {
-			const updatedPost = await updatePost(currentPost._id, updatedPostData);
-			setCurrentPost(updatedPost);
+			const updatedPost = await updatePost(post._id, updatedPostData);
 			setIsEditing(false);
 			// If parent component provided a custom onEdit handler, call it too
 			if (onEdit) {
 				onEdit(updatedPost);
 			}
+			return updatedPost;
 		} catch (error) {
 			console.error("Error updating post:", error);
 		}
 	};
 
-	// Handle comment count updates
-	const handleCommentUpdate = async (updatedComments) => {
-		setCommentCount(updatedComments.length);
-		// Update the local post state with new comments
-		setCurrentPost((prev) => ({ ...prev, comments: updatedComments }));
-		// Propagate changes upward if onEdit is provided
-		if (onEdit) {
-			onEdit({ ...currentPost, comments: updatedComments });
-		}
-	};
-
 	const handleShare = () => {
 		// Copy post URL to clipboard
-		const postUrl = `${window.location.origin}/post/${currentPost._id}`;
+		const postUrl = `${window.location.origin}/post/${post._id}`;
 		navigator.clipboard
 			.writeText(postUrl)
 			.then(() => {
@@ -142,9 +129,9 @@ export default function PostItem({
 
 	// Hours left until expiration
 	const getHoursLeft = () => {
-		if (!currentPost.expiresAt) return 0;
+		if (!post.expiresAt) return 0;
 		return Math.ceil(
-			(new Date(currentPost.expiresAt) - new Date()) / (1000 * 60 * 60)
+			(new Date(post.expiresAt) - new Date()) / (1000 * 60 * 60)
 		);
 	};
 
@@ -163,7 +150,7 @@ export default function PostItem({
 			<Card className="mb-4">
 				<div className="mb-3 flex items-center justify-between">
 					<div className="flex items-center gap-3">
-						<ProfileAvatar user={currentPost.user || currentUser} size="sm" />
+						<ProfileAvatar user={post.user || currentUser} size="sm" />
 						<h3 className="font-medium text-white">Edit Post</h3>
 					</div>
 					<button
@@ -176,9 +163,9 @@ export default function PostItem({
 
 				<PostForm
 					user={currentUser}
-					initialContent={currentPost.content}
+					initialContent={post.content}
 					initialDuration={getHoursLeft()}
-					initialMedia={currentPost.media || []} // Pass the existing media array
+					initialMedia={post.media || []} // Pass the existing media array
 					isEditing={true}
 					onSubmit={handleEdit}
 				/>
@@ -190,28 +177,28 @@ export default function PostItem({
 		<Card className="mb-4">
 			<div className="mb-3 flex items-center justify-between">
 				<div className="flex items-center gap-3">
-					<ProfileAvatar user={currentPost.user || currentUser} size="sm" />
+					<ProfileAvatar user={post.user || currentUser} size="sm" />
 					<div>
 						{/* Make user name clickable and navigate to their profile */}
-						{currentPost.user && currentPost.user._id ? (
+						{post.user && post.user._id ? (
 							<Link
-								to={`/profile/${currentPost.user._id}`}
+								to={`/profile/${post.user._id}`}
 								className="font-medium text-white hover:text-purple-400 transition-colors"
 							>
-								{currentPost.user?.fullName || currentUser?.fullName || "User"}
+								{post.user?.fullName || currentUser?.fullName || "User"}
 							</Link>
 						) : (
 							<h3 className="font-medium text-white">
-								{currentPost.user?.fullName || currentUser?.fullName || "User"}
+								{post.user?.fullName || currentUser?.fullName || "User"}
 							</h3>
 						)}
 						<p className="text-xs text-gray-400">
-							{formatDate(currentPost.createdAt)}
+							{formatDate(post.createdAt)}
 						</p>
 					</div>
 				</div>
 
-				{!currentPost.expired ? (
+				{!post.expired ? (
 					<div className="flex items-center gap-1 rounded-full bg-purple-900/30 px-2 py-1 text-xs font-medium text-purple-400">
 						<Clock className="h-3 w-3" />
 						<span>{getHoursLeft()}h left</span>
@@ -224,32 +211,28 @@ export default function PostItem({
 				)}
 			</div>
 
-			<p className="mb-4 text-sm text-gray-200">{currentPost.content}</p>
+			<p className="mb-4 text-sm text-gray-200">{post.content}</p>
 
 			{/* Render media items (images or videos) */}
-			{currentPost.media && currentPost.media.length > 0 && (
+			{post.media && post.media.length > 0 && (
 				<div className="mb-4 space-y-2">
-					{" "}
-					{/* Container for media items, adds space between them */}
-					{currentPost.media.map((mediaItem, index) => (
+					{post.media.map((mediaItem, index) => (
 						<div
 							key={mediaItem.publicId || index}
 							className="rounded-lg overflow-hidden"
 						>
-							{" "}
-							{/* Individual media item wrapper */}
 							{mediaItem.type === "image" && (
 								<img
 									src={mediaItem.url}
 									alt={`Post media ${index + 1}`}
-									className="h-auto w-full max-h-[600px] object-contain rounded-lg" // Max height, object-contain to show full image
+									className="h-auto w-full max-h-[600px] object-contain rounded-lg"
 								/>
 							)}
 							{mediaItem.type === "video" && (
 								<video
 									src={mediaItem.url}
 									controls
-									className="h-auto w-full max-h-[600px] rounded-lg bg-black" // Max height, background color for letterboxing
+									className="h-auto w-full max-h-[600px] rounded-lg bg-black"
 								>
 									Your browser does not support the video tag.
 								</video>
@@ -290,7 +273,7 @@ export default function PostItem({
 					</div>
 
 					<div className="flex gap-2">
-						{!currentPost.expired && isOwnPost && (
+						{!post.expired && isOwnPost && (
 							<button
 								onClick={handleRenew}
 								disabled={isRenewing}
@@ -328,9 +311,8 @@ export default function PostItem({
 			{/* Comments Section */}
 			{showComments && (
 				<CommentSection
-					post={currentPost}
+					post={post}
 					currentUser={currentUser}
-					onCommentUpdate={handleCommentUpdate}
 					onAddComment={addComment}
 					onDeleteComment={deleteComment}
 				/>

@@ -113,8 +113,8 @@ export default function PostForm({
 		);
 
 		try {
-			const response = await onSubmit(formData);
-			console.log("Post created:", response);
+			console.log("Submitting form data:", formData);
+			await onSubmit(formData);
 		} catch (error) {
 			showError(error.message || "Failed to create post. Please try again.");
 		}
