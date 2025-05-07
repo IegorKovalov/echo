@@ -53,14 +53,39 @@ exports.login = async (req, res) => {
 
 exports.signup = async (req, res) => {
 	try {
+		const {
+			username,
+			email,
+			password,
+			passwordConfirm,
+			fullName,
+			profilePicture,
+		} = req.body;
+
+		const existingEmail = await User.findOne({ email });
+		if (existingEmail) {
+			return res.status(400).json({
+				status: "failed",
+				message: "Email already in use",
+			});
+		}
+
+		const existingUsername = await User.findOne({ username });
+		if (existingUsername) {
+			return res.status(400).json({
+				status: "failed",
+				message: "Username already taken",
+			});
+		}
 		const user = await User.create({
-			username: req.body.username,
-			email: req.body.email,
-			password: req.body.password,
-			passwordConfirm: req.body.passwordConfirm,
-			fullName: req.body.fullName,
-			profilePicture: req.body.profilePicture,
+			username,
+			email,
+			password,
+			passwordConfirm,
+			fullName,
+			profilePicture,
 		});
+
 		sendToken(user, 201, res);
 	} catch (err) {
 		res.status(400).json({
@@ -69,7 +94,6 @@ exports.signup = async (req, res) => {
 		});
 	}
 };
-
 exports.logout = (req, res) => {
 	const cookieOptions = {
 		expires: new Date(0),

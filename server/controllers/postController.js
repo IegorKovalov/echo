@@ -77,32 +77,27 @@ exports.createPost = async (req, res) => {
 exports.getUserPosts = async (req, res) => {
 	try {
 		const userId = req.params.userId;
-		const { includeExpired } = req.query;
-		const isCurrentUser = userId === req.user._id.toString();
+		const { includeExpired, page = 1, limit = 15 } = req.query;
+
+		const pageNumber = parseInt(page, 10);
+		const limitNumber = parseInt(limit, 10);
+
+		const skip = (pageNumber - 1) * limitNumber;
 
 		let query = Post.find({ user: userId });
-		if (includeExpired === "true" && isCurrentUser) {
-			query = Post.find({
-				user: userId,
-				includeExpired: true,
-			});
-		} else {
-			query = Post.find({
-				user: userId,
-				$or: [
-					{ expiresAt: { $gt: new Date() } },
-					{ expiresAt: { $exists: false } },
-				],
-			});
+
+		if (includeExpired === "true") {
+			query = query.where({ includeExpired: true });
 		}
 
-		const posts = await populatePostFields(query).sort({
-			createdAt: -1,
-		});
+		const totalPosts = await Post.countDocuments(query.getQuery());
+
+		query = query.skip(skip).limit(limitNumber).sort({ createdAt: -1 });
+
+		const posts = await populatePostFields(query);
 
 		const enhancedPosts = posts.map((post) => {
 			const postObj = post.toObject({ virtuals: true });
-
 			postObj.isExpired = post.isExpired;
 			postObj.remainingTime = post.remainingTime;
 			postObj.expirationProgress = post.expirationProgress;
@@ -112,6 +107,14 @@ exports.getUserPosts = async (req, res) => {
 		res.status(200).json({
 			status: "success",
 			results: enhancedPosts.length,
+			pagination: {
+				total: totalPosts,
+				totalPages: Math.ceil(totalPosts / limitNumber),
+				currentPage: pageNumber,
+				postsPerPage: limitNumber,
+				hasNextPage: pageNumber < Math.ceil(totalPosts / limitNumber),
+				hasPrevPage: pageNumber > 1,
+			},
 			data: {
 				posts: enhancedPosts,
 			},
@@ -127,7 +130,12 @@ exports.getUserPosts = async (req, res) => {
 
 exports.getAllPosts = async (req, res) => {
 	try {
-		const { includeExpired } = req.query;
+		const { includeExpired, page = 1, limit = 15 } = req.query;
+
+		const pageNumber = parseInt(page, 10);
+		const limitNumber = parseInt(limit, 10);
+
+		const skip = (pageNumber - 1) * limitNumber;
 
 		let query = Post.find();
 
@@ -135,7 +143,13 @@ exports.getAllPosts = async (req, res) => {
 			query = query.where({ includeExpired: true });
 		}
 
-		const posts = await populatePostFields(query).sort({ createdAt: -1 });
+		const totalPosts = await Post.countDocuments(query.getQuery());
+
+		query = query.skip(skip).limit(limitNumber);
+
+		query = query.sort({ createdAt: -1 });
+
+		const posts = await populatePostFields(query);
 
 		const enhancedPosts = posts.map((post) => {
 			const postObj = post.toObject({ virtuals: true });
@@ -148,6 +162,14 @@ exports.getAllPosts = async (req, res) => {
 		res.status(200).json({
 			status: "success",
 			results: enhancedPosts.length,
+			pagination: {
+				total: totalPosts,
+				totalPages: Math.ceil(totalPosts / limitNumber),
+				currentPage: pageNumber,
+				postsPerPage: limitNumber,
+				hasNextPage: pageNumber < Math.ceil(totalPosts / limitNumber),
+				hasPrevPage: pageNumber > 1,
+			},
 			data: {
 				posts: enhancedPosts,
 			},
