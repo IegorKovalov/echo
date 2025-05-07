@@ -1,4 +1,4 @@
-import { Eye, Lock, Mail, Sparkles, User } from "lucide-react";
+import { Eye, Lock, Mail, Sparkles, User, UserCircle } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -10,13 +10,13 @@ export default function SignupPage() {
 	const [formData, setFormData] = useState({
 		firstName: "",
 		lastName: "",
+		username: "",
 		email: "",
 		password: "",
 		confirmPassword: "",
 	});
 	const [formError, setFormError] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
-	const [agreeToTerms, setAgreeToTerms] = useState(false);
 
 	const handleChange = (e) => {
 		const { id, value } = e.target;
@@ -36,7 +36,8 @@ export default function SignupPage() {
 			!formData.lastName ||
 			!formData.email ||
 			!formData.password ||
-			!formData.confirmPassword
+			!formData.confirmPassword ||
+			!formData.username
 		) {
 			setFormError("Please fill in all fields");
 			showError("Please fill in all fields");
@@ -54,16 +55,9 @@ export default function SignupPage() {
 			showError("Passwords do not match");
 			return;
 		}
-
-		if (!agreeToTerms) {
-			setFormError("You must agree to the terms of service");
-			showError("You must agree to the terms of service");
-			return;
-		}
-
 		try {
 			const userData = {
-				username: `${formData.firstName.toLowerCase()}${formData.lastName.toLowerCase()}`,
+				username: formData.username.toLocaleLowerCase(),
 				email: formData.email,
 				password: formData.password,
 				passwordConfirm: formData.confirmPassword,
@@ -71,7 +65,6 @@ export default function SignupPage() {
 			};
 			await signup(userData);
 			showSuccess("Account created successfully! Welcome to Echo.");
-			// Redirect is handled in AuthContext
 		} catch (err) {
 			const errorMessage = err.message || "Signup failed. Please try again.";
 			setFormError(errorMessage);
@@ -147,6 +140,26 @@ export default function SignupPage() {
 
 						<div className="space-y-2">
 							<label
+								htmlFor="username"
+								className="block text-sm font-medium text-gray-300"
+							>
+								User name
+							</label>
+							<div className="relative">
+								<input
+									id="username"
+									placeholder="johndoe"
+									type="text"
+									value={formData.username}
+									onChange={handleChange}
+									className="w-full rounded-md border border-gray-800 bg-gray-900 pl-10 pr-3 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+								/>
+								<UserCircle className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
+							</div>
+						</div>
+
+						<div className="space-y-2">
+							<label
 								htmlFor="email"
 								className="block text-sm font-medium text-gray-300"
 							>
@@ -212,26 +225,6 @@ export default function SignupPage() {
 								/>
 								<Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
 							</div>
-						</div>
-
-						<div className="flex items-center space-x-2">
-							<input
-								type="checkbox"
-								id="terms"
-								checked={agreeToTerms}
-								onChange={() => setAgreeToTerms(!agreeToTerms)}
-								className="h-4 w-4 rounded border-gray-700 bg-gray-900 text-purple-600 focus:ring-purple-500"
-							/>
-							<label htmlFor="terms" className="text-sm text-gray-400">
-								I agree to the{" "}
-								<Link to="#" className="text-purple-400 hover:text-purple-300">
-									terms of service
-								</Link>{" "}
-								and{" "}
-								<Link to="#" className="text-purple-400 hover:text-purple-300">
-									privacy policy
-								</Link>
-							</label>
 						</div>
 
 						<button

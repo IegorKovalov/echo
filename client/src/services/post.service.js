@@ -3,24 +3,29 @@ import api from "./api";
 const POSTS_URL = "/posts";
 
 const PostService = {
-	getAllPosts: async (includeExpired = false) => {
+	getAllPosts: async (page = 1, limit = 15, includeExpired = false) => {
 		const token = localStorage.getItem("token");
 		const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
 		const response = await api.get(POSTS_URL, {
 			headers,
-			params: { includeExpired },
+			params: { page, limit, includeExpired },
 		});
 		return response.data;
 	},
 
-	getUserPosts: async (userId, includeExpired = false) => {
+	getUserPosts: async (
+		userId,
+		includeExpired = false,
+		page = 1,
+		limit = 15
+	) => {
 		const token = localStorage.getItem("token");
 		const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
 		const response = await api.get(`${POSTS_URL}/user/${userId}`, {
 			headers,
-			params: { includeExpired },
+			params: { includeExpired, page, limit },
 		});
 		return response.data;
 	},
