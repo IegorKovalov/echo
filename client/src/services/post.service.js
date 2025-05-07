@@ -121,7 +121,6 @@ const PostService = {
 		return response.data;
 	},
 
-	// New method for batch view tracking
 	batchIncrementViews: async (postIds) => {
 		const token = localStorage.getItem("token");
 		const headers = token ? { Authorization: `Bearer ${token}` } : {};

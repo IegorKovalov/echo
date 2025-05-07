@@ -25,19 +25,48 @@ export const PostProvider = ({ children }) => {
 	const [trendingPosts, setTrendingPosts] = useState([]);
 	const [loadingPosts, setLoadingPosts] = useState(true);
 	const [loadingTrending, setLoadingTrending] = useState(true);
+	const [pagination, setPagination] = useState({
+		total: 0,
+		totalPages: 0,
+		currentPage: 1,
+		postsPerPage: 15,
+		hasNextPage: false,
+		hasPrevPage: false,
+	});
 
 	const { user } = useAuth();
 	const { showSuccess, showError } = useToast();
 
 	const fetchPosts = useCallback(
-		async (includeExpired = false) => {
+		async (page = 1, limit = 15, includeExpired = false) => {
 			if (!user) return [];
 
 			try {
 				setLoadingPosts(true);
-				const response = await PostService.getAllPosts(includeExpired);
+				const response = await PostService.getAllPosts(
+					page,
+					limit,
+					includeExpired
+				);
 				const fetchedPosts = response.data.posts || [];
-				setPosts(fetchedPosts);
+				if (response.pagination) {
+					setPagination({
+						total: response.pagination.total || 0,
+						totalPages: response.pagination.totalPages || 0,
+						currentPage: response.pagination.currentPage || 1,
+						postsPerPage: response.pagination.postsPerPage || 15,
+						hasNextPage: response.pagination.hasNextPage || false,
+						hasPrevPage: response.pagination.hasPrevPage || false,
+					});
+				}
+
+				// Append posts if loading more, replace if refreshing from page 1
+				if (page > 1) {
+					setPosts((prevPosts) => [...prevPosts, ...fetchedPosts]);
+				} else {
+					setPosts(fetchedPosts);
+				}
+
 				return fetchedPosts;
 			} catch (error) {
 				console.error("Error fetching posts:", error);
@@ -47,24 +76,43 @@ export const PostProvider = ({ children }) => {
 				setLoadingPosts(false);
 			}
 		},
-		[user, setLoadingPosts, setPosts, showError]
+		[user, setPosts, showError]
 	);
 
 	const fetchUserPosts = useCallback(
-		async (userId, includeExpired = false) => {
+		async (userId, includeExpired = false, page = 1, limit = 15) => {
 			if (!user) return [];
 
 			try {
 				setLoadingPosts(true);
-				const response = await PostService.getUserPosts(userId, includeExpired);
+				const response = await PostService.getUserPosts(
+					userId,
+					includeExpired,
+					page,
+					limit
+				);
 				let userPosts = [];
+
 				if (response && response.data) {
 					if (Array.isArray(response.data.posts)) {
 						userPosts = response.data.posts;
 					} else if (Array.isArray(response.data)) {
 						userPosts = response.data;
 					}
+
+					// Update pagination information if available
+					if (response.pagination) {
+						setPagination({
+							total: response.pagination.total || 0,
+							totalPages: response.pagination.totalPages || 0,
+							currentPage: response.pagination.currentPage || 1,
+							postsPerPage: response.pagination.postsPerPage || 15,
+							hasNextPage: response.pagination.hasNextPage || false,
+							hasPrevPage: response.pagination.hasPrevPage || false,
+						});
+					}
 				}
+
 				return userPosts;
 			} catch (error) {
 				console.error("Error fetching user posts:", error);
@@ -76,6 +124,17 @@ export const PostProvider = ({ children }) => {
 		},
 		[user, setLoadingPosts, showError]
 	);
+
+	const loadMorePosts = useCallback(async () => {
+		if (!pagination.hasNextPage || loadingPosts) return;
+
+		const nextPage = pagination.currentPage + 1;
+		return await fetchPosts(nextPage, pagination.postsPerPage);
+	}, [pagination, loadingPosts, fetchPosts]);
+
+	const refreshPosts = useCallback(async () => {
+		return await fetchPosts(1, pagination.postsPerPage);
+	}, [fetchPosts, pagination.postsPerPage]);
 
 	const fetchTrendingPosts = useCallback(async () => {
 		if (!user) return [];
@@ -242,10 +301,10 @@ export const PostProvider = ({ children }) => {
 
 	useEffect(() => {
 		if (user) {
-			fetchPosts();
+			fetchPosts(1, pagination.postsPerPage);
 			fetchTrendingPosts();
 		}
-	}, [user, fetchPosts, fetchTrendingPosts]);
+	}, [user, fetchPosts, fetchTrendingPosts, pagination.postsPerPage]);
 
 	const contextValue = useMemo(
 		() => ({
@@ -253,6 +312,7 @@ export const PostProvider = ({ children }) => {
 			trendingPosts,
 			loadingPosts,
 			loadingTrending,
+			pagination,
 			fetchPosts,
 			fetchUserPosts,
 			fetchTrendingPosts,
@@ -263,12 +323,15 @@ export const PostProvider = ({ children }) => {
 			addComment,
 			deleteComment,
 			getHoursLeft,
+			loadMorePosts,
+			refreshPosts,
 		}),
 		[
 			posts,
 			trendingPosts,
 			loadingPosts,
 			loadingTrending,
+			pagination,
 			fetchPosts,
 			fetchUserPosts,
 			fetchTrendingPosts,
@@ -279,6 +342,8 @@ export const PostProvider = ({ children }) => {
 			addComment,
 			deleteComment,
 			getHoursLeft,
+			loadMorePosts,
+			refreshPosts,
 		]
 	);
 
