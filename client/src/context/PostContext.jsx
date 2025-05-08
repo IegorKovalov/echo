@@ -22,6 +22,7 @@ export const usePost = () => {
 
 export const PostProvider = ({ children }) => {
 	const [posts, setPosts] = useState([]);
+	const [profilePosts, setProfilePosts] = useState([]); // Added new state for profile posts
 	const [page, setPage] = useState(1);
 	const [hasMore, setHasMore] = useState(true);
 	const [trendingPosts, setTrendingPosts] = useState([]);
@@ -136,9 +137,9 @@ export const PostProvider = ({ children }) => {
 				const userPosts = extractPostsFromResponse(response);
 				const pagination = extractPaginationFromResponse(response);
 				if (pageNum === 1) {
-					setPosts(userPosts);
+					setProfilePosts(userPosts);
 				} else {
-					setPosts((prevPosts) => {
+					setProfilePosts((prevPosts) => {
 						const existingIds = new Set(prevPosts.map((post) => post._id));
 						const uniqueNewPosts = userPosts.filter(
 							(post) => !existingIds.has(post._id)
@@ -204,7 +205,27 @@ export const PostProvider = ({ children }) => {
 				}
 
 				if (newPost) {
+					// Add to main feed posts
 					setPosts((prevPosts) => [newPost, ...prevPosts]);
+
+					// Also add to profile posts if we're in a profile view
+					setProfilePosts((prevProfilePosts) => {
+						// Check if the post belongs to the current user being viewed
+						if (prevProfilePosts.length > 0) {
+							// If we have profile posts, check if this post should be added
+							const firstPost = prevProfilePosts[0];
+							if (
+								firstPost &&
+								firstPost.user &&
+								newPost.user &&
+								firstPost.user._id === newPost.user._id
+							) {
+								return [newPost, ...prevProfilePosts];
+							}
+						}
+						return prevProfilePosts;
+					});
+
 					showSuccess("Post created successfully!");
 					return newPost;
 				} else {
@@ -216,13 +237,14 @@ export const PostProvider = ({ children }) => {
 				throw error;
 			}
 		},
-		[setPosts, showSuccess, showError]
+		[setPosts, setProfilePosts, showSuccess, showError]
 	);
 
 	const updatePost = useCallback(
 		async (postId, postData) => {
 			try {
 				const response = await PostService.updatePost(postId, postData);
+				console.log("Update Post Response:", response);
 				let updatedPost = {};
 				if (response.status === "success" && response.data) {
 					updatedPost = response.data.post;
@@ -234,6 +256,12 @@ export const PostProvider = ({ children }) => {
 							post._id === postId ? { ...post, ...updatedPost } : post
 						)
 					);
+					setProfilePosts((prevProfilePosts) =>
+						prevProfilePosts.map((post) =>
+							post._id === postId ? { ...post, ...updatedPost } : post
+						)
+					);
+
 					showSuccess("Post updated successfully!");
 					return updatedPost;
 				} else {
@@ -245,7 +273,7 @@ export const PostProvider = ({ children }) => {
 				throw error;
 			}
 		},
-		[setPosts, showSuccess, showError]
+		[setPosts, setProfilePosts, showSuccess, showError]
 	);
 
 	const deletePost = useCallback(
@@ -254,9 +282,16 @@ export const PostProvider = ({ children }) => {
 				const response = await PostService.deletePost(postId);
 
 				if (response.status === "success") {
+					// Remove from main feed posts
 					setPosts((prevPosts) =>
 						prevPosts.filter((post) => post._id !== postId)
 					);
+
+					// Also remove from profile posts
+					setProfilePosts((prevProfilePosts) =>
+						prevProfilePosts.filter((post) => post._id !== postId)
+					);
+
 					showSuccess("Post deleted successfully!");
 					return true;
 				} else {
@@ -268,7 +303,7 @@ export const PostProvider = ({ children }) => {
 				throw error;
 			}
 		},
-		[setPosts, showSuccess, showError]
+		[setPosts, setProfilePosts, showSuccess, showError]
 	);
 
 	const renewPost = useCallback(
@@ -276,18 +311,26 @@ export const PostProvider = ({ children }) => {
 			try {
 				const response = await PostService.renewPost(postId, hours);
 
-				// Extract the renewed post using the standardized format
 				let renewedPost = {};
 				if (response.status === "success" && response.data) {
 					renewedPost = response.data.post;
 				}
 
 				if (renewedPost) {
+					// Update in main feed posts
 					setPosts((prevPosts) =>
 						prevPosts.map((post) =>
 							post._id === postId ? { ...post, ...renewedPost } : post
 						)
 					);
+
+					// Also update in profile posts
+					setProfilePosts((prevProfilePosts) =>
+						prevProfilePosts.map((post) =>
+							post._id === postId ? { ...post, ...renewedPost } : post
+						)
+					);
+
 					showSuccess(`Post renewed for ${hours} more hours!`);
 					return renewedPost;
 				} else {
@@ -299,7 +342,7 @@ export const PostProvider = ({ children }) => {
 				throw error;
 			}
 		},
-		[setPosts, showSuccess, showError]
+		[setPosts, setProfilePosts, showSuccess, showError]
 	);
 
 	const addComment = useCallback(
@@ -314,11 +357,20 @@ export const PostProvider = ({ children }) => {
 				}
 
 				if (updatedPost) {
+					// Update in main posts array
 					setPosts((prevPosts) =>
 						prevPosts.map((post) =>
 							post._id === postId ? { ...post, ...updatedPost } : post
 						)
 					);
+
+					// Also update in profile posts array
+					setProfilePosts((prevProfilePosts) =>
+						prevProfilePosts.map((post) =>
+							post._id === postId ? { ...post, ...updatedPost } : post
+						)
+					);
+
 					return updatedPost;
 				} else {
 					throw new Error("Invalid response format");
@@ -329,7 +381,7 @@ export const PostProvider = ({ children }) => {
 				throw error;
 			}
 		},
-		[setPosts, showError]
+		[setPosts, setProfilePosts, showError]
 	);
 
 	const deleteComment = useCallback(
@@ -349,11 +401,20 @@ export const PostProvider = ({ children }) => {
 							),
 						};
 
+						// Update in main posts array
 						setPosts((prevPosts) =>
 							prevPosts.map((post) =>
 								post._id === postId ? updatedPost : post
 							)
 						);
+
+						// Also update in profile posts array
+						setProfilePosts((prevProfilePosts) =>
+							prevProfilePosts.map((post) =>
+								post._id === postId ? updatedPost : post
+							)
+						);
+
 						return updatedPost;
 					}
 				}
@@ -364,7 +425,7 @@ export const PostProvider = ({ children }) => {
 				throw error;
 			}
 		},
-		[posts, setPosts, showError]
+		[posts, setPosts, setProfilePosts, showError]
 	);
 
 	const getHoursLeft = useCallback((expiresAt) => {
@@ -382,6 +443,7 @@ export const PostProvider = ({ children }) => {
 	const contextValue = useMemo(
 		() => ({
 			posts,
+			profilePosts,
 			trendingPosts,
 			loadingPosts,
 			loadingTrending,
@@ -402,6 +464,7 @@ export const PostProvider = ({ children }) => {
 		}),
 		[
 			posts,
+			profilePosts,
 			trendingPosts,
 			loadingPosts,
 			loadingTrending,

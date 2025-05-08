@@ -2,7 +2,6 @@ const Post = require("../models/postModel");
 const cloudinary = require("../utils/cloudinary");
 const fs = require("fs");
 
-// Add standardized error handler
 const sendError = (res, statusCode, message) => {
 	return res.status(statusCode).json({
 		status: "failed",
@@ -24,7 +23,6 @@ const populatePostFields = (query) => {
 
 exports.createPost = async (req, res) => {
 	try {
-		console.log(req.body);
 		const { content, expirationTime } = req.body;
 		if (!content) {
 			return res.status(400).json({
@@ -60,7 +58,7 @@ exports.createPost = async (req, res) => {
 					type: file.mimetype.startsWith("video/") ? "video" : "image",
 					publicId: result.public_id,
 				});
-				fs.unlinkSync(file.path); // Remove temp file
+				fs.unlinkSync(file.path);
 			}
 		}
 
@@ -148,10 +146,8 @@ exports.getAllPosts = async (req, res) => {
 		const limitNum = parseInt(limit, 10);
 		const skip = (pageNum - 1) * limitNum;
 
-		// Build the query
 		let query = {};
 
-		// Only include non-expired posts unless specifically requested
 		if (includeExpired !== "true") {
 			query.expiresAt = { $gt: new Date() };
 		}
@@ -159,11 +155,9 @@ exports.getAllPosts = async (req, res) => {
 		console.log("Using query filter:", JSON.stringify(query));
 		console.log(`Pagination: page=${pageNum}, limit=${limitNum}, skip=${skip}`);
 
-		// Count total matching documents first
 		const totalPosts = await Post.countDocuments(query);
 		console.log(`Total posts matching query: ${totalPosts}`);
 
-		// Execute the query with pagination
 		const posts = await Post.find(query)
 			.skip(skip)
 			.limit(limitNum)
@@ -179,10 +173,8 @@ exports.getAllPosts = async (req, res) => {
 
 		console.log(`Found ${posts.length} posts for page ${pageNum}`);
 
-		// Check if there are actually more posts
 		const hasMorePosts = totalPosts > pageNum * limitNum;
 
-		// Apply virtual properties to each post
 		const enhancedPosts = posts.map((post) => {
 			const postObj = post.toObject({ virtuals: true });
 			postObj.isExpired = post.isExpired;
@@ -242,7 +234,6 @@ exports.getPost = async (req, res) => {
 			});
 		}
 
-		// Add virtual properties
 		const postObj = post.toObject({ virtuals: true });
 		postObj.isExpired = post.isExpired;
 		postObj.remainingTime = post.remainingTime;
@@ -264,10 +255,21 @@ exports.getPost = async (req, res) => {
 };
 exports.updatePost = async (req, res) => {
 	try {
+		const tempFilesToCleanup = req.files
+			? req.files.map((file) => file.path)
+			: [];
+		console.log("request:", req.body);
 		const content = req.body.content;
 		const duration = req.body.duration;
-		const keepExistingImage = req.body.keepExistingImage;
-		const existingMediaIds = req.body.existingMediaIds;
+
+		let existingMediaIds = req.body.existingMediaIds;
+
+		// Handle empty string case, converting it to an empty array
+		if (existingMediaIds === "") {
+			existingMediaIds = [];
+		} else if (existingMediaIds && !Array.isArray(existingMediaIds)) {
+			existingMediaIds = [existingMediaIds];
+		}
 
 		if (!content || content.trim() === "") {
 			return res.status(400).json({
@@ -275,6 +277,7 @@ exports.updatePost = async (req, res) => {
 				message: "Post content is required",
 			});
 		}
+
 		const post = await Post.findOne({
 			_id: req.params.id,
 			user: req.user._id,
@@ -286,6 +289,7 @@ exports.updatePost = async (req, res) => {
 				message: "Post not found or you're not authorized to update it",
 			});
 		}
+
 		post.content = content.trim();
 		if (duration) {
 			const durationHours = parseFloat(duration);
@@ -297,129 +301,54 @@ exports.updatePost = async (req, res) => {
 			}
 		}
 
-		// Handle media updates
-		if (req.files && req.files.length > 0) {
-			// If new files are uploaded, handle existing media differently
-			if (
-				existingMediaIds &&
-				Array.isArray(existingMediaIds) &&
+		if (existingMediaIds) {
+			const mediaToKeep =
 				existingMediaIds.length > 0
-			) {
-				// Keep only the media items that match the existingMediaIds
-				const mediaToKeep = post.media.filter((item) =>
-					existingMediaIds.includes(item._id.toString())
-				);
-
-				// Delete media items not in existingMediaIds from Cloudinary
-				const mediaToDelete = post.media.filter(
-					(item) => !existingMediaIds.includes(item._id.toString())
-				);
-
-				for (const mediaItem of mediaToDelete) {
-					try {
-						if (mediaItem.publicId) {
-							await cloudinary.uploader.destroy(mediaItem.publicId, {
-								resource_type: mediaItem.type,
-							});
-						}
-					} catch (err) {
-						console.error("Error deleting Cloudinary media:", err);
+					? post.media.filter((item) =>
+							existingMediaIds.includes(item._id.toString())
+						)
+					: [];
+			const mediaToDelete = post.media.filter(
+				(item) => !existingMediaIds.includes(item._id.toString())
+			);
+			for (const mediaItem of mediaToDelete) {
+				try {
+					if (mediaItem.publicId) {
+						await cloudinary.uploader.destroy(mediaItem.publicId, {
+							resource_type: mediaItem.type === "video" ? "video" : "image",
+						});
 					}
+				} catch (err) {
+					console.error("Error deleting Cloudinary media:", err);
 				}
-
-				// Update post media to keep existing selected media
-				post.media = mediaToKeep;
-			} else {
-				// Delete all old media from Cloudinary if not specified to keep
-				if (post.media && post.media.length > 0) {
-					for (const mediaItem of post.media) {
-						try {
-							if (mediaItem.publicId) {
-								await cloudinary.uploader.destroy(mediaItem.publicId, {
-									resource_type: mediaItem.type,
-								});
-							}
-						} catch (err) {
-							console.error("Error deleting Cloudinary media:", err);
-						}
-					}
-				}
-				post.media = [];
 			}
-
-			// Add new media uploads
+			post.media = mediaToKeep;
+		}
+		if (req.files && req.files.length > 0) {
 			for (const file of req.files) {
-				const result = await cloudinary.uploader.upload(file.path, {
-					resource_type: file.mimetype.startsWith("video/") ? "video" : "image",
-					folder: "posts",
-				});
-				post.media.push({
-					url: result.secure_url,
-					type: file.mimetype.startsWith("video/") ? "video" : "image",
-					publicId: result.public_id,
-				});
-				fs.unlinkSync(file.path); // Remove temp file
-			}
-		} else if (existingMediaIds && Array.isArray(existingMediaIds)) {
-			// No new files, but user might have removed some existing media
-			if (existingMediaIds.length > 0) {
-				// Keep only the media items that match the existingMediaIds
-				const mediaToKeep = post.media.filter((item) =>
-					existingMediaIds.includes(item._id.toString())
-				);
+				try {
+					const result = await cloudinary.uploader.upload(file.path, {
+						resource_type: file.mimetype.startsWith("video/")
+							? "video"
+							: "image",
+						folder: "posts",
+					});
 
-				// Delete media items not in existingMediaIds from Cloudinary
-				const mediaToDelete = post.media.filter(
-					(item) => !existingMediaIds.includes(item._id.toString())
-				);
-
-				for (const mediaItem of mediaToDelete) {
-					try {
-						if (mediaItem.publicId) {
-							await cloudinary.uploader.destroy(mediaItem.publicId, {
-								resource_type: mediaItem.type,
-							});
-						}
-					} catch (err) {
-						console.error("Error deleting Cloudinary media:", err);
+					post.media.push({
+						url: result.secure_url,
+						type: file.mimetype.startsWith("video/") ? "video" : "image",
+						publicId: result.public_id,
+					});
+					if (fs.existsSync(file.path)) {
+						fs.unlinkSync(file.path);
 					}
-				}
-
-				post.media = mediaToKeep;
-			} else if (existingMediaIds.length === 0) {
-				// All media was removed
-				// Delete all media from Cloudinary
-				if (post.media && post.media.length > 0) {
-					for (const mediaItem of post.media) {
-						try {
-							if (mediaItem.publicId) {
-								await cloudinary.uploader.destroy(mediaItem.publicId, {
-									resource_type: mediaItem.type,
-								});
-							}
-						} catch (err) {
-							console.error("Error deleting Cloudinary media:", err);
-						}
-					}
-				}
-				post.media = [];
-			}
-		} else if (keepExistingImage === "false") {
-			// Delete all media if keepExistingImage is false and no existingMediaIds provided
-			if (post.media && post.media.length > 0) {
-				for (const mediaItem of post.media) {
-					try {
-						if (mediaItem.publicId) {
-							await cloudinary.uploader.destroy(mediaItem.publicId, {
-								resource_type: mediaItem.type,
-							});
-						}
-					} catch (err) {
-						console.error("Error deleting Cloudinary media:", err);
+				} catch (uploadError) {
+					console.error("Error uploading media to Cloudinary:", uploadError);
+					if (fs.existsSync(file.path)) {
+						fs.unlinkSync(file.path);
 					}
 				}
 			}
-			post.media = [];
 		}
 
 		await post.save({ timestamps: false });
@@ -429,6 +358,15 @@ exports.updatePost = async (req, res) => {
 		postObj.remainingTime = updatedPost.remainingTime;
 		postObj.expirationProgress = updatedPost.expirationProgress;
 
+		// Final check for any remaining temp files
+		tempFilesToCleanup.forEach((filePath) => {
+			try {
+				if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+			} catch (err) {
+				console.error(`Failed to clean up temp file ${filePath}:`, err);
+			}
+		});
+
 		res.status(200).json({
 			status: "success",
 			data: {
@@ -437,6 +375,19 @@ exports.updatePost = async (req, res) => {
 		});
 	} catch (error) {
 		console.error("Error updating post:", error);
+
+		if (req.files && req.files.length > 0) {
+			req.files.forEach((file) => {
+				try {
+					if (fs.existsSync(file.path)) {
+						fs.unlinkSync(file.path);
+					}
+				} catch (err) {
+					console.error(`Failed to clean up temp file ${file.path}:`, err);
+				}
+			});
+		}
+
 		res.status(500).json({
 			status: "failed",
 			message: "Error updating post",
@@ -454,7 +405,59 @@ exports.deletePost = async (req, res) => {
 			return sendError(res, 403, "You're not authorized to delete this post");
 		}
 
+		// Delete all associated media from Cloudinary
+		if (post.media && post.media.length > 0) {
+			for (const mediaItem of post.media) {
+				try {
+					if (mediaItem.publicId) {
+						await cloudinary.uploader.destroy(mediaItem.publicId, {
+							resource_type: mediaItem.type === "video" ? "video" : "image",
+						});
+					}
+				} catch (err) {
+					console.error(
+						"Error deleting Cloudinary media during post deletion:",
+						err
+					);
+				}
+			}
+		}
+
 		await post.deleteOne();
+
+		// Additionally clean up any temp files that might be associated
+		// This is a precaution if any are leftover
+		try {
+			const tmpDir = "tmp/uploads/";
+			if (fs.existsSync(tmpDir)) {
+				// Check for old files that may be associated with this post
+				const files = fs.readdirSync(tmpDir);
+				// We can't directly associate files with posts, but cleaning up older files
+				// (e.g., files older than a day) could help
+				const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+
+				files.forEach((file) => {
+					const filePath = `${tmpDir}${file}`;
+					try {
+						const stats = fs.statSync(filePath);
+						// If file is older than a day, remove it
+						if (stats.mtimeMs < oneDayAgo) {
+							fs.unlinkSync(filePath);
+							console.log(`Cleaned up old temporary file: ${filePath}`);
+						}
+					} catch (err) {
+						console.error(
+							`Error checking or removing old temp file ${filePath}:`,
+							err
+						);
+					}
+				});
+			}
+		} catch (cleanupErr) {
+			console.error("Error during temporary files cleanup:", cleanupErr);
+			// Don't fail the delete operation if cleanup has issues
+		}
+
 		res.status(200).json({
 			status: "success",
 			message: "Post deleted successfully",
@@ -538,8 +541,6 @@ exports.deleteComment = async (req, res) => {
 		await post.save();
 
 		post = await populatePostFields(Post.findById(post._id));
-
-		// Enhance post with virtual properties
 		const postObj = post.toObject({ virtuals: true });
 		postObj.isExpired = post.isExpired;
 		postObj.remainingTime = post.remainingTime;
@@ -617,7 +618,6 @@ exports.renewPost = async (req, res) => {
 	}
 };
 
-// Increment the views counter for a post
 exports.incrementViews = async (req, res) => {
 	try {
 		const post = await Post.findByIdAndUpdate(
@@ -648,7 +648,6 @@ exports.incrementViews = async (req, res) => {
 	}
 };
 
-// Batch increment views for multiple posts
 exports.batchIncrementViews = async (req, res) => {
 	try {
 		const { postIds } = req.body;
@@ -660,7 +659,6 @@ exports.batchIncrementViews = async (req, res) => {
 			});
 		}
 
-		// Update the view count for all posts in a single operation
 		const result = await Post.updateMany(
 			{ _id: { $in: postIds } },
 			{ $inc: { views: 1 } }
@@ -682,26 +680,22 @@ exports.batchIncrementViews = async (req, res) => {
 	}
 };
 
-// Get trending posts based on views and recency
 exports.getTrendingPosts = async (req, res) => {
 	try {
-		// Calculate date 48 hours ago for trending window
 		const trendingWindow = new Date(Date.now() - 48 * 60 * 60 * 1000);
 
-		// Find non-expired posts created within the trending window
 		const posts = await Post.find({
 			createdAt: { $gte: trendingWindow },
-			expiresAt: { $gt: new Date() }, // Only non-expired posts
+			expiresAt: { $gt: new Date() },
 		})
 			.populate({
 				path: "user",
 				select: "username fullName profilePicture",
 			})
-			// Sort by views and creation date only (removed likes)
-			.sort({ views: -1, createdAt: -1 })
-			.limit(5); // Get top 5 trending posts
 
-		// Enhance posts with virtual properties
+			.sort({ views: -1, createdAt: -1 })
+			.limit(5);
+
 		const enhancedPosts = posts.map((post) => {
 			const postObj = post.toObject({ virtuals: true });
 			postObj.isExpired = post.isExpired;

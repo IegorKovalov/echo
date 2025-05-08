@@ -1,17 +1,16 @@
 const express = require("express");
 const authController = require("../controllers/authController");
 const postController = require("../controllers/postController");
-const upload = require("../middlewares/uploadMiddleware");
+const { uploadAndCompress } = require("../middlewares/uploadMiddleware");
 const router = express.Router();
 
 router.use(authController.protect);
 
-// Get trending posts route - placed before other routes for visibility
 router.get("/trending", postController.getTrendingPosts);
 
 router
 	.route("/")
-	.post(upload.array("media", 5), postController.createPost)
+	.post(uploadAndCompress("media", 5), postController.createPost)
 	.get(postController.getAllPosts);
 
 router.get("/user/:userId", postController.getUserPosts);
@@ -19,7 +18,7 @@ router.get("/user/:userId", postController.getUserPosts);
 router
 	.route("/:id")
 	.get(postController.getPost)
-	.patch(upload.array("media", 5), postController.updatePost)
+	.patch(uploadAndCompress("media", 5), postController.updatePost)
 	.delete(postController.deletePost);
 
 // View counter routes

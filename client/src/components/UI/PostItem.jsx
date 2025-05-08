@@ -179,7 +179,6 @@ export default function PostItem({
 				<div className="flex items-center gap-3">
 					<ProfileAvatar user={post.user || currentUser} size="sm" />
 					<div>
-						{/* Make user name clickable and navigate to their profile */}
 						{post.user && post.user._id ? (
 							<Link
 								to={`/profile/${post.user._id}`}

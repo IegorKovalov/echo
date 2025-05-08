@@ -1,4 +1,5 @@
 import { Clock, Eye, MessageCircle, Sparkles, TrendingUp } from "lucide-react";
+import { Link } from "react-router-dom";
 import ProfileAvatar from "../UI/ProfileAvatar";
 
 export default function TrendingSidebar({
@@ -32,9 +33,11 @@ export default function TrendingSidebar({
 							>
 								<div className="flex items-center gap-2 mb-2">
 									<ProfileAvatar user={post.user} size="xs" />
-									<span className="text-xs font-medium text-white truncate">
-										{post.user.fullName}
-									</span>
+									<Link to={`/profile/${post.user._id}`}>
+										<span className="text-xs font-medium text-white hover:text-purple-400 transition-colors">
+											{post.user.fullName}
+										</span>
+									</Link>
 								</div>
 
 								<p className="text-xs text-gray-300 mb-2 line-clamp-2">

@@ -21,12 +21,15 @@ export default function PostForm({
 	useEffect(() => {
 		setContent(initialContent);
 		setDuration(initialDuration);
-		const initialExistingMedia = initialMedia.map((item) => ({
-			id: item.id,
-			url: item.url,
-			type: item.type || (item.url && determineMediaTypeFromUrl(item.url)),
-			isExisting: true,
-		}));
+		const initialExistingMedia = initialMedia
+			.filter((item) => item && (item.url || item._id)) // Filter out any invalid items
+			.map((item) => ({
+				id: item._id || item.id,
+				url: item.url,
+				type: item.type || (item.url && determineMediaTypeFromUrl(item.url)),
+				isExisting: true,
+				publicId: item.publicId,
+			}));
 		setMediaItems(initialExistingMedia);
 	}, [initialContent, initialDuration, initialMedia]);
 
@@ -56,8 +59,8 @@ export default function PostForm({
 				e.target.value = null;
 				return;
 			}
-			if (file.size > 50 * 1024 * 1024) {
-				showError("Each file must be less than 50MB.");
+			if (file.size > 200 * 1024 * 1024) {
+				showError("Each file must be less than 100MB.");
 				e.target.value = null;
 				return;
 			}
@@ -94,22 +97,28 @@ export default function PostForm({
 			showInfo("Content cannot be empty.");
 			return;
 		}
-
 		const formData = new FormData();
 		formData.append("content", content);
 		formData.append("duration", duration);
+		const existingMediaIdsToKeep = mediaItems
+			.filter((item) => item.isExisting)
+			.map((item) => item.id);
 
-		const existingMediaIdsToKeep = [];
 		mediaItems.forEach((item) => {
-			if (!item.isExisting) {
+			if (!item.isExisting && item.file) {
 				formData.append("media", item.file);
-			} else {
-				existingMediaIdsToKeep.push(item.id);
 			}
 		});
-		existingMediaIdsToKeep.forEach((id) =>
-			formData.append("existingMediaIds", id)
-		);
+
+		if (isEditing) {
+			if (existingMediaIdsToKeep.length > 0) {
+				existingMediaIdsToKeep.forEach((id) =>
+					formData.append("existingMediaIds", id)
+				);
+			} else {
+				formData.append("existingMediaIds", "");
+			}
+		}
 
 		try {
 			await onSubmit(formData);
