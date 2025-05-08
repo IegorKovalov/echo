@@ -13,18 +13,28 @@ export const useToast = () => useContext(ToastContext);
  * Toast provider component that makes toast functions available throughout the app
  */
 export const ToastProvider = ({ children }) => {
+	// Common toast styles that use the design system
+	const baseToastStyle = {
+		background: "hsl(var(--card))",
+		color: "hsl(var(--card-foreground))",
+		border: "1px solid hsl(var(--border))",
+		borderRadius: "var(--radius)",
+		padding: "12px 16px",
+		maxWidth: "350px",
+		boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+	};
+
 	// Success toast notification
 	const showSuccess = (message) => {
 		toast.success(message, {
 			duration: 4000,
 			style: {
-				background: "rgba(15, 23, 42, 0.9)",
-				color: "#10b981",
-				border: "1px solid rgba(16, 185, 129, 0.2)",
+				...baseToastStyle,
+				borderLeft: "4px solid hsl(var(--primary))",
 			},
 			iconTheme: {
-				primary: "#10b981",
-				secondary: "#0f172a",
+				primary: "hsl(var(--primary))",
+				secondary: "hsl(var(--background))",
 			},
 		});
 	};
@@ -34,13 +44,12 @@ export const ToastProvider = ({ children }) => {
 		toast.error(message, {
 			duration: 5000,
 			style: {
-				background: "rgba(15, 23, 42, 0.9)",
-				color: "#ef4444",
-				border: "1px solid rgba(239, 68, 68, 0.2)",
+				...baseToastStyle,
+				borderLeft: "4px solid hsl(var(--destructive))",
 			},
 			iconTheme: {
-				primary: "#ef4444",
-				secondary: "#0f172a",
+				primary: "hsl(var(--destructive))",
+				secondary: "hsl(var(--background))",
 			},
 		});
 	};
@@ -50,11 +59,28 @@ export const ToastProvider = ({ children }) => {
 		toast(message, {
 			duration: 3000,
 			style: {
-				background: "rgba(15, 23, 42, 0.9)",
-				color: "#3b82f6",
-				border: "1px solid rgba(59, 130, 246, 0.2)",
+				...baseToastStyle,
+				borderLeft: "4px solid hsl(var(--accent))",
 			},
-			icon: "ℹ️",
+			// Replace the emoji with a custom icon style
+			icon: (
+				<div
+					style={{
+						width: "20px",
+						height: "20px",
+						borderRadius: "50%",
+						background: "hsl(var(--accent))",
+						color: "hsl(var(--accent-foreground))",
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "center",
+						fontSize: "14px",
+						fontWeight: "bold",
+					}}
+				>
+					i
+				</div>
+			),
 		});
 	};
 
@@ -76,23 +102,37 @@ export const ToastProvider = ({ children }) => {
 
 		return toast.promise(promise, messages, {
 			// Common styling options
-			style: {
-				background: "rgba(15, 23, 42, 0.9)",
-				color: "#e2e8f0",
-				border: "1px solid rgba(30, 41, 59, 0.5)",
-			},
+			style: baseToastStyle,
 			success: {
 				duration: 4000,
+				style: {
+					...baseToastStyle,
+					borderLeft: "4px solid hsl(var(--primary))",
+				},
 				iconTheme: {
-					primary: "#10b981",
-					secondary: "#0f172a",
+					primary: "hsl(var(--primary))",
+					secondary: "hsl(var(--background))",
 				},
 			},
 			error: {
 				duration: 5000,
+				style: {
+					...baseToastStyle,
+					borderLeft: "4px solid hsl(var(--destructive))",
+				},
 				iconTheme: {
-					primary: "#ef4444",
-					secondary: "#0f172a",
+					primary: "hsl(var(--destructive))",
+					secondary: "hsl(var(--background))",
+				},
+			},
+			loading: {
+				style: {
+					...baseToastStyle,
+					borderLeft: "4px solid hsl(var(--muted))",
+				},
+				iconTheme: {
+					primary: "hsl(var(--muted-foreground))",
+					secondary: "hsl(var(--background))",
 				},
 			},
 			position: "bottom-right",
@@ -114,13 +154,7 @@ export const ToastProvider = ({ children }) => {
 				position="bottom-right"
 				toastOptions={{
 					duration: 4000,
-					style: {
-						background: "rgba(15, 23, 42, 0.9)",
-						color: "#e2e8f0",
-						border: "1px solid rgba(30, 41, 59, 0.5)",
-						maxWidth: "350px",
-						padding: "12px 16px",
-					},
+					style: baseToastStyle,
 				}}
 			/>
 		</ToastContext.Provider>
