@@ -1087,23 +1087,16 @@ const generateViewCount = () => {
 // Generate more diverse post expiration patterns
 const generateExpirationTime = () => {
 	const expirationOptions = [
-		// 1 hour (rare)
-		{ hours: 1, weight: 0.05 },
-		// 6 hours
-		{ hours: 6, weight: 0.1 },
-		// 12 hours
-		{ hours: 12, weight: 0.15 },
 		// 24 hours (most common)
 		{ hours: 24, weight: 0.4 },
 		// 48 hours
 		{ hours: 48, weight: 0.15 },
 		// 72 hours (3 days)
 		{ hours: 72, weight: 0.1 },
-		// 168 hours (7 days, rare)
-		{ hours: 168, weight: 0.05 },
+		// 1 week
+		{ hours: 168, weight: 0.1 },
 	];
 
-	// Select an option based on weights
 	let random = Math.random();
 	let cumulativeWeight = 0;
 
@@ -1231,12 +1224,8 @@ const generatePosts = async (users, postsPerUser, maxComments, maxViews) => {
 				}
 
 				comments.sort((a, b) => a.createdAt - b.createdAt);
-
-				// Generate media for some posts (around 40%)
 				const media = [];
 				if (Math.random() < 0.4) {
-					// Media count depends a bit on the user's posting frequency
-					// Users who post more are more likely to include more media
 					const userPostFrequency = userPostCounts[i] / postsPerUser;
 					const maxMediaItems = Math.floor(userPostFrequency * 4) + 1; // 1-5 media items
 					const mediaCount = Math.floor(Math.random() * maxMediaItems) + 1;
@@ -1245,14 +1234,9 @@ const generatePosts = async (users, postsPerUser, maxComments, maxViews) => {
 						media.push(generateMediaItem());
 					}
 				}
-
-				// Track if this post has been renewed
 				let renewalCount = 0;
 				let renewedAt = null;
-
-				// Check if we previously determined this is a renewed post
 				if (expiresAt < now && !isExpired) {
-					// Get renewal info from above logic
 					renewalCount = Math.min(3, Math.floor(Math.random() * 4));
 					if (renewalCount > 0) {
 						renewedAt = new Date(
@@ -1291,26 +1275,16 @@ const generatePosts = async (users, postsPerUser, maxComments, maxViews) => {
 	return posts;
 };
 
-// Create interaction patterns between users
 const createUserInteractions = async (users, posts) => {
 	console.log("Creating user interaction patterns...");
-
-	// This would create interactions between users like follows, frequent commenters, etc.
-	// For the seed script we're focusing on post relationships, but in a real
-	// implementation this would establish social connections
-
 	console.log("User interaction patterns established");
 };
 
-// Main function to seed the database
 const seedDatabase = async () => {
 	try {
 		await connectDB();
 		await clearDatabase();
-
 		console.log("Seeding database...");
-
-		// Create admin and test users with predictable login credentials
 		const adminUser = await createTestUser(
 			"admin@example.com",
 			"admin123",
@@ -1331,13 +1305,9 @@ const seedDatabase = async () => {
 			"janesmith",
 			"Jane Smith"
 		);
-
-		// Create a diverse range of users (40-60)
 		const userCount = Math.floor(Math.random() * 21) + 40; // 40-60 users
 		const randomUsers = await generateUsers(userCount);
 		const allUsers = [adminUser, testUser1, testUser2, ...randomUsers];
-
-		// Generate varied post counts per user (5-20 posts per user)
 		const maxPostsPerUser = 20;
 		const maxCommentsPerPost = 15;
 		const maxViewsPerPost = 5000;
@@ -1348,8 +1318,6 @@ const seedDatabase = async () => {
 			maxCommentsPerPost,
 			maxViewsPerPost
 		);
-
-		// Create social patterns between users
 		await createUserInteractions(allUsers, []);
 
 		console.log("Database seeded successfully!");

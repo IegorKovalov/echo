@@ -1,7 +1,7 @@
 import {
+	ArrowDown,
 	Clock,
 	Eye,
-	Image as ImageIcon,
 	MessageCircle,
 	MessageSquare,
 	PlusCircle,
@@ -10,7 +10,7 @@ import {
 	TrendingUp,
 	Users,
 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import PostForm from "../components/UI/PostForm";
 import PostItem from "../components/UI/PostItem";
@@ -25,10 +25,15 @@ export default function HomePage() {
 		trendingPosts,
 		loadingPosts,
 		loadingTrending,
+		loadMorePosts,
+		hasMore,
 		createPost,
 		getHoursLeft,
 	} = usePost();
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [loadingMore, setLoadingMore] = useState(false);
+	const observerRef = useRef(null);
+	const lastPostRef = useRef(null);
 
 	const handleCreatePost = useCallback(
 		async (formData) => {
@@ -44,6 +49,53 @@ export default function HomePage() {
 		[createPost]
 	);
 
+	const handleLoadMore = useCallback(async () => {
+		if (loadingPosts || loadingMore || !hasMore) return;
+
+		try {
+			setLoadingMore(true);
+			await loadMorePosts();
+		} catch (error) {
+			console.error("Error loading more posts:", error);
+		} finally {
+			setLoadingMore(false);
+		}
+	}, [loadingPosts, loadingMore, hasMore, loadMorePosts]);
+
+	// Setup intersection observer for infinite scrolling
+	useEffect(() => {
+		const currentObserver = new IntersectionObserver(
+			(entries) => {
+				const [entry] = entries;
+				if (entry.isIntersecting && hasMore && !loadingPosts && !loadingMore) {
+					handleLoadMore();
+				}
+			},
+			{ threshold: 0.5 }
+		);
+
+		observerRef.current = currentObserver;
+
+		return () => {
+			if (observerRef.current) {
+				observerRef.current.disconnect();
+			}
+		};
+	}, [hasMore, loadingPosts, loadingMore, handleLoadMore]);
+
+	// Attach observer to last post element
+	useEffect(() => {
+		if (
+			!loadingPosts &&
+			posts.length > 0 &&
+			lastPostRef.current &&
+			observerRef.current
+		) {
+			observerRef.current.disconnect();
+			observerRef.current.observe(lastPostRef.current);
+		}
+	}, [posts, loadingPosts]);
+
 	if (loading) {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-gray-950">
@@ -54,6 +106,8 @@ export default function HomePage() {
 			</div>
 		);
 	}
+
+	const visiblePosts = posts.filter((post) => !post.expired);
 
 	return (
 		<div className="flex flex-col bg-gradient-to-b from-gray-900 to-gray-950">
@@ -132,17 +186,59 @@ export default function HomePage() {
 
 						{/* Posts Feed */}
 						<div className="space-y-6">
-							{loadingPosts ? (
+							{loadingPosts && posts.length === 0 ? (
 								<div className="text-center py-10">
 									<Sparkles className="mx-auto h-8 w-8 animate-pulse text-purple-500" />
 									<p className="mt-2 text-gray-400">Loading posts...</p>
 								</div>
-							) : posts.length > 0 ? (
-								posts
-									.filter((post) => !post.expired)
-									.map((post) => (
-										<PostItem key={post._id} post={post} currentUser={user} />
-									))
+							) : visiblePosts.length > 0 ? (
+								<>
+									{visiblePosts.map((post, index) => {
+										// Set ref for the last post for infinite scrolling
+										if (index === visiblePosts.length - 1) {
+											return (
+												<div key={post._id} ref={lastPostRef}>
+													<PostItem post={post} currentUser={user} />
+												</div>
+											);
+										}
+										return (
+											<PostItem key={post._id} post={post} currentUser={user} />
+										);
+									})}
+
+									{/* Show loading indicator when loading more posts */}
+									{loadingMore && (
+										<div className="text-center py-4">
+											<Sparkles className="mx-auto h-6 w-6 animate-pulse text-purple-500" />
+											<p className="mt-2 text-sm text-gray-400">
+												Loading more...
+											</p>
+										</div>
+									)}
+
+									{/* Show load more button if there are more posts but not loading */}
+									{hasMore && !loadingMore && (
+										<div className="text-center py-4">
+											<button
+												onClick={handleLoadMore}
+												className="flex items-center justify-center gap-2 mx-auto px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-purple-400 transition-colors"
+											>
+												<ArrowDown className="h-4 w-4" />
+												Load more
+											</button>
+										</div>
+									)}
+
+									{/* Show end of feed message when no more posts */}
+									{!hasMore && posts.length > 0 && (
+										<div className="text-center py-4">
+											<p className="text-sm text-gray-400">
+												No more posts to load
+											</p>
+										</div>
+									)}
+								</>
 							) : (
 								<div className="rounded-xl border border-gray-800 bg-gray-900 p-8 text-center">
 									<div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gray-800 p-4">

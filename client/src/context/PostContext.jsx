@@ -22,96 +22,132 @@ export const usePost = () => {
 
 export const PostProvider = ({ children }) => {
 	const [posts, setPosts] = useState([]);
+	const [page, setPage] = useState(1);
+	const [hasMore, setHasMore] = useState(true);
 	const [trendingPosts, setTrendingPosts] = useState([]);
 	const [loadingPosts, setLoadingPosts] = useState(true);
 	const [loadingTrending, setLoadingTrending] = useState(true);
-	const [pagination, setPagination] = useState({
-		total: 0,
-		totalPages: 0,
-		currentPage: 1,
-		postsPerPage: 15,
-		hasNextPage: false,
-		hasPrevPage: false,
-	});
+	const [initialLoad, setInitialLoad] = useState(true);
 
 	const { user } = useAuth();
 	const { showSuccess, showError } = useToast();
 
-	const fetchPosts = useCallback(
-		async (page = 1, limit = 15, includeExpired = false) => {
-			if (!user) return [];
+	const extractPostsFromResponse = (response) => {
+		if (!response) {
+			console.warn("Response is null or undefined");
+			return [];
+		}
 
+		// Check for our standardized format
+		if (response.status === "success" && response.data) {
+			if (response.data.posts && Array.isArray(response.data.posts)) {
+				return response.data.posts;
+			} else if (response.data.post) {
+				return [response.data.post];
+			} else {
+				console.warn(
+					"No posts or post field found in response.data",
+					response.data
+				);
+			}
+		} else {
+			// Try to handle legacy or unexpected response formats
+			console.warn("Non-standard response format detected:", response);
+
+			if (Array.isArray(response.posts)) {
+				return response.posts;
+			} else if (Array.isArray(response)) {
+				return response;
+			} else if (response.data && Array.isArray(response.data)) {
+				return response.data;
+			}
+		}
+
+		console.error("Could not extract posts from response:", response);
+		return [];
+	};
+
+	const extractPaginationFromResponse = (response) => {
+		if (!response) return { hasMore: false, currentPage: 1 };
+
+		if (
+			response.status === "success" &&
+			response.data &&
+			response.data.pagination
+		) {
+			return {
+				hasMore: response.data.pagination.hasMore || false,
+				currentPage: response.data.pagination.currentPage || 1,
+			};
+		}
+
+		return { hasMore: false, currentPage: 1 };
+	};
+
+	const fetchPosts = useCallback(
+		async (pageNum = 1, limit = 15, includeExpired = false) => {
 			try {
 				setLoadingPosts(true);
 				const response = await PostService.getAllPosts(
-					page,
+					pageNum,
 					limit,
 					includeExpired
 				);
-				const fetchedPosts = response.data.posts || [];
-				if (response.pagination) {
-					setPagination({
-						total: response.pagination.total || 0,
-						totalPages: response.pagination.totalPages || 0,
-						currentPage: response.pagination.currentPage || 1,
-						postsPerPage: response.pagination.postsPerPage || 15,
-						hasNextPage: response.pagination.hasNextPage || false,
-						hasPrevPage: response.pagination.hasPrevPage || false,
+				if (response) {
+					const newPosts = extractPostsFromResponse(response);
+					const pagination = extractPaginationFromResponse(response);
+
+					setPosts((prevPosts) => {
+						if (pageNum === 1) return newPosts;
+						const existingIds = new Set(prevPosts.map((post) => post._id));
+						const uniqueNewPosts = newPosts.filter(
+							(post) => !existingIds.has(post._id)
+						);
+						return [...prevPosts, ...uniqueNewPosts];
 					});
-				}
+					setHasMore(pagination.hasMore);
+					setPage(pagination.currentPage);
 
-				// Append posts if loading more, replace if refreshing from page 1
-				if (page > 1) {
-					setPosts((prevPosts) => [...prevPosts, ...fetchedPosts]);
-				} else {
-					setPosts(fetchedPosts);
+					if (initialLoad) {
+						setInitialLoad(false);
+					}
 				}
-
-				return fetchedPosts;
 			} catch (error) {
 				console.error("Error fetching posts:", error);
 				showError("Failed to fetch posts.");
-				return [];
 			} finally {
 				setLoadingPosts(false);
 			}
 		},
-		[user, setPosts, showError]
+		[initialLoad, showError]
 	);
 
 	const fetchUserPosts = useCallback(
-		async (userId, includeExpired = false, page = 1, limit = 15) => {
+		async (userId, includeExpired = false, pageNum = 1, limit = 15) => {
 			if (!user) return [];
-
 			try {
 				setLoadingPosts(true);
 				const response = await PostService.getUserPosts(
 					userId,
 					includeExpired,
-					page,
+					pageNum,
 					limit
 				);
-				let userPosts = [];
-
-				if (response && response.data) {
-					if (Array.isArray(response.data.posts)) {
-						userPosts = response.data.posts;
-					} else if (Array.isArray(response.data)) {
-						userPosts = response.data;
-					}
-
-					// Update pagination information if available
-					if (response.pagination) {
-						setPagination({
-							total: response.pagination.total || 0,
-							totalPages: response.pagination.totalPages || 0,
-							currentPage: response.pagination.currentPage || 1,
-							postsPerPage: response.pagination.postsPerPage || 15,
-							hasNextPage: response.pagination.hasNextPage || false,
-							hasPrevPage: response.pagination.hasPrevPage || false,
-						});
-					}
+				const userPosts = extractPostsFromResponse(response);
+				const pagination = extractPaginationFromResponse(response);
+				if (pageNum === 1) {
+					setPosts(userPosts);
+				} else {
+					setPosts((prevPosts) => {
+						const existingIds = new Set(prevPosts.map((post) => post._id));
+						const uniqueNewPosts = userPosts.filter(
+							(post) => !existingIds.has(post._id)
+						);
+						return [...prevPosts, ...uniqueNewPosts];
+					});
 				}
+				setHasMore(pagination.hasMore);
+				setPage(pagination.currentPage);
 
 				return userPosts;
 			} catch (error) {
@@ -126,15 +162,15 @@ export const PostProvider = ({ children }) => {
 	);
 
 	const loadMorePosts = useCallback(async () => {
-		if (!pagination.hasNextPage || loadingPosts) return;
+		if (!hasMore || loadingPosts) return;
 
-		const nextPage = pagination.currentPage + 1;
-		return await fetchPosts(nextPage, pagination.postsPerPage);
-	}, [pagination, loadingPosts, fetchPosts]);
+		const nextPage = page + 1;
+		return await fetchPosts(nextPage, 15);
+	}, [page, hasMore, loadingPosts, fetchPosts]);
 
 	const refreshPosts = useCallback(async () => {
-		return await fetchPosts(1, pagination.postsPerPage);
-	}, [fetchPosts, pagination.postsPerPage]);
+		return await fetchPosts(1, 15);
+	}, [fetchPosts]);
 
 	const fetchTrendingPosts = useCallback(async () => {
 		if (!user) return [];
@@ -142,7 +178,11 @@ export const PostProvider = ({ children }) => {
 		try {
 			setLoadingTrending(true);
 			const response = await PostService.getTrendingPosts();
-			const trendingData = response.data.posts || [];
+			let trendingData = [];
+			if (response.status === "success" && response.data) {
+				trendingData = response.data.posts || [];
+			}
+
 			setTrendingPosts(trendingData);
 			return trendingData;
 		} catch (error) {
@@ -152,16 +192,24 @@ export const PostProvider = ({ children }) => {
 		} finally {
 			setLoadingTrending(false);
 		}
-	}, [user, setLoadingTrending, setTrendingPosts, showError]);
+	}, [user, setLoadingTrending, showError]);
 
 	const createPost = useCallback(
 		async (postData) => {
 			try {
 				const response = await PostService.createPost(postData);
-				const newPost = response.data.post || response.data;
-				setPosts((prevPosts) => [newPost, ...prevPosts]);
-				showSuccess("Post created successfully!");
-				return newPost;
+				let newPost = {};
+				if (response.status === "success" && response.data) {
+					newPost = response.data.post;
+				}
+
+				if (newPost) {
+					setPosts((prevPosts) => [newPost, ...prevPosts]);
+					showSuccess("Post created successfully!");
+					return newPost;
+				} else {
+					throw new Error("Invalid response format");
+				}
 			} catch (error) {
 				console.error("Error creating post:", error);
 				showError(error.message || "Failed to create post");
@@ -175,15 +223,22 @@ export const PostProvider = ({ children }) => {
 		async (postId, postData) => {
 			try {
 				const response = await PostService.updatePost(postId, postData);
-				const updatedPost = response.data.post || response.data;
+				let updatedPost = {};
+				if (response.status === "success" && response.data) {
+					updatedPost = response.data.post;
+				}
 
-				setPosts((prevPosts) =>
-					prevPosts.map((post) =>
-						post._id === postId ? { ...post, ...updatedPost } : post
-					)
-				);
-				showSuccess("Post updated successfully!");
-				return updatedPost;
+				if (updatedPost) {
+					setPosts((prevPosts) =>
+						prevPosts.map((post) =>
+							post._id === postId ? { ...post, ...updatedPost } : post
+						)
+					);
+					showSuccess("Post updated successfully!");
+					return updatedPost;
+				} else {
+					throw new Error("Invalid response format");
+				}
 			} catch (error) {
 				console.error("Error updating post:", error);
 				showError(error.message || "Failed to update post");
@@ -196,12 +251,17 @@ export const PostProvider = ({ children }) => {
 	const deletePost = useCallback(
 		async (postId) => {
 			try {
-				await PostService.deletePost(postId);
-				setPosts((prevPosts) =>
-					prevPosts.filter((post) => post._id !== postId)
-				);
-				showSuccess("Post deleted successfully!");
-				return true;
+				const response = await PostService.deletePost(postId);
+
+				if (response.status === "success") {
+					setPosts((prevPosts) =>
+						prevPosts.filter((post) => post._id !== postId)
+					);
+					showSuccess("Post deleted successfully!");
+					return true;
+				} else {
+					throw new Error("Failed to delete post");
+				}
 			} catch (error) {
 				console.error("Error deleting post:", error);
 				showError(error.message || "Failed to delete post");
@@ -215,15 +275,24 @@ export const PostProvider = ({ children }) => {
 		async (postId, hours = 24) => {
 			try {
 				const response = await PostService.renewPost(postId, hours);
-				const renewedPost = response.data.post || response.data;
 
-				setPosts((prevPosts) =>
-					prevPosts.map((post) =>
-						post._id === postId ? { ...post, ...renewedPost } : post
-					)
-				);
-				showSuccess(`Post renewed for ${hours} more hours!`);
-				return renewedPost;
+				// Extract the renewed post using the standardized format
+				let renewedPost = {};
+				if (response.status === "success" && response.data) {
+					renewedPost = response.data.post;
+				}
+
+				if (renewedPost) {
+					setPosts((prevPosts) =>
+						prevPosts.map((post) =>
+							post._id === postId ? { ...post, ...renewedPost } : post
+						)
+					);
+					showSuccess(`Post renewed for ${hours} more hours!`);
+					return renewedPost;
+				} else {
+					throw new Error("Invalid response format");
+				}
 			} catch (error) {
 				console.error("Error renewing post:", error);
 				showError(error.message || "Failed to renew post");
@@ -237,14 +306,23 @@ export const PostProvider = ({ children }) => {
 		async (postId, commentContent) => {
 			try {
 				const response = await PostService.addComment(postId, commentContent);
-				const updatedPost = response.data.post || response.data;
 
-				setPosts((prevPosts) =>
-					prevPosts.map((post) =>
-						post._id === postId ? { ...post, ...updatedPost } : post
-					)
-				);
-				return updatedPost;
+				// Extract the updated post using the standardized format
+				let updatedPost = {};
+				if (response.status === "success" && response.data) {
+					updatedPost = response.data.post;
+				}
+
+				if (updatedPost) {
+					setPosts((prevPosts) =>
+						prevPosts.map((post) =>
+							post._id === postId ? { ...post, ...updatedPost } : post
+						)
+					);
+					return updatedPost;
+				} else {
+					throw new Error("Invalid response format");
+				}
 			} catch (error) {
 				console.error("Error adding comment:", error);
 				showError(error.message || "Failed to add comment");
@@ -258,33 +336,28 @@ export const PostProvider = ({ children }) => {
 		async (postId, commentId) => {
 			try {
 				const response = await PostService.deleteComment(postId, commentId);
-				let updatedPost;
 
-				if (response && response.data && response.data.post) {
-					updatedPost = response.data.post;
-				} else if (response && response.data) {
-					updatedPost = response.data;
-				} else {
+				// Handle the response based on the standardized format
+				if (response.status === "success") {
+					// If the server doesn't return the updated post, update it locally
 					const postToUpdate = posts.find((p) => p._id === postId);
 					if (postToUpdate) {
-						updatedPost = {
+						const updatedPost = {
 							...postToUpdate,
 							comments: postToUpdate.comments.filter(
 								(c) => c._id !== commentId
 							),
 						};
-					} else {
-						console.warn(`Post with ID ${postId} not found in state.`);
-						return null;
+
+						setPosts((prevPosts) =>
+							prevPosts.map((post) =>
+								post._id === postId ? updatedPost : post
+							)
+						);
+						return updatedPost;
 					}
 				}
-
-				setPosts((prevPosts) =>
-					prevPosts.map((post) =>
-						post._id === postId ? { ...post, ...updatedPost } : post
-					)
-				);
-				return updatedPost;
+				return null;
 			} catch (error) {
 				console.error("Error deleting comment:", error);
 				showError(error.message || "Failed to delete comment");
@@ -301,10 +374,10 @@ export const PostProvider = ({ children }) => {
 
 	useEffect(() => {
 		if (user) {
-			fetchPosts(1, pagination.postsPerPage);
+			fetchPosts(1, 15);
 			fetchTrendingPosts();
 		}
-	}, [user, fetchPosts, fetchTrendingPosts, pagination.postsPerPage]);
+	}, [user, fetchPosts, fetchTrendingPosts]);
 
 	const contextValue = useMemo(
 		() => ({
@@ -312,7 +385,8 @@ export const PostProvider = ({ children }) => {
 			trendingPosts,
 			loadingPosts,
 			loadingTrending,
-			pagination,
+			page,
+			hasMore,
 			fetchPosts,
 			fetchUserPosts,
 			fetchTrendingPosts,
@@ -331,7 +405,8 @@ export const PostProvider = ({ children }) => {
 			trendingPosts,
 			loadingPosts,
 			loadingTrending,
-			pagination,
+			page,
+			hasMore,
 			fetchPosts,
 			fetchUserPosts,
 			fetchTrendingPosts,

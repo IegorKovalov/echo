@@ -2,6 +2,14 @@ const Post = require("../models/postModel");
 const cloudinary = require("../utils/cloudinary");
 const fs = require("fs");
 
+// Add standardized error handler
+const sendError = (res, statusCode, message) => {
+	return res.status(statusCode).json({
+		status: "failed",
+		message,
+	});
+};
+
 const populatePostFields = (query) => {
 	return query
 		.populate({
@@ -91,6 +99,7 @@ exports.getUserPosts = async (req, res) => {
 		}
 
 		const totalPosts = await Post.countDocuments(query.getQuery());
+		const hasMorePosts = pageNumber * limitNumber < totalPosts;
 
 		query = query.skip(skip).limit(limitNumber).sort({ createdAt: -1 });
 
@@ -106,51 +115,73 @@ exports.getUserPosts = async (req, res) => {
 
 		res.status(200).json({
 			status: "success",
-			results: enhancedPosts.length,
-			pagination: {
-				total: totalPosts,
-				totalPages: Math.ceil(totalPosts / limitNumber),
-				currentPage: pageNumber,
-				postsPerPage: limitNumber,
-				hasNextPage: pageNumber < Math.ceil(totalPosts / limitNumber),
-				hasPrevPage: pageNumber > 1,
-			},
 			data: {
 				posts: enhancedPosts,
+				count: enhancedPosts.length,
+				pagination: {
+					total: totalPosts,
+					currentPage: pageNumber,
+					postsPerPage: limitNumber,
+					totalPages: Math.ceil(totalPosts / limitNumber),
+					hasMore: hasMorePosts,
+					nextPage: hasMorePosts ? pageNumber + 1 : null,
+				},
 			},
 		});
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error retrieving user posts",
-			error: process.env.NODE_ENV === "development" ? error.message : undefined,
-		});
+		sendError(res, 500, "Error retrieving user posts");
 	}
 };
 
 exports.getAllPosts = async (req, res) => {
 	try {
-		const { includeExpired, page = 1, limit = 15 } = req.query;
+		console.log("getAllPosts controller called with params:", req.query);
+		const {
+			page = 1,
+			limit = 10,
+			includeExpired = false,
+			sortBy = "-createdAt",
+		} = req.query;
 
-		const pageNumber = parseInt(page, 10);
-		const limitNumber = parseInt(limit, 10);
+		const pageNum = parseInt(page, 10);
+		const limitNum = parseInt(limit, 10);
+		const skip = (pageNum - 1) * limitNum;
 
-		const skip = (pageNumber - 1) * limitNumber;
+		// Build the query
+		let query = {};
 
-		let query = Post.find();
-
-		if (includeExpired === "true") {
-			query = query.where({ includeExpired: true });
+		// Only include non-expired posts unless specifically requested
+		if (includeExpired !== "true") {
+			query.expiresAt = { $gt: new Date() };
 		}
 
-		const totalPosts = await Post.countDocuments(query.getQuery());
+		console.log("Using query filter:", JSON.stringify(query));
+		console.log(`Pagination: page=${pageNum}, limit=${limitNum}, skip=${skip}`);
 
-		query = query.skip(skip).limit(limitNumber);
+		// Count total matching documents first
+		const totalPosts = await Post.countDocuments(query);
+		console.log(`Total posts matching query: ${totalPosts}`);
 
-		query = query.sort({ createdAt: -1 });
+		// Execute the query with pagination
+		const posts = await Post.find(query)
+			.skip(skip)
+			.limit(limitNum)
+			.sort(sortBy)
+			.populate({
+				path: "user",
+				select: "username fullName profilePicture",
+			})
+			.populate({
+				path: "comments.user",
+				select: "username fullName profilePicture",
+			});
 
-		const posts = await populatePostFields(query);
+		console.log(`Found ${posts.length} posts for page ${pageNum}`);
 
+		// Check if there are actually more posts
+		const hasMorePosts = totalPosts > pageNum * limitNum;
+
+		// Apply virtual properties to each post
 		const enhancedPosts = posts.map((post) => {
 			const postObj = post.toObject({ virtuals: true });
 			postObj.isExpired = post.isExpired;
@@ -159,33 +190,46 @@ exports.getAllPosts = async (req, res) => {
 			return postObj;
 		});
 
-		res.status(200).json({
+		const responseObj = {
 			status: "success",
-			results: enhancedPosts.length,
-			pagination: {
-				total: totalPosts,
-				totalPages: Math.ceil(totalPosts / limitNumber),
-				currentPage: pageNumber,
-				postsPerPage: limitNumber,
-				hasNextPage: pageNumber < Math.ceil(totalPosts / limitNumber),
-				hasPrevPage: pageNumber > 1,
-			},
 			data: {
 				posts: enhancedPosts,
+				count: enhancedPosts.length,
+				pagination: {
+					total: totalPosts,
+					currentPage: pageNum,
+					postsPerPage: limitNum,
+					totalPages: Math.ceil(totalPosts / limitNum),
+					hasMore: hasMorePosts,
+					nextPage: hasMorePosts ? pageNum + 1 : null,
+				},
 			},
-		});
+		};
+
+		console.log(
+			"Sending response with structure:",
+			JSON.stringify(
+				{
+					status: responseObj.status,
+					data: {
+						count: responseObj.data.count,
+						pagination: responseObj.data.pagination,
+					},
+				},
+				null,
+				2
+			)
+		);
+
+		res.status(200).json(responseObj);
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error retrieving posts",
-			error: process.env.NODE_ENV === "development" ? error.message : undefined,
-		});
+		console.error("Error in getAllPosts controller:", error);
+		sendError(res, 500, "Failed to retrieve posts");
 	}
 };
 
 exports.getPost = async (req, res) => {
 	try {
-		// Use includeExpired to potentially see expired posts
 		const post = await populatePostFields(
 			Post.findById(req.params.id).where({ includeExpired: true })
 		);
@@ -472,10 +516,7 @@ exports.deleteComment = async (req, res) => {
 	try {
 		let post = await Post.findById(req.params.id);
 		if (!post) {
-			return res.status(404).json({
-				status: "failed",
-				message: "Post not found",
-			});
+			return sendError(res, 404, "Post not found");
 		}
 
 		const commentIndex = post.comments.findIndex(
@@ -485,10 +526,11 @@ exports.deleteComment = async (req, res) => {
 		);
 
 		if (commentIndex === -1) {
-			return res.status(403).json({
-				status: "failed",
-				message: "Comment not found or you're not authorized to delete it",
-			});
+			return sendError(
+				res,
+				403,
+				"Comment not found or you're not authorized to delete it"
+			);
 		}
 
 		post.comments.splice(commentIndex, 1);
@@ -496,16 +538,21 @@ exports.deleteComment = async (req, res) => {
 
 		post = await populatePostFields(Post.findById(post._id));
 
+		// Enhance post with virtual properties
+		const postObj = post.toObject({ virtuals: true });
+		postObj.isExpired = post.isExpired;
+		postObj.remainingTime = post.remainingTime;
+		postObj.expirationProgress = post.expirationProgress;
+
 		res.status(200).json({
 			status: "success",
-			message: "Comment deleted",
+			data: {
+				post: postObj,
+				message: "Comment deleted successfully",
+			},
 		});
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error deleting comment",
-			error: process.env.NODE_ENV === "development" ? error.message : undefined,
-		});
+		sendError(res, 500, "Error deleting comment");
 	}
 };
 exports.renewPost = async (req, res) => {
@@ -664,16 +711,12 @@ exports.getTrendingPosts = async (req, res) => {
 
 		res.status(200).json({
 			status: "success",
-			results: enhancedPosts.length,
 			data: {
 				posts: enhancedPosts,
+				count: enhancedPosts.length,
 			},
 		});
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error retrieving trending posts",
-			error: process.env.NODE_ENV === "development" ? error.message : undefined,
-		});
+		sendError(res, 500, "Error retrieving trending posts");
 	}
 };

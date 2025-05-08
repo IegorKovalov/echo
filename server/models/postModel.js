@@ -17,8 +17,8 @@ const postSchema = new Schema(
 			{
 				url: { type: String, required: true },
 				type: { type: String, enum: ["image", "video"], required: true },
-				publicId: { type: String, required: true }
-			}
+				publicId: { type: String, required: true },
+			},
 		],
 		views: {
 			type: Number,
@@ -88,7 +88,7 @@ postSchema.virtual("expirationProgress").get(function () {
 });
 
 postSchema.pre(/^find/, function (next) {
-	if (!this.getQuery().includeExpired) {
+	if (this.getOptions().includeExpired !== true) {
 		this.find({ expiresAt: { $gt: new Date() } });
 	}
 	next();

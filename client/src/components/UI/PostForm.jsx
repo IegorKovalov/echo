@@ -100,7 +100,6 @@ export default function PostForm({
 		formData.append("duration", duration);
 
 		const existingMediaIdsToKeep = [];
-		console.log("Media items to submit:", mediaItems);
 		mediaItems.forEach((item) => {
 			if (!item.isExisting) {
 				formData.append("media", item.file);
@@ -113,7 +112,6 @@ export default function PostForm({
 		);
 
 		try {
-			console.log("Submitting form data:", formData);
 			await onSubmit(formData);
 		} catch (error) {
 			showError(error.message || "Failed to create post. Please try again.");
