@@ -58,6 +58,7 @@ exports.createPost = async (req, res) => {
 				postData.media.push({
 					url: result.secure_url,
 					type: file.mimetype.startsWith("video/") ? "video" : "image",
+					publicId: result.public_id,
 				});
 				fs.unlinkSync(file.path); // Remove temp file
 			}

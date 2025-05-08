@@ -66,7 +66,7 @@ export default function PostForm({
 		const newMedia = selectedFiles.map((file) => ({
 			file: file,
 			previewUrl: URL.createObjectURL(file),
-			type: file.type, // Store the actual file type directly
+			type: file.type,
 			isExisting: false,
 			tempId: Date.now() + Math.random(),
 		}));
