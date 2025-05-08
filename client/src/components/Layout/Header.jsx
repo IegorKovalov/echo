@@ -77,7 +77,7 @@ export default function Header() {
 
 	return (
 		<>
-			<header className="sticky top-0 z-10 border-b border-gray-800 bg-gray-950/90 backdrop-blur-md">
+			<header className="sticky top-0 z-20 border-b border-gray-800 bg-gray-950/90 backdrop-blur-md">
 				<div className="container flex h-16 items-center justify-between px-4">
 					{/* Logo */}
 					<div className="flex items-center gap-2">
@@ -163,7 +163,7 @@ export default function Header() {
 									<ProfileAvatar user={user} size="xs" />
 									<span className="sr-only">Profile</span>
 								</button>
-								<div className="absolute right-0 top-full mt-1 w-52 origin-top-right rounded-xl border border-gray-800 bg-gray-900 shadow-lg focus:outline-none invisible opacity-0 translate-y-2 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200">
+								<div className="absolute right-0 top-full mt-1 w-52 origin-top-right rounded-xl border border-gray-800 bg-gray-900 shadow-lg focus:outline-none invisible opacity-0 translate-y-2 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 z-[999]">
 									<div className="py-2">
 										<div className="px-4 py-3 text-sm text-gray-200 border-b border-gray-800">
 											<div className="font-medium">

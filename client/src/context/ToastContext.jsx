@@ -1,19 +1,12 @@
+import { CheckIcon, InfoIcon, LoaderIcon, XIcon } from "lucide-react";
 import React, { createContext, useContext } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
-// Create the toast context
 const ToastContext = createContext();
 
-/**
- * Custom hook to use the toast context
- */
 export const useToast = () => useContext(ToastContext);
 
-/**
- * Toast provider component that makes toast functions available throughout the app
- */
 export const ToastProvider = ({ children }) => {
-	// Common toast styles that use the design system
 	const baseToastStyle = {
 		background: "hsl(var(--card))",
 		color: "hsl(var(--card-foreground))",
@@ -24,72 +17,57 @@ export const ToastProvider = ({ children }) => {
 		boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
 	};
 
-	// Success toast notification
 	const showSuccess = (message) => {
-		toast.success(message, {
-			duration: 4000,
-			style: {
-				...baseToastStyle,
-				borderLeft: "4px solid hsl(var(--primary))",
-			},
-			iconTheme: {
-				primary: "hsl(var(--primary))",
-				secondary: "hsl(var(--background))",
-			},
-		});
+		toast.custom(
+			(t) => (
+				<div
+					className={`${t.visible ? "animate-enter" : "animate-leave"}`}
+					style={{
+						...baseToastStyle,
+						display: "flex",
+						alignItems: "center",
+						gap: "8px",
+					}}
+				>
+					<CheckIcon size={18} color="hsl(var(--primary))" />
+					<span>{message}</span>
+				</div>
+			),
+			{ duration: 4000 }
+		);
 	};
 
-	// Error toast notification
 	const showError = (message) => {
-		toast.error(message, {
-			duration: 5000,
-			style: {
-				...baseToastStyle,
-				borderLeft: "4px solid hsl(var(--destructive))",
-			},
-			iconTheme: {
-				primary: "hsl(var(--destructive))",
-				secondary: "hsl(var(--background))",
-			},
-		});
+		toast.custom(
+			(t) => (
+				<div
+					className={`${t.visible ? "animate-enter" : "animate-leave"}`}
+					style={{
+						...baseToastStyle,
+						display: "flex",
+						alignItems: "center",
+						gap: "8px",
+					}}
+				>
+					<XIcon size={18} color="hsl(var(--destructive))" />
+					<span>{message}</span>
+				</div>
+			),
+			{ duration: 5000 }
+		);
 	};
 
-	// Info toast notification
 	const showInfo = (message) => {
 		toast(message, {
 			duration: 3000,
-			style: {
-				...baseToastStyle,
-				borderLeft: "4px solid hsl(var(--accent))",
-			},
-			// Replace the emoji with a custom icon style
-			icon: (
-				<div
-					style={{
-						width: "20px",
-						height: "20px",
-						borderRadius: "50%",
-						background: "hsl(var(--accent))",
-						color: "hsl(var(--accent-foreground))",
-						display: "flex",
-						alignItems: "center",
-						justifyContent: "center",
-						fontSize: "14px",
-						fontWeight: "bold",
-					}}
-				>
-					i
-				</div>
-			),
+			style: baseToastStyle,
+			icon: <InfoIcon size={18} color="hsl(var(--accent-foreground))" />,
 		});
 	};
 
-	// Loading toast notification with promise
 	const showLoading = (promise, options) => {
-		// Ensure that options is an object
 		const opts = options || {};
 
-		// Ensure all messages are strings
 		const messages = {
 			loading: typeof opts.loading === "string" ? opts.loading : "Loading...",
 			success:
@@ -101,14 +79,12 @@ export const ToastProvider = ({ children }) => {
 		};
 
 		return toast.promise(promise, messages, {
-			// Common styling options
 			style: baseToastStyle,
+			icon: <LoaderIcon size={18} className="animate-spin" />,
 			success: {
 				duration: 4000,
-				style: {
-					...baseToastStyle,
-					borderLeft: "4px solid hsl(var(--primary))",
-				},
+				style: baseToastStyle,
+				icon: <CheckIcon size={18} />,
 				iconTheme: {
 					primary: "hsl(var(--primary))",
 					secondary: "hsl(var(--background))",
@@ -116,20 +92,16 @@ export const ToastProvider = ({ children }) => {
 			},
 			error: {
 				duration: 5000,
-				style: {
-					...baseToastStyle,
-					borderLeft: "4px solid hsl(var(--destructive))",
-				},
+				style: baseToastStyle,
+				icon: <XIcon size={18} />,
 				iconTheme: {
 					primary: "hsl(var(--destructive))",
 					secondary: "hsl(var(--background))",
 				},
 			},
 			loading: {
-				style: {
-					...baseToastStyle,
-					borderLeft: "4px solid hsl(var(--muted))",
-				},
+				style: baseToastStyle,
+				icon: <LoaderIcon size={18} className="animate-spin" />,
 				iconTheme: {
 					primary: "hsl(var(--muted-foreground))",
 					secondary: "hsl(var(--background))",
@@ -139,7 +111,6 @@ export const ToastProvider = ({ children }) => {
 		});
 	};
 
-	// Provide all toast functions to components in the app
 	return (
 		<ToastContext.Provider
 			value={{

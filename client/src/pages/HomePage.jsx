@@ -1,20 +1,7 @@
-import {
-	ArrowDown,
-	Clock,
-	Eye,
-	MessageCircle,
-	MessageSquare,
-	PlusCircle,
-	Search,
-	Sparkles,
-	TrendingUp,
-	Users,
-} from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import PostForm from "../components/UI/PostForm";
-import PostItem from "../components/UI/PostItem";
-import ProfileAvatar from "../components/UI/ProfileAvatar";
+import { Sparkles } from "lucide-react";
+import MessageSidebar from "../components/UI/MessageSidebar";
+import PostFeed from "../components/UI/PostFeed";
+import TrendingSidebar from "../components/UI/TrendingSidebar";
 import { useAuth } from "../context/AuthContext";
 import { usePost } from "../context/PostContext";
 
@@ -30,71 +17,6 @@ export default function HomePage() {
 		createPost,
 		getHoursLeft,
 	} = usePost();
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [loadingMore, setLoadingMore] = useState(false);
-	const observerRef = useRef(null);
-	const lastPostRef = useRef(null);
-
-	const handleCreatePost = useCallback(
-		async (formData) => {
-			try {
-				setIsSubmitting(true);
-				await createPost(formData);
-			} catch (error) {
-				console.error("Error creating post:", error);
-			} finally {
-				setIsSubmitting(false);
-			}
-		},
-		[createPost]
-	);
-
-	const handleLoadMore = useCallback(async () => {
-		if (loadingPosts || loadingMore || !hasMore) return;
-
-		try {
-			setLoadingMore(true);
-			await loadMorePosts();
-		} catch (error) {
-			console.error("Error loading more posts:", error);
-		} finally {
-			setLoadingMore(false);
-		}
-	}, [loadingPosts, loadingMore, hasMore, loadMorePosts]);
-
-	// Setup intersection observer for infinite scrolling
-	useEffect(() => {
-		const currentObserver = new IntersectionObserver(
-			(entries) => {
-				const [entry] = entries;
-				if (entry.isIntersecting && hasMore && !loadingPosts && !loadingMore) {
-					handleLoadMore();
-				}
-			},
-			{ threshold: 0.5 }
-		);
-
-		observerRef.current = currentObserver;
-
-		return () => {
-			if (observerRef.current) {
-				observerRef.current.disconnect();
-			}
-		};
-	}, [hasMore, loadingPosts, loadingMore, handleLoadMore]);
-
-	// Attach observer to last post element
-	useEffect(() => {
-		if (
-			!loadingPosts &&
-			posts.length > 0 &&
-			lastPostRef.current &&
-			observerRef.current
-		) {
-			observerRef.current.disconnect();
-			observerRef.current.observe(lastPostRef.current);
-		}
-	}, [posts, loadingPosts]);
 
 	if (loading) {
 		return (
@@ -107,214 +29,29 @@ export default function HomePage() {
 		);
 	}
 
-	const visiblePosts = posts.filter((post) => !post.expired);
-
 	return (
 		<div className="flex flex-col bg-gradient-to-b from-gray-900 to-gray-950">
 			<main className="flex-1">
 				<div className="container grid grid-cols-1 gap-6 px-4 py-6 md:grid-cols-3 lg:grid-cols-4">
-					{/* Messenger Placeholder Sidebar */}
-					<div className="hidden md:block md:col-span-1">
-						<div className="sticky top-20 rounded-xl border border-gray-800 bg-gray-900 p-4">
-							<div className="mb-4 flex items-center justify-between">
-								<h3 className="font-medium text-white flex items-center gap-2">
-									<MessageSquare className="h-5 w-5 text-purple-400" />
-									Messages{" "}
-									<span className="text-xs text-gray-500">(Coming Soon)</span>
-								</h3>
-								<button className="rounded-full p-1 hover:bg-gray-800 text-purple-400">
-									<PlusCircle className="h-5 w-5" />
-								</button>
-							</div>
+					{/* Message Sidebar */}
+					<MessageSidebar />
 
-							<div className>
-								<input
-									type="text"
-									placeholder="Search messages"
-									className="w-full rounded-lg border border-gray-800 bg-gray-800 pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
-									disabled
-								/>
-								<Search className="absolute left-3 top-2 h-4 w-4 text-gray-500" />
-							</div>
-
-							<div className="space-y-1 opacity-60">
-								{/* Placeholder message items */}
-								{[1, 2, 3].map((i) => (
-									<div
-										key={i}
-										className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-800 cursor-not-allowed"
-									>
-										<div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-900/50 to-blue-900/50" />
-										<div className="flex-1 min-w-0">
-											<p className="font-medium text-white truncate">
-												Friend {i}
-											</p>
-											<p className="text-xs text-gray-400 truncate">
-												Coming soon in future update...
-											</p>
-										</div>
-										<div className="w-2 h-2 rounded-full bg-purple-500"></div>
-									</div>
-								))}
-							</div>
-
-							<div className="mt-6 text-center">
-								<p className="text-xs text-gray-500">
-									Messaging functionality will be available in an upcoming
-									update.
-								</p>
-								<Link
-									to="/profile"
-									className="mt-4 inline-flex items-center gap-2 text-sm text-purple-400 hover:text-purple-300"
-								>
-									<Users className="h-4 w-4" />
-									View your profile
-								</Link>
-							</div>
-						</div>
-					</div>
-
-					{/* Main Content Area */}
-					<div className="md:col-span-2 lg:col-span-2">
-						{/* Post Form */}
-						<PostForm
-							user={user}
-							onSubmit={handleCreatePost}
-							isSubmitting={isSubmitting}
-							initialMedia={[]}
-						/>
-
-						{/* Posts Feed */}
-						<div className="space-y-6">
-							{loadingPosts && posts.length === 0 ? (
-								<div className="text-center py-10">
-									<Sparkles className="mx-auto h-8 w-8 animate-pulse text-purple-500" />
-									<p className="mt-2 text-gray-400">Loading posts...</p>
-								</div>
-							) : visiblePosts.length > 0 ? (
-								<>
-									{visiblePosts.map((post, index) => {
-										// Set ref for the last post for infinite scrolling
-										if (index === visiblePosts.length - 1) {
-											return (
-												<div key={post._id} ref={lastPostRef}>
-													<PostItem post={post} currentUser={user} />
-												</div>
-											);
-										}
-										return (
-											<PostItem key={post._id} post={post} currentUser={user} />
-										);
-									})}
-
-									{/* Show loading indicator when loading more posts */}
-									{loadingMore && (
-										<div className="text-center py-4">
-											<Sparkles className="mx-auto h-6 w-6 animate-pulse text-purple-500" />
-											<p className="mt-2 text-sm text-gray-400">
-												Loading more...
-											</p>
-										</div>
-									)}
-
-									{/* Show load more button if there are more posts but not loading */}
-									{hasMore && !loadingMore && (
-										<div className="text-center py-4">
-											<button
-												onClick={handleLoadMore}
-												className="flex items-center justify-center gap-2 mx-auto px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-purple-400 transition-colors"
-											>
-												<ArrowDown className="h-4 w-4" />
-												Load more
-											</button>
-										</div>
-									)}
-
-									{/* Show end of feed message when no more posts */}
-									{!hasMore && posts.length > 0 && (
-										<div className="text-center py-4">
-											<p className="text-sm text-gray-400">
-												No more posts to load
-											</p>
-										</div>
-									)}
-								</>
-							) : (
-								<div className="rounded-xl border border-gray-800 bg-gray-900 p-8 text-center">
-									<div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gray-800 p-4">
-										<MessageCircle className="h-8 w-8 text-gray-600" />
-									</div>
-									<h3 className="text-lg font-medium text-white">
-										No posts yet
-									</h3>
-									<p className="mt-2 text-gray-400">
-										Create your first Echo or follow more users to see their
-										posts.
-									</p>
-								</div>
-							)}
-						</div>
-					</div>
+					{/* Post Feed */}
+					<PostFeed
+						user={user}
+						posts={posts}
+						loadingPosts={loadingPosts}
+						hasMore={hasMore}
+						loadMorePosts={loadMorePosts}
+						createPost={createPost}
+					/>
 
 					{/* Trending Sidebar */}
-					<div className="hidden lg:block lg:col-span-1">
-						<div className="sticky top-20 rounded-xl border border-gray-800 bg-gray-900 p-4">
-							<h3 className="mb-4 font-medium text-white flex items-center gap-2">
-								<TrendingUp className="h-5 w-5 text-purple-400" />
-								Trending Echoes
-							</h3>
-
-							{loadingTrending ? (
-								<div className="py-12 text-center">
-									<Sparkles className="mx-auto h-6 w-6 animate-pulse text-purple-500" />
-									<p className="mt-2 text-xs text-gray-400">
-										Loading trends...
-									</p>
-								</div>
-							) : trendingPosts.length === 0 ? (
-								<div className="py-8 text-center">
-									<p className="text-sm text-gray-400">No trending posts yet</p>
-								</div>
-							) : (
-								<div className="space-y-4">
-									{trendingPosts.map((post) => (
-										<div
-											key={post._id}
-											className="rounded-lg bg-gray-800/50 p-3 hover:bg-gray-800 transition-colors"
-										>
-											<div className="flex items-center gap-2 mb-2">
-												<ProfileAvatar user={post.user} size="xs" />
-												<span className="text-xs font-medium text-white truncate">
-													{post.user.fullName}
-												</span>
-											</div>
-
-											<p className="text-xs text-gray-300 mb-2 line-clamp-2">
-												{post.content}
-											</p>
-
-											<div className="flex items-center justify-between text-xs text-gray-400">
-												<div className="flex items-center gap-4">
-													<div className="flex items-center gap-1">
-														<Eye className="h-3 w-3" />
-														<span>{post.views}</span>
-													</div>
-													<div className="flex items-center gap-1">
-														<MessageCircle className="h-3 w-3" />
-														<span>{post.comments?.length || 0}</span>
-													</div>
-												</div>
-												<div className="flex items-center gap-1">
-													<Clock className="h-3 w-3" />
-													<span>{getHoursLeft(post.expiresAt)}h left</span>
-												</div>
-											</div>
-										</div>
-									))}
-								</div>
-							)}
-						</div>
-					</div>
+					<TrendingSidebar
+						trendingPosts={trendingPosts}
+						loadingTrending={loadingTrending}
+						getHoursLeft={getHoursLeft}
+					/>
 				</div>
 			</main>
 		</div>
