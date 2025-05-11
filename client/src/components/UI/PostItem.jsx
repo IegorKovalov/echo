@@ -1,4 +1,3 @@
-// client/src/components/UI/PostItem.jsx
 import {
 	ChevronDown,
 	ChevronUp,
@@ -35,6 +34,7 @@ export default function PostItem({
 	const [hasTrackedView, setHasTrackedView] = useState(false);
 	const [showComments, setShowComments] = useState(false);
 	const [isEditing, setIsEditing] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const { showSuccess, showError, showInfo } = useToast();
 	const { trackView, getViewCount, initializeViewCount } = useViewTracking();
@@ -101,21 +101,22 @@ export default function PostItem({
 	};
 
 	const handleEdit = async (updatedPostData) => {
+		setIsSubmitting(true);
 		try {
 			const updatedPost = await updatePost(post._id, updatedPostData);
 			setIsEditing(false);
-			// If parent component provided a custom onEdit handler, call it too
 			if (onEdit) {
 				onEdit(updatedPost);
 			}
 			return updatedPost;
 		} catch (error) {
 			console.error("Error updating post:", error);
+		} finally {
+			setIsSubmitting(false);
 		}
 	};
 
 	const handleShare = () => {
-		// Copy post URL to clipboard
 		const postUrl = `${window.location.origin}/post/${post._id}`;
 		navigator.clipboard
 			.writeText(postUrl)
@@ -168,6 +169,7 @@ export default function PostItem({
 					initialMedia={post.media || []} // Pass the existing media array
 					isEditing={true}
 					onSubmit={handleEdit}
+					isSubmitting={isSubmitting}
 				/>
 			</Card>
 		);
