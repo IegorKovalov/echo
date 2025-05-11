@@ -23,12 +23,16 @@ router
 
 // View counter routes
 router.patch("/:id/view", postController.incrementViews);
-router.post("/batch-view", postController.batchIncrementViews); // New batch endpoint
+router.post("/batch-view", postController.batchIncrementViews);
 
 router.post("/:id/renew", postController.renewPost);
-
 router.post("/:id/comments", postController.addComment);
-
 router.delete("/:id/comments/:commentId", postController.deleteComment);
+
+router.post("/:id/comments/:commentId/replies", postController.addCommentReply);
+router.delete(
+	"/:id/comments/:commentId/replies/:replyId",
+	postController.deleteCommentReply
+);
 
 module.exports = router;

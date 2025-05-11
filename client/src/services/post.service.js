@@ -41,21 +41,6 @@ const PostService = {
 	createPost: async (formData) => {
 		const token = localStorage.getItem("token");
 		const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-		if (process.env.NODE_ENV !== "production") {
-			console.log("PostService - formData contents:");
-			for (const pair of formData.entries()) {
-				const [key, value] = pair;
-				if (value instanceof File) {
-					console.log(
-						`${key}: File - ${value.name} (${value.type}, ${value.size} bytes)`
-					);
-				} else {
-					console.log(`${key}: ${value}`);
-				}
-			}
-		}
-
 		const response = await api.post(POSTS_URL, formData, {
 			headers,
 			transformRequest: [(data) => data],
@@ -65,25 +50,7 @@ const PostService = {
 
 	updatePost: async (id, formData) => {
 		const token = localStorage.getItem("token");
-
-		// When sending FormData with files, we should only set the Authorization header
 		const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-		// Better logging for FormData
-		if (process.env.NODE_ENV !== "production") {
-			console.log(`PostService - updating post ${id}, formData contents:`);
-			for (const pair of formData.entries()) {
-				const [key, value] = pair;
-				if (value instanceof File) {
-					console.log(
-						`${key}: File - ${value.name} (${value.type}, ${value.size} bytes)`
-					);
-				} else {
-					console.log(`${key}: ${value}`);
-				}
-			}
-		}
-
 		const response = await api.patch(`${POSTS_URL}/${id}`, formData, {
 			headers,
 			transformRequest: [(data) => data],
@@ -119,6 +86,29 @@ const PostService = {
 
 		const response = await api.delete(
 			`${POSTS_URL}/${postId}/comments/${commentId}`,
+			{ headers }
+		);
+		return response.data;
+	},
+
+	addCommentReply: async (postId, commentId, replyContent, replyToUser) => {
+		const token = localStorage.getItem("token");
+		const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+		const response = await api.post(
+			`${POSTS_URL}/${postId}/comments/${commentId}/replies`,
+			{ replyContent, replyToUser },
+			{ headers }
+		);
+		return response.data;
+	},
+
+	deleteCommentReply: async (postId, commentId, replyId) => {
+		const token = localStorage.getItem("token");
+		const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+		const response = await api.delete(
+			`${POSTS_URL}/${postId}/comments/${commentId}/replies/${replyId}`,
 			{ headers }
 		);
 		return response.data;

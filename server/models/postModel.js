@@ -40,6 +40,28 @@ const postSchema = new Schema(
 					type: Date,
 					default: Date.now,
 				},
+				replies: [
+					{
+						user: {
+							type: Schema.Types.ObjectId,
+							ref: "User",
+							required: true,
+						},
+						content: {
+							type: String,
+							required: true,
+							trim: true,
+						},
+						createdAt: {
+							type: Date,
+							default: Date.now,
+						},
+						replyToUser: {
+							type: Schema.Types.ObjectId,
+							ref: "User",
+						},
+					},
+				],
 			},
 		],
 		expiresAt: {

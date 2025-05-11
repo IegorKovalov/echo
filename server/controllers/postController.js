@@ -18,6 +18,14 @@ const populatePostFields = (query) => {
 		.populate({
 			path: "comments.user",
 			select: "username fullName profilePicture",
+		})
+		.populate({
+			path: "comments.replies.user",
+			select: "username fullName profilePicture",
+		})
+		.populate({
+			path: "comments.replies.replyToUser",
+			select: "username fullName profilePicture",
 		});
 };
 
@@ -134,7 +142,6 @@ exports.getUserPosts = async (req, res) => {
 
 exports.getAllPosts = async (req, res) => {
 	try {
-		console.log("getAllPosts controller called with params:", req.query);
 		const {
 			page = 1,
 			limit = 10,
@@ -152,26 +159,11 @@ exports.getAllPosts = async (req, res) => {
 			query.expiresAt = { $gt: new Date() };
 		}
 
-		console.log("Using query filter:", JSON.stringify(query));
-		console.log(`Pagination: page=${pageNum}, limit=${limitNum}, skip=${skip}`);
-
 		const totalPosts = await Post.countDocuments(query);
-		console.log(`Total posts matching query: ${totalPosts}`);
 
-		const posts = await Post.find(query)
-			.skip(skip)
-			.limit(limitNum)
-			.sort(sortBy)
-			.populate({
-				path: "user",
-				select: "username fullName profilePicture",
-			})
-			.populate({
-				path: "comments.user",
-				select: "username fullName profilePicture",
-			});
-
-		console.log(`Found ${posts.length} posts for page ${pageNum}`);
+		const posts = await populatePostFields(
+			Post.find(query).skip(skip).limit(limitNum).sort(sortBy)
+		);
 
 		const hasMorePosts = totalPosts > pageNum * limitNum;
 
@@ -198,22 +190,6 @@ exports.getAllPosts = async (req, res) => {
 				},
 			},
 		};
-
-		console.log(
-			"Sending response with structure:",
-			JSON.stringify(
-				{
-					status: responseObj.status,
-					data: {
-						count: responseObj.data.count,
-						pagination: responseObj.data.pagination,
-					},
-				},
-				null,
-				2
-			)
-		);
-
 		res.status(200).json(responseObj);
 	} catch (error) {
 		console.error("Error in getAllPosts controller:", error);
@@ -258,13 +234,11 @@ exports.updatePost = async (req, res) => {
 		const tempFilesToCleanup = req.files
 			? req.files.map((file) => file.path)
 			: [];
-		console.log("request:", req.body);
 		const content = req.body.content;
 		const duration = req.body.duration;
 
 		let existingMediaIds = req.body.existingMediaIds;
 
-		// Handle empty string case, converting it to an empty array
 		if (existingMediaIds === "") {
 			existingMediaIds = [];
 		} else if (existingMediaIds && !Array.isArray(existingMediaIds)) {
@@ -404,8 +378,6 @@ exports.deletePost = async (req, res) => {
 		if (post.user.toString() !== req.user._id.toString()) {
 			return sendError(res, 403, "You're not authorized to delete this post");
 		}
-
-		// Delete all associated media from Cloudinary
 		if (post.media && post.media.length > 0) {
 			for (const mediaItem of post.media) {
 				try {
@@ -424,26 +396,18 @@ exports.deletePost = async (req, res) => {
 		}
 
 		await post.deleteOne();
-
-		// Additionally clean up any temp files that might be associated
-		// This is a precaution if any are leftover
 		try {
 			const tmpDir = "tmp/uploads/";
 			if (fs.existsSync(tmpDir)) {
-				// Check for old files that may be associated with this post
 				const files = fs.readdirSync(tmpDir);
-				// We can't directly associate files with posts, but cleaning up older files
-				// (e.g., files older than a day) could help
 				const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
 
 				files.forEach((file) => {
 					const filePath = `${tmpDir}${file}`;
 					try {
 						const stats = fs.statSync(filePath);
-						// If file is older than a day, remove it
 						if (stats.mtimeMs < oneDayAgo) {
 							fs.unlinkSync(filePath);
-							console.log(`Cleaned up old temporary file: ${filePath}`);
 						}
 					} catch (err) {
 						console.error(
@@ -455,7 +419,6 @@ exports.deletePost = async (req, res) => {
 			}
 		} catch (cleanupErr) {
 			console.error("Error during temporary files cleanup:", cleanupErr);
-			// Don't fail the delete operation if cleanup has issues
 		}
 
 		res.status(200).json({
@@ -463,7 +426,6 @@ exports.deletePost = async (req, res) => {
 			message: "Post deleted successfully",
 		});
 	} catch (error) {
-		console.log(error);
 		res.status(500).json({
 			status: "failed",
 			message: "Error deleting post",
@@ -557,6 +519,82 @@ exports.deleteComment = async (req, res) => {
 		sendError(res, 500, "Error deleting comment");
 	}
 };
+exports.addCommentReply = async (req, res) => {
+	try {
+		const { replyContent } = req.body;
+		console.log("Request Body", req.body);
+		console.log("Request Params", req.params);
+		if (!replyContent || replyContent.trim() === "") {
+			sendError(res, 400, "Reply Content is required");
+		}
+		let post = await Post.findById(req.params.id);
+		if (!post) {
+			sendError(res, 404, "Post not found");
+		}
+		const commentIndex = post.comments.findIndex(
+			(c) => c._id.toString() === req.params.commentId
+		);
+		if (commentIndex === -1) {
+			return sendError(res, 404, "Comment not found");
+		}
+		const newReply = {
+			user: req.user._id,
+			content: replyContent.trim(),
+			replyToUse: req.body.replyToUser || post.comments[commentIndex].user,
+		};
+		post.comments[commentIndex].replies =
+			post.comments[commentIndex].replies || [];
+		post.comments[commentIndex].replies.push(newReply);
+		await post.save();
+		post = await populatePostFields(Post.findById(post._id));
+		res.status(201).json({
+			status: "success",
+			data: {
+				post,
+			},
+		});
+	} catch (error) {
+		sendError(res, 500, "Error adding reply");
+	}
+};
+exports.deleteCommentReply = async (req, res) => {
+	try {
+		let post = await Post.findById(req.params.id);
+		if (!post) {
+			return sendError(res, 404, "Post not found");
+		}
+		const comment = post.comments.find(req.params.commentId);
+		if (!comment) {
+			return sendError(res, 404, "Comment not found");
+		}
+		const replyIndex = comment.replies.findIndex(
+			(r) =>
+				r._id.toString() === req.params.replyId &&
+				r.user.toString() === req.user._id.toString()
+		);
+		if (replyIndex === -1) {
+			return sendError(
+				res,
+				403,
+				"Reply not found or you're not authorized to delete it"
+			);
+		}
+		comment.replies.splice(replyIndex, 1);
+		await post.save();
+		post = await populatePostFields(Post.findById(post._id));
+
+		res.status(200).json({
+			status: "success",
+			data: {
+				post,
+				message: "Reply deleted successfully",
+			},
+		});
+	} catch (error) {
+		sendError(res, 500, "Error deleting reply");
+	}
+};
+
 exports.renewPost = async (req, res) => {
 	try {
 		const post = await Post.findOne({
