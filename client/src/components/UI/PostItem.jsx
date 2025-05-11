@@ -43,11 +43,8 @@ export default function PostItem({
 
 	const initializedRef = useRef(false);
 	const isOwnPost = user._id === post.user._id;
-
-	// Derived state instead of managed state
 	const commentCount = post.comments ? post.comments.length : 0;
 
-	// Initialize view count once
 	useEffect(() => {
 		if (!initializedRef.current) {
 			initializedRef.current = true;
@@ -55,7 +52,6 @@ export default function PostItem({
 		}
 	}, [post._id, post.views, initializeViewCount]);
 
-	// Track view once per component mount
 	useEffect(() => {
 		if (!hasTrackedView && !post.expired) {
 			trackView(post._id);
@@ -63,14 +59,12 @@ export default function PostItem({
 		}
 	}, [post._id, post.expired, hasTrackedView, trackView]);
 
-	// Get the current view count for this post
 	const viewCount = getViewCount(post._id) || post.views || 0;
 
 	const handleDelete = async () => {
 		if (window.confirm("Are you sure you want to delete this post?")) {
 			setIsDeleting(true);
 			try {
-				// Use either passed callback or context function
 				if (onDelete) {
 					await onDelete(post._id);
 				} else {
@@ -88,7 +82,6 @@ export default function PostItem({
 		setIsRenewing(true);
 		try {
 			const renewedPost = await renewPost(post._id);
-			// If parent component provided a custom onRenew handler, call it too
 			if (onRenew) {
 				onRenew(post._id);
 			}
@@ -128,7 +121,6 @@ export default function PostItem({
 			});
 	};
 
-	// Hours left until expiration
 	const getHoursLeft = () => {
 		if (!post.expiresAt) return 0;
 		return Math.ceil(
@@ -136,7 +128,6 @@ export default function PostItem({
 		);
 	};
 
-	// Format date for readability
 	const formatDate = (dateString) => {
 		const date = new Date(dateString);
 		return `${date.toLocaleDateString()} at ${date.toLocaleTimeString([], {
@@ -145,7 +136,6 @@ export default function PostItem({
 		})}`;
 	};
 
-	// Show edit form instead of post content when editing
 	if (isEditing) {
 		return (
 			<Card className="mb-4">
@@ -166,7 +156,7 @@ export default function PostItem({
 					user={currentUser}
 					initialContent={post.content}
 					initialDuration={getHoursLeft()}
-					initialMedia={post.media || []} // Pass the existing media array
+					initialMedia={post.media || []}
 					isEditing={true}
 					onSubmit={handleEdit}
 					isSubmitting={isSubmitting}

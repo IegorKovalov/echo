@@ -39,7 +39,6 @@ export default function SettingsPage() {
 	const [profilePreview, setProfilePreview] = useState(null);
 	const [profileFile, setProfileFile] = useState(null);
 
-	// Load profile data from API
 	useEffect(() => {
 		if (user) {
 			const fetchProfileData = async () => {
@@ -47,8 +46,6 @@ export default function SettingsPage() {
 					const data = await UserService.getProfile();
 					const userData = data.data.user;
 					setProfileData(userData);
-
-					// Set form data from user profile
 					setFormData({
 						fullName: userData.fullName || "",
 						username: userData.username || "",
@@ -58,7 +55,6 @@ export default function SettingsPage() {
 						website: userData.website || "",
 					});
 
-					// Set profile picture preview if exists
 					if (userData.profilePicture) {
 						setProfilePreview(userData.profilePicture);
 					}
@@ -93,15 +89,14 @@ export default function SettingsPage() {
 		setIsSaving(true);
 
 		try {
-			// Update profile information
 			const response = await UserService.updateMe({
 				fullName: formData.fullName,
 				username: formData.username,
+				bio: formData.bio,
+				location: formData.location,
+				website: formData.website,
 			});
-
-			// Check if the server response has user data and update accordingly
 			if (response.data && response.data.user) {
-				// Update user in AuthContext so it's reflected throughout the app
 				updateUser({
 					fullName: response.data.user.fullName,
 					username: response.data.user.username,
@@ -121,7 +116,6 @@ export default function SettingsPage() {
 		e.preventDefault();
 		setIsSaving(true);
 
-		// Validation
 		if (
 			!passwordData.currentPassword ||
 			!passwordData.newPassword ||
@@ -153,7 +147,6 @@ export default function SettingsPage() {
 
 			showSuccess("Password successfully updated");
 
-			// Clear password fields
 			setPasswordData({
 				currentPassword: "",
 				newPassword: "",
@@ -171,7 +164,6 @@ export default function SettingsPage() {
 		const file = e.target.files[0];
 		if (!file) return;
 
-		// Preview image
 		const reader = new FileReader();
 		reader.onloadend = () => {
 			setProfilePreview(reader.result);
@@ -191,7 +183,6 @@ export default function SettingsPage() {
 
 			const response = await UserService.updateProfilePicture(formData);
 
-			// Update profile picture in AuthContext
 			if (response.data && response.data.user) {
 				updateUser({ profilePicture: response.data.user.profilePicture });
 			}
@@ -217,7 +208,6 @@ export default function SettingsPage() {
 		try {
 			const response = await UserService.deleteProfilePicture();
 
-			// Update profile picture in AuthContext to null
 			if (response.data && response.data.user) {
 				updateUser({ profilePicture: null });
 			}
@@ -359,8 +349,8 @@ export default function SettingsPage() {
 												id="username"
 												name="username"
 												value={formData.username}
-												onChange={handleProfileChange}
-												className="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-4 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+												disabled
+												className="w-full cursor-not-allowed rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-4 text-gray-400 focus:outline-none"
 												placeholder="username"
 											/>
 										</div>

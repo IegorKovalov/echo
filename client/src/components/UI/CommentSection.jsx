@@ -17,8 +17,6 @@ export default function CommentSection({
 	const [isExpanded, setIsExpanded] = useState(false);
 	const { showSuccess, showError } = useToast();
 	const postContext = usePost();
-
-	// Use post.comments directly, no need to duplicate state
 	const comments = post.comments || [];
 
 	const handleAddComment = async (e) => {
@@ -27,7 +25,6 @@ export default function CommentSection({
 
 		setIsSubmitting(true);
 		try {
-			// Use the provided callback or the context method
 			const addCommentFn = onAddComment || postContext.addComment;
 			await addCommentFn(post._id, commentContent.trim());
 			showSuccess("Comment added successfully");
@@ -42,21 +39,14 @@ export default function CommentSection({
 
 	const handleDeleteComment = async (postId, commentId) => {
 		try {
-			// Use the provided callback or the context method
 			const deleteCommentFn = onDeleteComment || postContext.deleteComment;
 			await deleteCommentFn(postId, commentId);
-
-			// No need to update local state since we're using post.comments directly
-			// The context will update the post with new comments
-
 			showSuccess("Comment deleted successfully");
 		} catch (error) {
 			console.error("Error deleting comment:", error);
 			showError(error.message || "Failed to delete comment");
 		}
 	};
-
-	// Show all comments or just the most recent ones
 	const displayedComments = isExpanded ? comments : comments.slice(-3);
 	const hasMoreComments = comments.length > 3;
 

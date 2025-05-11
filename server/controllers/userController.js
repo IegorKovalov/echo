@@ -28,7 +28,7 @@ exports.updateMe = async (req, res) => {
 					"This route is not for password updates. Please use /update-password.",
 			});
 		}
-		const allowedFields = ["username", "fullName", "profilePicture", "email"];
+		const allowedFields = ["username", "fullName", "profilePicture", "email","bio","location","website","birthday"];
 		const filteredBody = {};
 		Object.keys(req.body).forEach((field) => {
 			if (allowedFields.includes(field)) {
