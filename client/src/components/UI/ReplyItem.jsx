@@ -8,7 +8,6 @@ export default function ReplyItem({ reply, postId, commentId, onDelete }) {
 	const { user } = useAuth();
 	const [isDeleting, setIsDeleting] = useState(false);
 	const isAuthor = user && reply.user && user._id === reply.user._id;
-	console.log("ReplyItem", reply, postId, commentId, onDelete);
 	const formatDate = (dateString) => {
 		const date = new Date(dateString);
 		const now = new Date();
