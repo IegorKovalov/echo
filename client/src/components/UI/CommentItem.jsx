@@ -153,7 +153,7 @@ export default function CommentItem({ comment, postId, onDelete }) {
 			<div className="flex items-center gap-2 mt-2">
 				<button
 					onClick={() => setShowReplyForm(!showReplyForm)}
-					className="flex items-center gap-1 text-xs text-gray-400 hover:text-purple-400"
+					className="flex items-center gap-1 text-xs text-gray-400 hover:text-purple-400 transition-colors"
 				>
 					<ReplyIcon className="h-3 w-3" />
 					<span>Reply</span>
@@ -162,7 +162,7 @@ export default function CommentItem({ comment, postId, onDelete }) {
 				{hasReplies && (
 					<button
 						onClick={() => setShowReplies(!showReplies)}
-						className="text-xs text-gray-400 hover:text-purple-400"
+						className="text-xs text-gray-400 hover:text-purple-400 transition-colors"
 					>
 						{showReplies
 							? `Hide ${replies.length} ${
@@ -179,7 +179,7 @@ export default function CommentItem({ comment, postId, onDelete }) {
 			{showReplyForm && (
 				<form
 					onSubmit={handleSubmitReply}
-					className="flex gap-2 ml-10 mt-1 mb-2"
+					className="flex gap-2 ml-10 mt-2 mb-2"
 				>
 					<ProfileAvatar user={user} size="2xs" />
 					<div className="relative flex-1">
@@ -188,13 +188,13 @@ export default function CommentItem({ comment, postId, onDelete }) {
 							value={replyContent}
 							onChange={(e) => setReplyContent(e.target.value)}
 							placeholder={`Reply to ${comment.user?.fullName || "user"}...`}
-							className="w-full rounded-full border border-gray-800 bg-gray-800 pl-3 pr-10 py-1.5 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+							className="w-full rounded-full border border-gray-800 bg-gray-800/50 pl-3 pr-10 py-1.5 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 transition-colors"
 							disabled={isSubmittingReply}
 						/>
 						<button
 							type="submit"
 							disabled={!replyContent.trim() || isSubmittingReply}
-							className="absolute right-1 top-1 rounded-full bg-purple-600 p-1.5 text-white hover:bg-purple-700 disabled:opacity-50"
+							className="absolute right-1 top-1 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 p-1 text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 transition-all"
 						>
 							<ReplyIcon className="h-3 w-3" />
 							<span className="sr-only">Reply</span>
@@ -205,7 +205,7 @@ export default function CommentItem({ comment, postId, onDelete }) {
 
 			{/* Replies section */}
 			{showReplies && hasReplies && (
-				<div className="ml-4 mt-1">
+				<div className="ml-4 mt-1 space-y-1">
 					{replies.map((reply) => (
 						<ReplyItem
 							key={reply._id}

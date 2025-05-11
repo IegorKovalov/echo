@@ -50,13 +50,13 @@ export default function ReplyItem({ reply, postId, commentId, onDelete }) {
 	}
 
 	return (
-		<div className="flex gap-3 py-3 px-2 ml-6 border-l border-gray-800 pl-3">
+		<div className="flex items-center gap-3 py-3 px-2 ml-6 border-l border-gray-800 pl-3 hover:bg-gray-800/30 transition-colors">
 			{reply.user && reply.user._id ? (
-				<Link to={`/profile/${reply.user._id}`}>
-					<ProfileAvatar user={reply.user} size="2xs" />
+				<Link to={`/profile/${reply.user._id}`} className="flex items-center">
+					<ProfileAvatar user={reply.user} size="xs" />
 				</Link>
 			) : (
-				<ProfileAvatar user={reply.user} size="2xs" />
+				<ProfileAvatar user={reply.user} size="xs" />
 			)}
 
 			<div className="flex-1 min-w-0">
@@ -82,7 +82,7 @@ export default function ReplyItem({ reply, postId, commentId, onDelete }) {
 									<span className="text-gray-500 mx-1">replying to</span>
 									<Link
 										to={`/profile/${reply.replyToUser._id}`}
-										className="text-purple-400 hover:text-purple-300"
+										className="text-purple-400 hover:text-purple-300 transition-colors"
 									>
 										@{reply.replyToUser.username || "user"}
 									</Link>
@@ -98,7 +98,7 @@ export default function ReplyItem({ reply, postId, commentId, onDelete }) {
 						<button
 							onClick={handleDelete}
 							disabled={isDeleting}
-							className="rounded-full p-1.5 text-gray-500 hover:bg-gray-800 hover:text-red-400"
+							className="rounded-full p-1.5 text-gray-500 hover:bg-gray-800 hover:text-red-400 transition-colors"
 							aria-label="Delete reply"
 						>
 							<Trash2 className="h-3 w-3" />
