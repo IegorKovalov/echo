@@ -22,7 +22,7 @@ export default function PostForm({
 		setContent(initialContent);
 		setDuration(initialDuration);
 		const initialExistingMedia = initialMedia
-			.filter((item) => item && (item.url || item._id)) // Filter out any invalid items
+			.filter((item) => item && (item.url || item._id))
 			.map((item) => ({
 				id: item._id || item.id,
 				url: item.url,

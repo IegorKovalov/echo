@@ -8,7 +8,7 @@ import {
 	Send,
 	Trash2,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { usePost } from "../../context/PostContext";
@@ -28,7 +28,6 @@ export default function PostItem({
 	onEdit,
 }) {
 	const { user } = useAuth();
-	// UI-specific state
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [isRenewing, setIsRenewing] = useState(false);
 	const [hasTrackedView, setHasTrackedView] = useState(false);

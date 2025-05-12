@@ -3,8 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 
 export default function SuccessPage() {
 	const location = useLocation();
-
-	// Get message from location state or use default
 	const {
 		title = "Success!",
 		message = "Your password has been successfully reset.",

@@ -29,8 +29,6 @@ export default function SignupPage() {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setFormError("");
-
-		// Validation
 		if (
 			!formData.firstName ||
 			!formData.lastName ||

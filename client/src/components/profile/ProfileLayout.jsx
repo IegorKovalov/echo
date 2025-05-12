@@ -30,7 +30,6 @@ export default function ProfileLayout({ userId }) {
 
 	const profilePostIds = useRef(new Set());
 
-	// Fetch profile data
 	useEffect(() => {
 		if (user) {
 			const fetchProfileData = async () => {
