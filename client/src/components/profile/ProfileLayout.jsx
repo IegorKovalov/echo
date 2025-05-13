@@ -58,20 +58,16 @@ export default function ProfileLayout({ userId }) {
 		}
 	}, [user, userId, navigate]);
 
-	// Load user posts using PostContext
 	useEffect(() => {
 		if (!user || !profileData) return;
 
 		const loadUserPosts = async () => {
 			try {
-				// Fetch posts for the profile we're viewing
 				const fetchedPosts = await fetchUserPosts(
 					profileData._id,
 					showExpiredPosts && isOwnProfile
 				);
 				setUserPosts(fetchedPosts || []);
-
-				// Store the IDs of posts that belong to this profile
 				profilePostIds.current = new Set(fetchedPosts.map((post) => post._id));
 			} catch (error) {
 				console.error("Error fetching posts:", error);
@@ -138,32 +134,22 @@ export default function ProfileLayout({ userId }) {
 		[isOwnProfile, deletePost]
 	);
 
-	// Handle post renewal - handled by context directly
 	const handleRenewPost = async (postId) => {
-		// Post renewal handled by context, we update our local copy
 		const updatedPosts = await fetchUserPosts(
 			profileData._id,
 			showExpiredPosts && isOwnProfile
 		);
 		setUserPosts(updatedPosts || []);
-
-		// Update the tracked post IDs
 		profilePostIds.current = new Set(updatedPosts.map((post) => post._id));
 	};
-
-	// Handle opening followers modal
 	const openFollowersModal = (tab) => {
 		setFollowersModalTab(tab);
 		setIsFollowersModalOpen(true);
 	};
-
-	// Handle closing followers modal
 	const closeFollowersModal = () => {
 		setFollowersModalTab("");
 		setIsFollowersModalOpen(false);
 	};
-
-	// Loading state
 	if (isLoading || !user || !profileData) {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-gray-950">
@@ -190,6 +176,7 @@ export default function ProfileLayout({ userId }) {
 						<ProfileStats
 							postsCount={userPosts.length}
 							onOpenFollowersModal={openFollowersModal}
+							userId={profileData._id}
 						/>
 
 						<ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />

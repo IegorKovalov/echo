@@ -7,16 +7,57 @@ import {
 	UserMinus,
 	UserPlus,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useFollower } from "../../context/FollowerContext";
+import { useToast } from "../../context/ToastContext";
 import ProfileAvatar from "../UI/ProfileAvatar";
 
 export default function ProfileContent({ profileData, isOwnProfile }) {
-	const [isFollowing, setIsFollowing] = useState(false);
+	const { getFollowerStats, toggleFollow } = useFollower();
+	const { showError } = useToast();
+	const [followStats, setFollowStats] = useState({ isFollowing: false });
+	const [isUpdatingFollow, setIsUpdatingFollow] = useState(false);
 
-	const handleFollowToggle = () => {
-		// This would make an API call to follow/unfollow the user
-		setIsFollowing(!isFollowing);
+	useEffect(() => {
+		const loadFollowStats = async () => {
+			if (profileData && profileData._id && !isOwnProfile) {
+				try {
+					const stats = await getFollowerStats(profileData._id);
+					if (stats) {
+						setFollowStats(stats);
+					}
+				} catch (error) {
+					console.error("Error loading follow stats:", error);
+				}
+			}
+		};
+
+		loadFollowStats();
+	}, [profileData, isOwnProfile, getFollowerStats]);
+
+	const handleFollowToggle = async () => {
+		if (isUpdatingFollow || !profileData || !profileData._id) return;
+
+		try {
+			setIsUpdatingFollow(true);
+			const success = await toggleFollow(
+				profileData._id,
+				followStats.isFollowing
+			);
+
+			if (success) {
+				setFollowStats((prev) => ({
+					...prev,
+					isFollowing: !prev.isFollowing,
+				}));
+			}
+		} catch (error) {
+			console.error("Error toggling follow:", error);
+			showError("Failed to update follow status");
+		} finally {
+			setIsUpdatingFollow(false);
+		}
 	};
 
 	return (
@@ -66,13 +107,16 @@ export default function ProfileContent({ profileData, isOwnProfile }) {
 							<div className="flex gap-2">
 								<button
 									onClick={handleFollowToggle}
+									disabled={isUpdatingFollow}
 									className={`flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium ${
-										isFollowing
+										followStats.isFollowing
 											? "bg-gray-700 text-white hover:bg-gray-600"
 											: "bg-purple-600 text-white hover:bg-purple-700"
-									}`}
+									} ${isUpdatingFollow ? "opacity-70" : ""}`}
 								>
-									{isFollowing ? (
+									{isUpdatingFollow ? (
+										"Processing..."
+									) : followStats.isFollowing ? (
 										<>
 											<UserMinus className="h-4 w-4" />
 											<span>Unfollow</span>
