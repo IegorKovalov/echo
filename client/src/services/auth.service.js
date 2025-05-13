@@ -4,10 +4,6 @@ const AuthService = {
 	signup: async (userData) => {
 		try {
 			const response = await api.post(`/users/signup`, userData);
-			if (response.data.token) {
-				localStorage.setItem("token", response.data.token);
-				localStorage.setItem("user", JSON.stringify(response.data.data.user));
-			}
 			return response.data;
 		} catch (error) {
 			const errorMessage =
@@ -21,6 +17,8 @@ const AuthService = {
 	login: async (email, password) => {
 		try {
 			const response = await api.post(`/users/login`, { email, password });
+			
+			// Check if the user is verified
 			if (response.data.token) {
 				localStorage.setItem("token", response.data.token);
 				localStorage.setItem("user", JSON.stringify(response.data.data.user));
@@ -30,7 +28,49 @@ const AuthService = {
 			const errorMessage =
 				error.response?.data?.message ||
 				"Login failed. Please check your credentials.";
+			
+			// Pass through userId if email needs verification
+			if (error.response?.data?.userId) {
+				throw {
+					message: errorMessage,
+					userId: error.response.data.userId
+				};
+			}
+			
 			console.error("Login error:", errorMessage);
+			throw new Error(errorMessage);
+		}
+	},
+	
+	verifyOTP: async (userId, otp) => {
+		try {
+			const response = await api.post(`/users/verify-otp/${userId}`, { otp });
+			
+			// If verification is successful, store token and user
+			if (response.data.token) {
+				localStorage.setItem("token", response.data.token);
+				localStorage.setItem("user", JSON.stringify(response.data.data.user));
+			}
+			
+			return response.data;
+		} catch (error) {
+			const errorMessage =
+				error.response?.data?.message ||
+				"OTP verification failed. Please try again.";
+			console.error("OTP verification error:", errorMessage);
+			throw new Error(errorMessage);
+		}
+	},
+	
+	resendOTP: async (userId) => {
+		try {
+			const response = await api.post(`/users/resend-otp/${userId}`);
+			return response.data;
+		} catch (error) {
+			const errorMessage =
+				error.response?.data?.message ||
+				"Failed to resend verification code. Please try again.";
+			console.error("OTP resend error:", errorMessage);
 			throw new Error(errorMessage);
 		}
 	},

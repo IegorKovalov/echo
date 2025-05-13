@@ -113,7 +113,7 @@ const createPasswordResetMessage = (resetURL) => {
       </div>
       <p>This link will expire in 10 minutes. If it expires, you'll need to request a new password reset.</p>
       <div class="message-box">
-        <p>If you didn’t request this, feel free to ignore the email. Your account remains secure.</p>
+        <p>If you didn't request this, feel free to ignore the email. Your account remains secure.</p>
       </div>
     </div>
     <div class="email-footer">

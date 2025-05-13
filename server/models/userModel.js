@@ -90,6 +90,27 @@ const userSchema = new Schema(
 			trim: true,
 			maxlength: [100, "Occupation cannot exceed 100 characters"],
 		},
+		isVerified: {
+			type: Boolean,
+			default: false,
+		},
+		otpCode: {
+			type: String,
+			select: false,
+		},
+		otpExpires: {
+			type: Date,
+			select: false,
+		},
+		otpAttempts: {
+			type: Number,
+			default: 0,
+			select: false,
+		},
+		otpLastRequest: {
+			type: Date,
+			select: false,
+		},
 		passwordChangedAt: Date,
 		passwordResetToken: String,
 		passwordResetExpires: Date,
@@ -172,6 +193,37 @@ userSchema.methods.createPasswordResetToken = function () {
 	this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
 
 	return resetToken;
+};
+
+userSchema.methods.generateOTP = function () {
+	// Generate a 6-digit OTP
+	const otp = Math.floor(100000 + Math.random() * 900000).toString();
+	
+	// Hash the OTP before storing
+	this.otpCode = crypto
+		.createHash("sha256")
+		.update(otp)
+		.digest("hex");
+	
+	// Set expiration time (10 minutes)
+	this.otpExpires = Date.now() + 10 * 60 * 1000;
+	
+	// Reset attempts and update last request time
+	this.otpAttempts = 0;
+	this.otpLastRequest = Date.now();
+	
+	return otp;
+};
+
+userSchema.methods.verifyOTP = function (otp) {
+	// Hash the provided OTP to compare with stored hash
+	const hashedOTP = crypto
+		.createHash("sha256")
+		.update(otp)
+		.digest("hex");
+	
+	// Check if OTP is valid and not expired
+	return this.otpCode === hashedOTP && this.otpExpires > Date.now();
 };
 
 const User = mongoose.model("User", userSchema);

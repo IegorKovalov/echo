@@ -8,6 +8,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import OTPVerificationPage from "./pages/OTPVerificationPage";
 import ProfilePage from "./pages/ProfilePage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import SearchPage from "./pages/SearchPage";
@@ -88,6 +89,14 @@ function App() {
 								element={
 									<Layout showHeader={false}>
 										<SignupPage />
+									</Layout>
+								}
+							/>
+							<Route
+								path="/verify-email/:userId"
+								element={
+									<Layout showHeader={false}>
+										<OTPVerificationPage />
 									</Layout>
 								}
 							/>

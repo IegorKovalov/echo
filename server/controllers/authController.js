@@ -4,6 +4,7 @@ const { promisify } = require("util");
 const sendEmail = require("../utils/email");
 const User = require("../models/userModel");
 const resetPasswordMessage = require("../utils/passwordReset");
+const otpEmailTemplate = require("../utils/otpEmail");
 
 const sendToken = (user, statusCode, res) => {
 	const token = user.generateAuthToken();
@@ -41,6 +42,15 @@ exports.login = async (req, res) => {
 				message: "Invalid credentials, email or password are incorrect",
 			});
 		}
+		
+		if (!user.isVerified) {
+		  return res.status(403).json({
+		    status: "failed",
+		    message: "Email not verified. Please verify your email to continue.",
+		    userId: user._id
+		  });
+		}
+		
 		sendToken(user, 200, res);
 	} catch (error) {
 		console.log(error);
@@ -84,9 +94,33 @@ exports.signup = async (req, res) => {
 			passwordConfirm,
 			fullName,
 			profilePicture,
+			isVerified: false,
 		});
-
-		sendToken(user, 201, res);
+		
+		const otp = user.generateOTP();
+		await user.save({ validateBeforeSave: false });
+		
+		try {
+		  const message = otpEmailTemplate(otp, user.fullName || user.username);
+		  await sendEmail({
+		    email: user.email,
+		    subject: "Your Email Verification Code",
+		    message,
+		  });
+		  
+		  res.status(201).json({
+		    status: "success",
+		    message: "Signup successful! Please check your email for verification code.",
+		    userId: user._id,
+		  });
+		} catch (emailError) {
+		  console.error("Failed to send verification email:", emailError);
+		  res.status(201).json({
+		    status: "partial_success",
+		    message: "Account created but failed to send verification email. Please use the resend option.",
+		    userId: user._id,
+		  });
+		}
 	} catch (err) {
 		res.status(400).json({
 			status: "failed",
@@ -197,12 +231,11 @@ exports.resetPassword = async (req, res) => {
 			});
 		}
 
-		// Update user with new password and reset token fields
 		user.passwordResetExpires = undefined;
 		user.passwordResetToken = undefined;
 		user.passwordChangedAt = Date.now();
 		user.password = password;
-		user.passwordConfirm = passwordConfirm; // This now sets the virtual field
+		user.passwordConfirm = passwordConfirm;
 		await user.save();
 
 		sendToken(user, 200, res);
@@ -254,6 +287,28 @@ exports.protect = async (req, res, next) => {
 		});
 	}
 };
+
+exports.requireVerification = async (req, res, next) => {
+  try {
+    const user = req.user;
+    
+    if (!user.isVerified) {
+      return res.status(403).json({
+        status: "failed",
+        message: "Your email is not verified. Please verify your email to access this resource.",
+        userId: user._id
+      });
+    }
+    
+    next();
+  } catch (err) {
+    return res.status(500).json({
+      status: "failed",
+      message: "Error checking verification status",
+    });
+  }
+};
+
 exports.isLoggedIn = async (req, res, next) => {
 	try {
 		let token;

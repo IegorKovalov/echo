@@ -4,6 +4,7 @@ const morgan = require("morgan");
 const cors = require("cors");
 const helmet = require("helmet");
 const dotenv = require("dotenv");
+const { apiLimiter } = require("./middlewares/rateLimitMiddleware");
 
 const userRouter = require("./routes/userRoutes");
 const postRouter = require("./routes/postRoutes");
@@ -26,6 +27,9 @@ app.use(
 // Body parser middleware
 app.use(express.json()); // Parse JSON request bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded form data
+
+// Apply rate limiting to all API routes
+app.use("/api", apiLimiter);
 
 // Simple test route
 app.get("/", (req, res) => {

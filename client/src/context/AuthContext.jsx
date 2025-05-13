@@ -30,6 +30,13 @@ export function AuthProvider({ children }) {
 			navigate("/");
 			return response;
 		} catch (err) {
+			// Check if this is an unverified user error
+			if (err.userId) {
+				// Redirect to OTP verification page
+				navigate(`/verify-email/${err.userId}`);
+				throw err;
+			}
+			
 			setError(err.message);
 			throw err;
 		} finally {
@@ -43,8 +50,48 @@ export function AuthProvider({ children }) {
 			setLoading(true);
 			setError(null);
 			const response = await authService.signup(userData);
-			setUser(response.data.user);
-			navigate("/"); // Navigate to home page instead of verification
+			
+			// If signup successful, redirect to OTP verification page
+			if (response.status === "success" && response.userId) {
+				navigate(`/verify-email/${response.userId}`);
+			}
+			
+			return response;
+		} catch (err) {
+			setError(err.message);
+			throw err;
+		} finally {
+			setLoading(false);
+		}
+	};
+	
+	// Verify OTP function
+	const verifyOTP = async (userId, otp) => {
+		try {
+			setLoading(true);
+			setError(null);
+			const response = await authService.verifyOTP(userId, otp);
+			
+			if (response.status === "success") {
+				setUser(response.data.user);
+				navigate("/");
+			}
+			
+			return response;
+		} catch (err) {
+			setError(err.message);
+			throw err;
+		} finally {
+			setLoading(false);
+		}
+	};
+	
+	// Resend OTP function
+	const resendOTP = async (userId) => {
+		try {
+			setLoading(true);
+			setError(null);
+			const response = await authService.resendOTP(userId);
 			return response;
 		} catch (err) {
 			setError(err.message);
@@ -136,7 +183,9 @@ export function AuthProvider({ children }) {
 		logout,
 		forgotPassword,
 		resetPassword,
-		updateUser, // Add updateUser to context value
+		updateUser,
+		verifyOTP,
+		resendOTP,
 	};
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
