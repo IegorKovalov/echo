@@ -39,28 +39,34 @@ const UserService = {
 
 		return response.data;
 	},
+	
+	updateProfilePicture: async (formData) => {
+		try {
+			const token = localStorage.getItem("token");
+			const response = await api.patch(
+				`${USER_URL}/update-profile-picture`,
+				formData,
+				{
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
+				}
+			);
 
-	updateProfileInfo: async (profileData) => {
-		const token = localStorage.getItem("token");
-		const headers = token ? { Authorization: `Bearer ${token}` } : {};
+			if (response.data && response.data.data && response.data.data.user) {
+				const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+				const updatedUser = {
+					...currentUser,
+					profilePicture: response.data.data.user.profilePicture,
+				};
+				localStorage.setItem("user", JSON.stringify(updatedUser));
+			}
 
-		const response = await api.patch(
-			`${USER_URL}/updateProfileInfo`,
-			profileData,
-			{ headers }
-		);
-
-		if (response.data && response.data.data && response.data.data.user) {
-			// Update user in local storage for immediate UI update
-			const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-			const updatedUser = {
-				...currentUser,
-				...response.data.data.user,
-			};
-			localStorage.setItem("user", JSON.stringify(updatedUser));
+			return response.data;
+		} catch (error) {
+			console.error("Update profile picture error:", error);
+			throw error;
 		}
-
-		return response.data;
 	},
 
 	changePassword: async (passwordCurrent, password, passwordConfirm) => {

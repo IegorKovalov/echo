@@ -1,13 +1,7 @@
 const Post = require("../models/postModel");
 const cloudinary = require("../utils/cloudinary");
 const fs = require("fs");
-
-const sendError = (res, statusCode, message) => {
-	return res.status(statusCode).json({
-		status: "failed",
-		message,
-	});
-};
+const { sendError, sendSuccess } = require("../utils/responseUtils");
 
 const populatePostFields = (query) => {
 	return query
@@ -33,10 +27,7 @@ exports.createPost = async (req, res) => {
 	try {
 		const { content, expirationTime } = req.body;
 		if (!content) {
-			return res.status(400).json({
-				status: "failed",
-				message: "Post content is required",
-			});
+			return sendError(res, 400, "Post content is required");
 		}
 
 		const postData = { content, user: req.user._id };
@@ -44,11 +35,11 @@ exports.createPost = async (req, res) => {
 		if (expirationTime) {
 			const hours = parseFloat(expirationTime);
 			if (isNaN(hours) || hours <= 0 || hours > 168) {
-				return res.status(400).json({
-					status: "failed",
-					message:
-						"Expiration time must be between 1 hour and 168 hours (1 week)",
-				});
+				return sendError(
+					res,
+					400,
+					"Expiration time must be between 1 hour and 168 hours (1 week)"
+				);
 			}
 
 			const now = new Date();
@@ -71,19 +62,15 @@ exports.createPost = async (req, res) => {
 		}
 
 		const newPost = await Post.create(postData);
-
 		const populatedPost = await populatePostFields(Post.findById(newPost._id));
 
-		res.status(201).json({
-			status: "success",
+		return sendSuccess(res, 201, "Post created successfully", {
 			data: {
 				post: populatedPost,
 			},
 		});
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error creating post",
+		return sendError(res, 500, "Error creating post", {
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
@@ -120,8 +107,7 @@ exports.getUserPosts = async (req, res) => {
 			return postObj;
 		});
 
-		res.status(200).json({
-			status: "success",
+		return sendSuccess(res, 200, "User posts retrieved successfully", {
 			data: {
 				posts: enhancedPosts,
 				count: enhancedPosts.length,
@@ -136,7 +122,7 @@ exports.getUserPosts = async (req, res) => {
 			},
 		});
 	} catch (error) {
-		sendError(res, 500, "Error retrieving user posts");
+		return sendError(res, 500, "Error retrieving user posts");
 	}
 };
 
@@ -175,8 +161,7 @@ exports.getAllPosts = async (req, res) => {
 			return postObj;
 		});
 
-		const responseObj = {
-			status: "success",
+		return sendSuccess(res, 200, "Posts retrieved successfully", {
 			data: {
 				posts: enhancedPosts,
 				count: enhancedPosts.length,
@@ -189,11 +174,10 @@ exports.getAllPosts = async (req, res) => {
 					nextPage: hasMorePosts ? pageNum + 1 : null,
 				},
 			},
-		};
-		res.status(200).json(responseObj);
+		});
 	} catch (error) {
 		console.error("Error in getAllPosts controller:", error);
-		sendError(res, 500, "Failed to retrieve posts");
+		return sendError(res, 500, "Failed to retrieve posts");
 	}
 };
 
@@ -204,10 +188,7 @@ exports.getPost = async (req, res) => {
 		);
 
 		if (!post) {
-			return res.status(404).json({
-				status: "failed",
-				message: "No post found",
-			});
+			return sendError(res, 404, "No post found");
 		}
 
 		const postObj = post.toObject({ virtuals: true });
@@ -215,20 +196,18 @@ exports.getPost = async (req, res) => {
 		postObj.remainingTime = post.remainingTime;
 		postObj.expirationProgress = post.expirationProgress;
 
-		res.status(200).json({
-			status: "success",
+		return sendSuccess(res, 200, "Post retrieved successfully", {
 			data: {
 				post: postObj,
 			},
 		});
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error retrieving post",
+		return sendError(res, 500, "Error retrieving post", {
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
 };
+
 exports.updatePost = async (req, res) => {
 	try {
 		const tempFilesToCleanup = req.files
@@ -246,10 +225,7 @@ exports.updatePost = async (req, res) => {
 		}
 
 		if (!content || content.trim() === "") {
-			return res.status(400).json({
-				status: "failed",
-				message: "Post content is required",
-			});
+			return sendError(res, 400, "Post content is required");
 		}
 
 		const post = await Post.findOne({
@@ -258,10 +234,11 @@ exports.updatePost = async (req, res) => {
 		});
 
 		if (!post) {
-			return res.status(404).json({
-				status: "failed",
-				message: "Post not found or you're not authorized to update it",
-			});
+			return sendError(
+				res,
+				404,
+				"Post not found or you're not authorized to update it"
+			);
 		}
 
 		post.content = content.trim();
@@ -280,7 +257,7 @@ exports.updatePost = async (req, res) => {
 				existingMediaIds.length > 0
 					? post.media.filter((item) =>
 							existingMediaIds.includes(item._id.toString())
-						)
+					  )
 					: [];
 			const mediaToDelete = post.media.filter(
 				(item) => !existingMediaIds.includes(item._id.toString())
@@ -341,8 +318,7 @@ exports.updatePost = async (req, res) => {
 			}
 		});
 
-		res.status(200).json({
-			status: "success",
+		return sendSuccess(res, 200, "Post updated successfully", {
 			data: {
 				post: postObj,
 			},
@@ -362,9 +338,7 @@ exports.updatePost = async (req, res) => {
 			});
 		}
 
-		res.status(500).json({
-			status: "failed",
-			message: "Error updating post",
+		return sendError(res, 500, "Error updating post", {
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
@@ -421,14 +395,9 @@ exports.deletePost = async (req, res) => {
 			console.error("Error during temporary files cleanup:", cleanupErr);
 		}
 
-		res.status(200).json({
-			status: "success",
-			message: "Post deleted successfully",
-		});
+		return sendSuccess(res, 200, "Post deleted successfully");
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error deleting post",
+		return sendError(res, 500, "Error deleting post", {
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
@@ -438,19 +407,13 @@ exports.addComment = async (req, res) => {
 	try {
 		const { commentContent } = req.body;
 		if (!commentContent || commentContent.trim() === "") {
-			return res.status(400).json({
-				status: "failed",
-				message: "Comment Content is required",
-			});
+			return sendError(res, 400, "Comment Content is required");
 		}
 
 		let post = await Post.findById(req.params.id);
 
 		if (!post) {
-			return res.status(404).json({
-				status: "failed",
-				message: "Post not found",
-			});
+			return sendError(res, 404, "Post not found");
 		}
 
 		const newComment = {
@@ -463,16 +426,13 @@ exports.addComment = async (req, res) => {
 
 		post = await populatePostFields(Post.findById(post._id));
 
-		res.status(201).json({
-			status: "success",
+		return sendSuccess(res, 201, "Comment added successfully", {
 			data: {
 				post,
 			},
 		});
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error adding comment",
+		return sendError(res, 500, "Error adding comment", {
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
@@ -508,28 +468,27 @@ exports.deleteComment = async (req, res) => {
 		postObj.remainingTime = post.remainingTime;
 		postObj.expirationProgress = post.expirationProgress;
 
-		res.status(200).json({
-			status: "success",
+		return sendSuccess(res, 200, "Comment deleted successfully", {
 			data: {
 				post: postObj,
-				message: "Comment deleted successfully",
 			},
 		});
 	} catch (error) {
-		sendError(res, 500, "Error deleting comment");
+		return sendError(res, 500, "Error deleting comment");
 	}
 };
+
 exports.addCommentReply = async (req, res) => {
 	try {
 		const { replyContent } = req.body;
 		console.log("Request Body", req.body);
 		console.log("Request Params", req.params);
 		if (!replyContent || replyContent.trim() === "") {
-			sendError(res, 400, "Reply Content is required");
+			return sendError(res, 400, "Reply Content is required");
 		}
 		let post = await Post.findById(req.params.id);
 		if (!post) {
-			sendError(res, 404, "Post not found");
+			return sendError(res, 404, "Post not found");
 		}
 		const commentIndex = post.comments.findIndex(
 			(c) => c._id.toString() === req.params.commentId
@@ -547,16 +506,17 @@ exports.addCommentReply = async (req, res) => {
 		post.comments[commentIndex].replies.push(newReply);
 		await post.save();
 		post = await populatePostFields(Post.findById(post._id));
-		res.status(201).json({
-			status: "success",
+
+		return sendSuccess(res, 201, "Reply added successfully", {
 			data: {
 				post,
 			},
 		});
 	} catch (error) {
-		sendError(res, 500, "Error adding reply");
+		return sendError(res, 500, "Error adding reply");
 	}
 };
+
 exports.deleteCommentReply = async (req, res) => {
 	try {
 		let post = await Post.findById(req.params.id);
@@ -583,15 +543,13 @@ exports.deleteCommentReply = async (req, res) => {
 		await post.save();
 		post = await populatePostFields(Post.findById(post._id));
 
-		res.status(200).json({
-			status: "success",
+		return sendSuccess(res, 200, "Reply deleted successfully", {
 			data: {
 				post,
-				message: "Reply deleted successfully",
 			},
 		});
 	} catch (error) {
-		sendError(res, 500, "Error deleting reply");
+		return sendError(res, 500, "Error deleting reply");
 	}
 };
 
@@ -604,27 +562,30 @@ exports.renewPost = async (req, res) => {
 		});
 
 		if (!post) {
-			return res.status(404).json({
-				status: "failed",
-				message: "Post not found or you're not authorized to renew it",
-			});
+			return sendError(
+				res,
+				404,
+				"Post not found or you're not authorized to renew it"
+			);
 		}
 
 		if (post.renewalCount >= 3) {
-			return res.status(400).json({
-				status: "failed",
-				message: "Post has reached the maximum number of renewals (3)",
-			});
+			return sendError(
+				res,
+				400,
+				"Post has reached the maximum number of renewals (3)"
+			);
 		}
 
 		const { hours } = req.body;
 		const renewalHours = hours ? parseFloat(hours) : 24;
 
 		if (isNaN(renewalHours) || renewalHours <= 0 || renewalHours > 168) {
-			return res.status(400).json({
-				status: "failed",
-				message: "Renewal time must be between 1 hour and 168 hours (1 week)",
-			});
+			return sendError(
+				res,
+				400,
+				"Renewal time must be between 1 hour and 168 hours (1 week)"
+			);
 		}
 
 		const now = new Date();
@@ -640,17 +601,13 @@ exports.renewPost = async (req, res) => {
 		postObj.remainingTime = updatedPost.remainingTime;
 		postObj.expirationProgress = updatedPost.expirationProgress;
 
-		res.status(200).json({
-			status: "success",
-			message: "Post renewed successfully",
+		return sendSuccess(res, 200, "Post renewed successfully", {
 			data: {
 				post: postObj,
 			},
 		});
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error renewing post",
+		return sendError(res, 500, "Error renewing post", {
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
@@ -665,22 +622,16 @@ exports.incrementViews = async (req, res) => {
 		);
 
 		if (!post) {
-			return res.status(404).json({
-				status: "failed",
-				message: "Post not found",
-			});
+			return sendError(res, 404, "Post not found");
 		}
 
-		res.status(200).json({
-			status: "success",
+		return sendSuccess(res, 200, "Post views updated successfully", {
 			data: {
 				views: post.views,
 			},
 		});
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error updating post views",
+		return sendError(res, 500, "Error updating post views", {
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
@@ -691,10 +642,7 @@ exports.batchIncrementViews = async (req, res) => {
 		const { postIds } = req.body;
 
 		if (!postIds || !Array.isArray(postIds) || postIds.length === 0) {
-			return res.status(400).json({
-				status: "failed",
-				message: "Valid postIds array is required",
-			});
+			return sendError(res, 400, "Valid postIds array is required");
 		}
 
 		const result = await Post.updateMany(
@@ -702,17 +650,18 @@ exports.batchIncrementViews = async (req, res) => {
 			{ $inc: { views: 1 } }
 		);
 
-		res.status(200).json({
-			status: "success",
-			data: {
-				modifiedCount: result.modifiedCount,
-				message: `Updated views for ${result.modifiedCount} posts`,
-			},
-		});
+		return sendSuccess(
+			res,
+			200,
+			`Updated views for ${result.modifiedCount} posts`,
+			{
+				data: {
+					modifiedCount: result.modifiedCount,
+				},
+			}
+		);
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error updating post views in batch",
+		return sendError(res, 500, "Error updating post views in batch", {
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
@@ -742,14 +691,13 @@ exports.getTrendingPosts = async (req, res) => {
 			return postObj;
 		});
 
-		res.status(200).json({
-			status: "success",
+		return sendSuccess(res, 200, "Trending posts retrieved successfully", {
 			data: {
 				posts: enhancedPosts,
 				count: enhancedPosts.length,
 			},
 		});
 	} catch (error) {
-		sendError(res, 500, "Error retrieving trending posts");
+		return sendError(res, 500, "Error retrieving trending posts");
 	}
 };
