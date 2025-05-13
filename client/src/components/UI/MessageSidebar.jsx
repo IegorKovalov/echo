@@ -35,7 +35,7 @@ export default function MessageSidebar() {
 						>
 							<div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-900/50 to-blue-900/50" />
 							<div className="flex-1 min-w-0">
-								<p className="font-medium text-white truncate">Friend {i}</p>
+								<p className="font-medium text-white truncate">User {i}</p>
 								<p className="text-xs text-gray-400 truncate">
 									Coming soon in future update...
 								</p>
