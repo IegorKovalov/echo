@@ -30,7 +30,9 @@ exports.followUser = async (req, res) => {
 		});
 
 		return sendSuccess(res, 201, "User followed successfully", {
-			follow: newFollower,
+			data: {
+				follow: newFollower,
+			},
 		});
 	} catch (error) {
 		console.error("Error in followUser:", error);
@@ -94,12 +96,14 @@ exports.getFollowers = async (req, res) => {
 		);
 
 		return sendSuccess(res, 200, "Followers retrieved successfully", {
-			followers: enhancedFollowers,
-			count: enhancedFollowers.length,
-			total: totalFollowers,
-			pages: Math.ceil(totalFollowers / limit),
-			currentPage: page,
-			hasMore: skip + enhancedFollowers.length < totalFollowers,
+			data: {
+				followers: enhancedFollowers,
+				count: enhancedFollowers.length,
+				total: totalFollowers,
+				pages: Math.ceil(totalFollowers / limit),
+				currentPage: page,
+				hasMore: skip + enhancedFollowers.length < totalFollowers,
+			},
 		});
 	} catch (error) {
 		console.error("Error in getFollowers:", error);
@@ -142,12 +146,14 @@ exports.getFollowing = async (req, res) => {
 		);
 
 		return sendSuccess(res, 200, "Following list retrieved successfully", {
-			following: enhancedFollowing,
-			count: enhancedFollowing.length,
-			total: totalFollowing,
-			pages: Math.ceil(totalFollowing / limit),
-			currentPage: page,
-			hasMore: skip + enhancedFollowing.length < totalFollowing,
+			data: {
+				following: enhancedFollowing,
+				count: enhancedFollowing.length,
+				total: totalFollowing,
+				pages: Math.ceil(totalFollowing / limit),
+				currentPage: page,
+				hasMore: skip + enhancedFollowing.length < totalFollowing,
+			},
 		});
 	} catch (error) {
 		console.error("Error in getFollowing:", error);
@@ -169,10 +175,12 @@ exports.getFollowerStats = async (req, res) => {
 		});
 
 		return sendSuccess(res, 200, "Follower statistics retrieved successfully", {
-			stats: {
-				followers: followerCount,
-				following: followingCount,
-				isFollowing: !!isFollowing,
+			data: {
+				stats: {
+					followers: followerCount,
+					following: followingCount,
+					isFollowing: !!isFollowing,
+				},
 			},
 		});
 	} catch (error) {
@@ -228,12 +236,14 @@ exports.getFollowingFeed = async (req, res) => {
 		});
 
 		return sendSuccess(res, 200, "Feed retrieved successfully", {
-			posts: enhancedPosts,
-			count: enhancedPosts.length,
-			total: totalPosts,
-			pages: Math.ceil(totalPosts / limit),
-			currentPage: page,
-			hasMore: skip + enhancedPosts.length < totalPosts,
+			data: {
+				posts: enhancedPosts,
+				count: enhancedPosts.length,
+				total: totalPosts,
+				pages: Math.ceil(totalPosts / limit),
+				currentPage: page,
+				hasMore: skip + enhancedPosts.length < totalPosts,
+			},
 		});
 	} catch (error) {
 		console.error("Error in getFollowingFeed:", error);
