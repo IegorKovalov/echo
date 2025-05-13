@@ -1,8 +1,8 @@
 const User = require("../models/userModel");
 const { sendToken } = require("./authController");
-const cloudinary = require("../utils/cloudinary");
+const cloudinary = require("../utils/media/cloudinary");
 const fs = require("fs");
-const { sendError, sendSuccess } = require("../utils/responseUtils");
+const { sendError, sendSuccess } = require("../utils/http/responseUtils");
 
 exports.getMe = (req, res) => {
 	const user = req.user;

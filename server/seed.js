@@ -16,7 +16,7 @@ const bcrypt = require("bcrypt");
 const { faker } = require("@faker-js/faker/locale/en");
 const fs = require("fs");
 const path = require("path");
-const cloudinary = require("./utils/cloudinary");
+const cloudinary = require("./utils/media/cloudinary");
 
 // Import models
 const User = require("./models/userModel");

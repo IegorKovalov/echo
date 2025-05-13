@@ -1,6 +1,6 @@
 const Follower = require("../models/followerModel");
 const User = require("../models/userModel");
-const { sendError, sendSuccess } = require("../utils/responseUtils");
+const { sendError, sendSuccess } = require("../utils/http/responseUtils");
 
 exports.followUser = async (req, res) => {
 	try {
@@ -222,6 +222,7 @@ exports.getFollowingFeed = async (req, res) => {
 			.sort({ createdAt: -1 })
 			.skip(skip)
 			.limit(limit);
+
 		const totalPosts = await Post.countDocuments({
 			user: { $in: followingIds },
 			expiresAt: { $gt: new Date() },

@@ -1,7 +1,7 @@
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const { compressMedia } = require("../utils/compression/mediaCompressor");
+const { compressMedia } = require("../utils/media/mediaCompressor");
 
 const storage = multer.diskStorage({
 	destination: function (req, file, cb) {

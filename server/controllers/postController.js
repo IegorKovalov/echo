@@ -1,26 +1,22 @@
 const Post = require("../models/postModel");
-const cloudinary = require("../utils/cloudinary");
 const fs = require("fs");
-const { sendError, sendSuccess } = require("../utils/responseUtils");
+const { sendError, sendSuccess } = require("../utils/http/responseUtils");
+const { 
+	populatePostFields, 
+	enhancePostWithVirtuals, 
+	validateExpirationTime,
+	calculateExpirationDate,
+	getPaginationInfo
+} = require("../utils/post/postUtils");
+const {
+	uploadMediaToCloudinary,
+	deleteMediaFromCloudinary,
+	cleanupTempFiles,
+	cleanupOldTempFiles
+} = require("../utils/media/mediaUtils");
 
-const populatePostFields = (query) => {
-	return query
-		.populate({
-			path: "user",
-			select: "username fullName profilePicture",
-		})
-		.populate({
-			path: "comments.user",
-			select: "username fullName profilePicture",
-		})
-		.populate({
-			path: "comments.replies.user",
-			select: "username fullName profilePicture",
-		})
-		.populate({
-			path: "comments.replies.replyToUser",
-			select: "username fullName profilePicture",
-		});
+const enhancePostsWithVirtuals = (posts) => {
+	return posts.map(post => enhancePostWithVirtuals(post));
 };
 
 exports.createPost = async (req, res) => {
@@ -33,32 +29,17 @@ exports.createPost = async (req, res) => {
 		const postData = { content, user: req.user._id };
 
 		if (expirationTime) {
-			const hours = parseFloat(expirationTime);
-			if (isNaN(hours) || hours <= 0 || hours > 168) {
-				return sendError(
-					res,
-					400,
-					"Expiration time must be between 1 hour and 168 hours (1 week)"
-				);
+			const validation = validateExpirationTime(expirationTime);
+			if (!validation.valid) {
+				return sendError(res, 400, validation.message);
 			}
-
-			const now = new Date();
-			postData.expiresAt = new Date(now.getTime() + hours * 60 * 60 * 1000);
+			postData.expiresAt = calculateExpirationDate(validation.hours);
 		}
-		postData.media = [];
-		if (req.files && req.files.length > 0) {
-			for (const file of req.files) {
-				const result = await cloudinary.uploader.upload(file.path, {
-					resource_type: file.mimetype.startsWith("video/") ? "video" : "image",
-					folder: "posts",
-				});
-				postData.media.push({
-					url: result.secure_url,
-					type: file.mimetype.startsWith("video/") ? "video" : "image",
-					publicId: result.public_id,
-				});
-				fs.unlinkSync(file.path);
-			}
+		
+		try {
+			postData.media = await uploadMediaToCloudinary(req.files);
+		} catch (error) {
+			return sendError(res, 500, `Error uploading media: ${error.message}`);
 		}
 
 		const newPost = await Post.create(postData);
@@ -70,6 +51,7 @@ exports.createPost = async (req, res) => {
 			},
 		});
 	} catch (error) {
+		cleanupTempFiles(req.files);
 		return sendError(res, 500, "Error creating post", {
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
@@ -81,11 +63,7 @@ exports.getUserPosts = async (req, res) => {
 		const userId = req.params.userId;
 		const { includeExpired, page = 1, limit = 15 } = req.query;
 
-		const pageNumber = parseInt(page, 10);
-		const limitNumber = parseInt(limit, 10);
-
-		const skip = (pageNumber - 1) * limitNumber;
-
+		const pagination = getPaginationInfo(page, limit, 0);
 		let query = Post.find({ user: userId });
 
 		if (includeExpired === "true") {
@@ -93,32 +71,15 @@ exports.getUserPosts = async (req, res) => {
 		}
 
 		const totalPosts = await Post.countDocuments(query.getQuery());
-		const hasMorePosts = pageNumber * limitNumber < totalPosts;
-
-		query = query.skip(skip).limit(limitNumber).sort({ createdAt: -1 });
-
+		query = query.skip(pagination.skip).limit(pagination.itemsPerPage).sort({ createdAt: -1 });
 		const posts = await populatePostFields(query);
-
-		const enhancedPosts = posts.map((post) => {
-			const postObj = post.toObject({ virtuals: true });
-			postObj.isExpired = post.isExpired;
-			postObj.remainingTime = post.remainingTime;
-			postObj.expirationProgress = post.expirationProgress;
-			return postObj;
-		});
+		const enhancedPosts = enhancePostsWithVirtuals(posts);
 
 		return sendSuccess(res, 200, "User posts retrieved successfully", {
 			data: {
 				posts: enhancedPosts,
 				count: enhancedPosts.length,
-				pagination: {
-					total: totalPosts,
-					currentPage: pageNumber,
-					postsPerPage: limitNumber,
-					totalPages: Math.ceil(totalPosts / limitNumber),
-					hasMore: hasMorePosts,
-					nextPage: hasMorePosts ? pageNumber + 1 : null,
-				},
+				pagination: getPaginationInfo(page, limit, totalPosts),
 			},
 		});
 	} catch (error) {
@@ -135,10 +96,7 @@ exports.getAllPosts = async (req, res) => {
 			sortBy = "-createdAt",
 		} = req.query;
 
-		const pageNum = parseInt(page, 10);
-		const limitNum = parseInt(limit, 10);
-		const skip = (pageNum - 1) * limitNum;
-
+		const pagination = getPaginationInfo(page, limit, 0);
 		let query = {};
 
 		if (includeExpired !== "true") {
@@ -146,33 +104,16 @@ exports.getAllPosts = async (req, res) => {
 		}
 
 		const totalPosts = await Post.countDocuments(query);
-
 		const posts = await populatePostFields(
-			Post.find(query).skip(skip).limit(limitNum).sort(sortBy)
+			Post.find(query).skip(pagination.skip).limit(pagination.itemsPerPage).sort(sortBy)
 		);
-
-		const hasMorePosts = totalPosts > pageNum * limitNum;
-
-		const enhancedPosts = posts.map((post) => {
-			const postObj = post.toObject({ virtuals: true });
-			postObj.isExpired = post.isExpired;
-			postObj.remainingTime = post.remainingTime;
-			postObj.expirationProgress = post.expirationProgress;
-			return postObj;
-		});
+		const enhancedPosts = enhancePostsWithVirtuals(posts);
 
 		return sendSuccess(res, 200, "Posts retrieved successfully", {
 			data: {
 				posts: enhancedPosts,
 				count: enhancedPosts.length,
-				pagination: {
-					total: totalPosts,
-					currentPage: pageNum,
-					postsPerPage: limitNum,
-					totalPages: Math.ceil(totalPosts / limitNum),
-					hasMore: hasMorePosts,
-					nextPage: hasMorePosts ? pageNum + 1 : null,
-				},
+				pagination: getPaginationInfo(page, limit, totalPosts),
 			},
 		});
 	} catch (error) {
@@ -191,14 +132,9 @@ exports.getPost = async (req, res) => {
 			return sendError(res, 404, "No post found");
 		}
 
-		const postObj = post.toObject({ virtuals: true });
-		postObj.isExpired = post.isExpired;
-		postObj.remainingTime = post.remainingTime;
-		postObj.expirationProgress = post.expirationProgress;
-
 		return sendSuccess(res, 200, "Post retrieved successfully", {
 			data: {
-				post: postObj,
+				post: enhancePostWithVirtuals(post),
 			},
 		});
 	} catch (error) {
@@ -225,6 +161,7 @@ exports.updatePost = async (req, res) => {
 		}
 
 		if (!content || content.trim() === "") {
+			cleanupTempFiles(tempFilesToCleanup);
 			return sendError(res, 400, "Post content is required");
 		}
 
@@ -234,6 +171,7 @@ exports.updatePost = async (req, res) => {
 		});
 
 		if (!post) {
+			cleanupTempFiles(tempFilesToCleanup);
 			return sendError(
 				res,
 				404,
@@ -243,16 +181,14 @@ exports.updatePost = async (req, res) => {
 
 		post.content = content.trim();
 		if (duration) {
-			const durationHours = parseFloat(duration);
-			if (!isNaN(durationHours) && durationHours > 0 && durationHours <= 168) {
-				const now = new Date();
-				post.expiresAt = new Date(
-					now.getTime() + durationHours * 60 * 60 * 1000
-				);
+			const validation = validateExpirationTime(duration);
+			if (validation.valid) {
+				post.expiresAt = calculateExpirationDate(validation.hours);
 			}
 		}
 
-		if (existingMediaIds) {
+		// Handle existing media
+		if (existingMediaIds !== undefined) {
 			const mediaToKeep =
 				existingMediaIds.length > 0
 					? post.media.filter((item) =>
@@ -262,82 +198,35 @@ exports.updatePost = async (req, res) => {
 			const mediaToDelete = post.media.filter(
 				(item) => !existingMediaIds.includes(item._id.toString())
 			);
-			for (const mediaItem of mediaToDelete) {
-				try {
-					if (mediaItem.publicId) {
-						await cloudinary.uploader.destroy(mediaItem.publicId, {
-							resource_type: mediaItem.type === "video" ? "video" : "image",
-						});
-					}
-				} catch (err) {
-					console.error("Error deleting Cloudinary media:", err);
-				}
-			}
+			
+			await deleteMediaFromCloudinary(mediaToDelete);
 			post.media = mediaToKeep;
 		}
+		
+		// Add new media
 		if (req.files && req.files.length > 0) {
-			for (const file of req.files) {
-				try {
-					const result = await cloudinary.uploader.upload(file.path, {
-						resource_type: file.mimetype.startsWith("video/")
-							? "video"
-							: "image",
-						folder: "posts",
-					});
-
-					post.media.push({
-						url: result.secure_url,
-						type: file.mimetype.startsWith("video/") ? "video" : "image",
-						publicId: result.public_id,
-					});
-					if (fs.existsSync(file.path)) {
-						fs.unlinkSync(file.path);
-					}
-				} catch (uploadError) {
-					console.error("Error uploading media to Cloudinary:", uploadError);
-					if (fs.existsSync(file.path)) {
-						fs.unlinkSync(file.path);
-					}
-				}
+			try {
+				const newMedia = await uploadMediaToCloudinary(req.files);
+				post.media = [...post.media, ...newMedia];
+			} catch (uploadError) {
+				return sendError(res, 500, `Error uploading media: ${uploadError.message}`);
 			}
 		}
 
 		await post.save({ timestamps: false });
 		const updatedPost = await populatePostFields(Post.findById(post._id));
-		const postObj = updatedPost.toObject({ virtuals: true });
-		postObj.isExpired = updatedPost.isExpired;
-		postObj.remainingTime = updatedPost.remainingTime;
-		postObj.expirationProgress = updatedPost.expirationProgress;
 
-		// Final check for any remaining temp files
-		tempFilesToCleanup.forEach((filePath) => {
-			try {
-				if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-			} catch (err) {
-				console.error(`Failed to clean up temp file ${filePath}:`, err);
-			}
-		});
+		// Clean up any remaining temp files
+		cleanupTempFiles(tempFilesToCleanup);
 
 		return sendSuccess(res, 200, "Post updated successfully", {
 			data: {
-				post: postObj,
+				post: enhancePostWithVirtuals(updatedPost),
 			},
 		});
 	} catch (error) {
 		console.error("Error updating post:", error);
-
-		if (req.files && req.files.length > 0) {
-			req.files.forEach((file) => {
-				try {
-					if (fs.existsSync(file.path)) {
-						fs.unlinkSync(file.path);
-					}
-				} catch (err) {
-					console.error(`Failed to clean up temp file ${file.path}:`, err);
-				}
-			});
-		}
-
+		cleanupTempFiles(req.files);
 		return sendError(res, 500, "Error updating post", {
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
@@ -352,48 +241,13 @@ exports.deletePost = async (req, res) => {
 		if (post.user.toString() !== req.user._id.toString()) {
 			return sendError(res, 403, "You're not authorized to delete this post");
 		}
-		if (post.media && post.media.length > 0) {
-			for (const mediaItem of post.media) {
-				try {
-					if (mediaItem.publicId) {
-						await cloudinary.uploader.destroy(mediaItem.publicId, {
-							resource_type: mediaItem.type === "video" ? "video" : "image",
-						});
-					}
-				} catch (err) {
-					console.error(
-						"Error deleting Cloudinary media during post deletion:",
-						err
-					);
-				}
-			}
-		}
-
+		
+		// Delete associated media
+		await deleteMediaFromCloudinary(post.media);
 		await post.deleteOne();
-		try {
-			const tmpDir = "tmp/uploads/";
-			if (fs.existsSync(tmpDir)) {
-				const files = fs.readdirSync(tmpDir);
-				const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-
-				files.forEach((file) => {
-					const filePath = `${tmpDir}${file}`;
-					try {
-						const stats = fs.statSync(filePath);
-						if (stats.mtimeMs < oneDayAgo) {
-							fs.unlinkSync(filePath);
-						}
-					} catch (err) {
-						console.error(
-							`Error checking or removing old temp file ${filePath}:`,
-							err
-						);
-					}
-				});
-			}
-		} catch (cleanupErr) {
-			console.error("Error during temporary files cleanup:", cleanupErr);
-		}
+		
+		// Clean up old temporary files
+		cleanupOldTempFiles();
 
 		return sendSuccess(res, 200, "Post deleted successfully");
 	} catch (error) {
@@ -463,14 +317,10 @@ exports.deleteComment = async (req, res) => {
 		await post.save();
 
 		post = await populatePostFields(Post.findById(post._id));
-		const postObj = post.toObject({ virtuals: true });
-		postObj.isExpired = post.isExpired;
-		postObj.remainingTime = post.remainingTime;
-		postObj.expirationProgress = post.expirationProgress;
 
 		return sendSuccess(res, 200, "Comment deleted successfully", {
 			data: {
-				post: postObj,
+				post: enhancePostWithVirtuals(post),
 			},
 		});
 	} catch (error) {
@@ -481,30 +331,34 @@ exports.deleteComment = async (req, res) => {
 exports.addCommentReply = async (req, res) => {
 	try {
 		const { replyContent } = req.body;
-		console.log("Request Body", req.body);
-		console.log("Request Params", req.params);
+		
 		if (!replyContent || replyContent.trim() === "") {
 			return sendError(res, 400, "Reply Content is required");
 		}
+		
 		let post = await Post.findById(req.params.id);
 		if (!post) {
 			return sendError(res, 404, "Post not found");
 		}
+		
 		const commentIndex = post.comments.findIndex(
 			(c) => c._id.toString() === req.params.commentId
 		);
+		
 		if (commentIndex === -1) {
 			return sendError(res, 404, "Comment not found");
 		}
+		
 		const newReply = {
 			user: req.user._id,
 			content: replyContent.trim(),
-			replyToUse: req.body.replyToUser || post.comments[commentIndex].user,
+			replyToUser: req.body.replyToUser || post.comments[commentIndex].user,
 		};
-		post.comments[commentIndex].replies =
-			post.comments[commentIndex].replies || [];
+		
+		post.comments[commentIndex].replies = post.comments[commentIndex].replies || [];
 		post.comments[commentIndex].replies.push(newReply);
 		await post.save();
+		
 		post = await populatePostFields(Post.findById(post._id));
 
 		return sendSuccess(res, 201, "Reply added successfully", {
@@ -523,15 +377,18 @@ exports.deleteCommentReply = async (req, res) => {
 		if (!post) {
 			return sendError(res, 404, "Post not found");
 		}
-		const comment = post.comments.find(req.params.commentId);
+		
+		const comment = post.comments.find(c => c._id.toString() === req.params.commentId);
 		if (!comment) {
 			return sendError(res, 404, "Comment not found");
 		}
+		
 		const replyIndex = comment.replies.findIndex(
 			(r) =>
 				r._id.toString() === req.params.replyId &&
 				r.user.toString() === req.user._id.toString()
 		);
+		
 		if (replyIndex === -1) {
 			return sendError(
 				res,
@@ -539,6 +396,7 @@ exports.deleteCommentReply = async (req, res) => {
 				"Reply not found or you're not authorized to delete it"
 			);
 		}
+		
 		comment.replies.splice(replyIndex, 1);
 		await post.save();
 		post = await populatePostFields(Post.findById(post._id));
@@ -578,32 +436,24 @@ exports.renewPost = async (req, res) => {
 		}
 
 		const { hours } = req.body;
-		const renewalHours = hours ? parseFloat(hours) : 24;
-
-		if (isNaN(renewalHours) || renewalHours <= 0 || renewalHours > 168) {
-			return sendError(
-				res,
-				400,
-				"Renewal time must be between 1 hour and 168 hours (1 week)"
-			);
+		const validation = validateExpirationTime(hours);
+		
+		if (!validation.valid) {
+			return sendError(res, 400, validation.message);
 		}
 
 		const now = new Date();
-		post.expiresAt = new Date(now.getTime() + renewalHours * 60 * 60 * 1000);
+		post.expiresAt = calculateExpirationDate(validation.hours);
 		post.renewalCount += 1;
 		post.renewedAt = now;
 
 		await post.save();
 
 		const updatedPost = await populatePostFields(Post.findById(post._id));
-		const postObj = updatedPost.toObject({ virtuals: true });
-		postObj.isExpired = updatedPost.isExpired;
-		postObj.remainingTime = updatedPost.remainingTime;
-		postObj.expirationProgress = updatedPost.expirationProgress;
 
 		return sendSuccess(res, 200, "Post renewed successfully", {
 			data: {
-				post: postObj,
+				post: enhancePostWithVirtuals(updatedPost),
 			},
 		});
 	} catch (error) {
@@ -679,17 +529,10 @@ exports.getTrendingPosts = async (req, res) => {
 				path: "user",
 				select: "username fullName profilePicture",
 			})
-
 			.sort({ views: -1, createdAt: -1 })
 			.limit(5);
 
-		const enhancedPosts = posts.map((post) => {
-			const postObj = post.toObject({ virtuals: true });
-			postObj.isExpired = post.isExpired;
-			postObj.remainingTime = post.remainingTime;
-			postObj.expirationProgress = post.expirationProgress;
-			return postObj;
-		});
+		const enhancedPosts = enhancePostsWithVirtuals(posts);
 
 		return sendSuccess(res, 200, "Trending posts retrieved successfully", {
 			data: {
