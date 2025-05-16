@@ -3,6 +3,8 @@ import Layout from "./components/Layout/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { FollowerProvider } from "./context/FollowerContext";
+import { PostProvider } from "./context/PostContext";
+import { RoomProvider } from "./context/RoomContext";
 import { ToastProvider } from "./context/ToastContext";
 import { ViewTrackingProvider } from "./context/ViewTrackingContext";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
@@ -12,6 +14,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import OTPVerificationPage from "./pages/OTPVerificationPage";
 import ProfilePage from "./pages/ProfilePage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import RoomsPage from "./pages/RoomsPage";
 import SearchPage from "./pages/SearchPage";
 import SettingsPage from "./pages/SettingsPage";
 import SignupPage from "./pages/SignupPage";
@@ -24,119 +27,135 @@ function App() {
 				<ToastProvider>
 					<ViewTrackingProvider>
 						<FollowerProvider>
-							<Routes>
-								{/* Protected routes */}
-								<Route
-									path="/"
-									element={
-										<ProtectedRoute>
-											<Layout>
-												<HomePage />
-											</Layout>
-										</ProtectedRoute>
-									}
-								/>
-								<Route
-									path="/profile"
-									element={
-										<ProtectedRoute>
-											<Layout>
-												<ProfilePage />
-											</Layout>
-										</ProtectedRoute>
-									}
-								/>
-								<Route
-									path="/profile/:userId"
-									element={
-										<ProtectedRoute>
-											<Layout>
-												<ProfilePage />
-											</Layout>
-										</ProtectedRoute>
-									}
-								/>
-								<Route
-									path="/settings"
-									element={
-										<ProtectedRoute>
-											<Layout>
-												<SettingsPage />
-											</Layout>
-										</ProtectedRoute>
-									}
-								/>
-								<Route
-									path="/search"
-									element={
-										<ProtectedRoute>
-											<Layout>
-												<SearchPage />
-											</Layout>
-										</ProtectedRoute>
-									}
-								/>
+							<PostProvider>
+								<RoomProvider>
+									<Routes>
+										{/* Protected routes */}
+										<Route
+											path="/"
+											element={
+												<ProtectedRoute>
+													<Layout>
+														<HomePage />
+													</Layout>
+												</ProtectedRoute>
+											}
+										/>
+										<Route
+											path="/profile"
+											element={
+												<ProtectedRoute>
+													<Layout>
+														<ProfilePage />
+													</Layout>
+												</ProtectedRoute>
+											}
+										/>
+										<Route
+											path="/profile/:userId"
+											element={
+												<ProtectedRoute>
+													<Layout>
+														<ProfilePage />
+													</Layout>
+												</ProtectedRoute>
+											}
+										/>
+										<Route
+											path="/settings"
+											element={
+												<ProtectedRoute>
+													<Layout>
+														<SettingsPage />
+													</Layout>
+												</ProtectedRoute>
+											}
+										/>
+										<Route
+											path="/search"
+											element={
+												<ProtectedRoute>
+													<Layout>
+														<SearchPage />
+													</Layout>
+												</ProtectedRoute>
+											}
+										/>
 
-								{/* Public routes */}
-								<Route
-									path="/login"
-									element={
-										<Layout showHeader={false}>
-											<LoginPage />
-										</Layout>
-									}
-								/>
-								<Route
-									path="/signup"
-									element={
-										<Layout showHeader={false}>
-											<SignupPage />
-										</Layout>
-									}
-								/>
-								<Route
-									path="/verify-email/:userId"
-									element={
-										<Layout showHeader={false}>
-											<OTPVerificationPage />
-										</Layout>
-									}
-								/>
-								<Route
-									path="/forgot-password"
-									element={
-										<Layout showHeader={false}>
-											<ForgotPasswordPage />
-										</Layout>
-									}
-								/>
-								<Route
-									path="/reset-password/:token"
-									element={
-										<Layout showHeader={false}>
-											<ResetPasswordPage />
-										</Layout>
-									}
-								/>
-								<Route
-									path="/success"
-									element={
-										<Layout showHeader={false}>
-											<SuccessPage />
-										</Layout>
-									}
-								/>
+										{/* Room routes */}
+										<Route
+											path="/rooms/*"
+											element={
+												<ProtectedRoute>
+													<Layout>
+														<RoomsPage />
+													</Layout>
+												</ProtectedRoute>
+											}
+										/>
 
-								{/* 404 - Not Found Page (catch all) */}
-								<Route
-									path="*"
-									element={
-										<Layout showHeader={false}>
-											<NotFoundPage />
-										</Layout>
-									}
-								/>
-							</Routes>
+										{/* Public routes */}
+										<Route
+											path="/login"
+											element={
+												<Layout showHeader={false}>
+													<LoginPage />
+												</Layout>
+											}
+										/>
+										<Route
+											path="/signup"
+											element={
+												<Layout showHeader={false}>
+													<SignupPage />
+												</Layout>
+											}
+										/>
+										<Route
+											path="/verify-email/:userId"
+											element={
+												<Layout showHeader={false}>
+													<OTPVerificationPage />
+												</Layout>
+											}
+										/>
+										<Route
+											path="/forgot-password"
+											element={
+												<Layout showHeader={false}>
+													<ForgotPasswordPage />
+												</Layout>
+											}
+										/>
+										<Route
+											path="/reset-password/:token"
+											element={
+												<Layout showHeader={false}>
+													<ResetPasswordPage />
+												</Layout>
+											}
+										/>
+										<Route
+											path="/success"
+											element={
+												<Layout showHeader={false}>
+													<SuccessPage />
+												</Layout>
+											}
+										/>
+
+										{/* 404 - Not Found Page (catch all) */}
+										<Route
+											path="*"
+											element={
+												<Layout showHeader={false}>
+													<NotFoundPage />
+												</Layout>
+											}
+										/>
+									</Routes>
+								</RoomProvider>
+							</PostProvider>
 						</FollowerProvider>
 					</ViewTrackingProvider>
 				</ToastProvider>
