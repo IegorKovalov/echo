@@ -5,7 +5,7 @@ import {
 	Shield,
 	UserX,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useRoom } from "../../context/RoomContext";
@@ -39,6 +39,12 @@ export default function RoomDetail() {
 
 	const timerRef = useRef(null);
 
+	// Handle room expiration consistently
+	const handleRoomExpiration = useCallback(() => {
+		showError("This room has expired");
+		navigate("/rooms");
+	}, [showError, navigate]);
+
 	useEffect(() => {
 		const loadRoom = async () => {
 			setIsLoading(true);
@@ -61,7 +67,7 @@ export default function RoomDetail() {
 				console.error("Error loading room:", error);
 				if (error.response?.status === 410) {
 					// Room expired
-					navigate("/rooms");
+					handleRoomExpiration();
 				}
 			} finally {
 				setIsLoading(false);
@@ -83,6 +89,8 @@ export default function RoomDetail() {
 		user,
 		navigate,
 		initializeRoomIdentity,
+		showError,
+		handleRoomExpiration
 	]);
 
 	// Update time left every minute
@@ -96,8 +104,7 @@ export default function RoomDetail() {
 
 			if (diffMs <= 0) {
 				// Room expired, navigate away
-				showError("This room has expired");
-				navigate("/rooms");
+				handleRoomExpiration();
 				return "Expired";
 			}
 
@@ -110,16 +117,15 @@ export default function RoomDetail() {
 			return `${diffMins}m remaining`;
 		};
 
+		// Set the initial time left
 		setTimeLeft(calculateTimeLeft());
 
-		// Update every minute
-		if (timerRef.current) {
-			clearInterval(timerRef.current);
+		// Only set up the interval if it doesn't already exist
+		if (!timerRef.current) {
+			timerRef.current = setInterval(() => {
+				setTimeLeft(calculateTimeLeft());
+			}, 60000); // Update every minute
 		}
-
-		timerRef.current = setInterval(() => {
-			setTimeLeft(calculateTimeLeft());
-		}, 60000); // Update every minute
 	};
 
 	const handleJoinRoom = async () => {
@@ -135,6 +141,9 @@ export default function RoomDetail() {
 			}
 		} catch (error) {
 			console.error("Error joining room:", error);
+			if (error.response?.status === 410) {
+				handleRoomExpiration();
+			}
 		} finally {
 			setIsJoining(false);
 		}
@@ -154,6 +163,9 @@ export default function RoomDetail() {
 			}
 		} catch (error) {
 			console.error("Error leaving room:", error);
+			if (error.response?.status === 410) {
+				handleRoomExpiration();
+			}
 		} finally {
 			setIsLeaving(false);
 		}
@@ -170,6 +182,9 @@ export default function RoomDetail() {
 			setMessageContent("");
 		} catch (error) {
 			console.error("Error sending message:", error);
+			if (error.response?.status === 410) {
+				handleRoomExpiration();
+			}
 		} finally {
 			setIsSending(false);
 		}
@@ -329,7 +344,7 @@ export default function RoomDetail() {
 								<p className="text-xs text-gray-500">
 									Posting as{" "}
 									<span className="font-medium text-purple-400">
-										{anonymousIdentity?.name || "Anonymous"}
+										{anonymousIdentity?.anonymousName || "Anonymous"}
 									</span>
 								</p>
 								<p className="text-xs text-gray-500">

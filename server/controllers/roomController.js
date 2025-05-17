@@ -6,6 +6,10 @@ const { sendError, sendSuccess } = require("../utils/http/responseUtils");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 
+/**
+ * Create a new room
+ * @route POST /api/v1/rooms
+ */
 exports.createRoom = async (req, res) => {
 	try {
 		const { name, description, duration, tags, maxUsers } = req.body;
@@ -14,7 +18,7 @@ exports.createRoom = async (req, res) => {
 			return sendError(res, 400, "Room name is required");
 		}
 
-		// Parse duration as a number if it comes as a string
+		// Parse duration as a number
 		const durationHours = parseInt(duration) || 24;
 
 		// Calculate expiration date
@@ -35,9 +39,7 @@ exports.createRoom = async (req, res) => {
 		const newRoom = await Room.create(roomData);
 
 		return sendSuccess(res, 201, "Room created successfully", {
-			data: {
-				room: newRoom,
-			},
+			data: { room: newRoom },
 		});
 	} catch (error) {
 		return sendError(res, 500, "Error creating room", {
@@ -46,13 +48,19 @@ exports.createRoom = async (req, res) => {
 	}
 };
 
+/**
+ * Get all non-expired rooms with optional filtering
+ * @route GET /api/v1/rooms
+ */
 exports.getRooms = async (req, res) => {
 	try {
 		const { page = 1, limit = 10, filter } = req.query;
 		const skip = (page - 1) * limit;
 
+		// Base query: only non-expired rooms
 		let query = { expiresAt: { $gt: new Date() } };
 
+		// Apply additional filters if specified
 		if (filter === "joined") {
 			query.participants = req.user._id;
 		} else if (filter === "official") {
@@ -82,6 +90,10 @@ exports.getRooms = async (req, res) => {
 	}
 };
 
+/**
+ * Get a specific room by ID
+ * @route GET /api/v1/rooms/:roomId
+ */
 exports.getRoom = async (req, res) => {
 	try {
 		const { roomId } = req.params;
@@ -106,10 +118,13 @@ exports.getRoom = async (req, res) => {
 	}
 };
 
+/**
+ * Join a room and get anonymous identity
+ * @route POST /api/v1/rooms/:roomId/join
+ */
 exports.joinRoom = async (req, res) => {
 	try {
 		const { roomId } = req.params;
-
 		const room = await Room.findById(roomId);
 
 		if (!room) {
@@ -120,28 +135,30 @@ exports.joinRoom = async (req, res) => {
 			return sendError(res, 410, "This room has expired");
 		}
 
+		// Check if user is already a member
 		if (room.participants.includes(req.user._id)) {
 			return sendSuccess(res, 200, "You are already a member of this room", {
 				data: { room },
 			});
 		}
 
+		// Check room capacity
 		if (room.participants.length >= room.maxUsers) {
 			return sendError(res, 400, "This room has reached its maximum capacity");
 		}
 
+		// Add user to participants
 		room.participants.push(req.user._id);
 		await room.save();
 
+		// Generate anonymous identity for the user in this room
 		const anonymousId = crypto
 			.createHash("sha256")
 			.update(`${req.user._id}-${roomId}-${Date.now()}`)
 			.digest("hex")
 			.substring(0, 10);
 
-		const anonymousName = `Anonymous-${Math.floor(
-			1000 + Math.random() * 9000
-		)}`;
+		const anonymousName = `Anonymous-${Math.floor(1000 + Math.random() * 9000)}`;
 
 		return sendSuccess(res, 200, "Successfully joined the room", {
 			data: {
@@ -159,16 +176,20 @@ exports.joinRoom = async (req, res) => {
 	}
 };
 
+/**
+ * Leave a room
+ * @route DELETE /api/v1/rooms/:roomId/leave
+ */
 exports.leaveRoom = async (req, res) => {
 	try {
 		const { roomId } = req.params;
-
 		const room = await Room.findById(roomId);
 
 		if (!room) {
 			return sendError(res, 404, "Room not found");
 		}
 
+		// Remove user from participants if they are a member
 		if (room.participants.includes(req.user._id)) {
 			room.participants = room.participants.filter(
 				(id) => id.toString() !== req.user._id.toString()
@@ -184,17 +205,22 @@ exports.leaveRoom = async (req, res) => {
 	}
 };
 
+/**
+ * Send a message in a room
+ * @route POST /api/v1/rooms/:roomId/messages
+ */
 exports.sendMessage = async (req, res) => {
 	try {
 		const { roomId } = req.params;
 		const { content, anonymousId, anonymousName } = req.body;
 
+		// Validate message content
 		if (!content || content.trim() === "") {
 			return sendError(res, 400, "Message content is required");
 		}
 
+		// Verify room exists and has not expired
 		const room = await Room.findById(roomId);
-
 		if (!room) {
 			return sendError(res, 404, "Room not found");
 		}
@@ -203,27 +229,30 @@ exports.sendMessage = async (req, res) => {
 			return sendError(res, 410, "This room has expired");
 		}
 
+		// Verify user is a participant in the room
 		if (!room.participants.includes(req.user._id)) {
-			return sendError(
-				res,
-				403,
-				"You must join the room before sending messages"
-			);
+			return sendError(res, 403, "You must join the room before sending messages");
 		}
 
+		// Create the message
 		const newMessage = await Message.create({
 			room: roomId,
-			content: content.trim(),
 			sender: req.user._id,
+			content: content.trim(),
 			anonymousId,
 			anonymousName,
 		});
 
-		const messageResponse = newMessage.toObject();
-		delete messageResponse.sender;
+		// Return the created message
+		const populatedMessage = await Message.findById(newMessage._id)
+			.populate({
+				path: "sender",
+				select: "username",
+			})
+			.exec();
 
 		return sendSuccess(res, 201, "Message sent successfully", {
-			data: { message: messageResponse },
+			data: { message: populatedMessage },
 		});
 	} catch (error) {
 		return sendError(res, 500, "Error sending message", {
@@ -232,31 +261,40 @@ exports.sendMessage = async (req, res) => {
 	}
 };
 
+/**
+ * Get messages for a room with pagination
+ * @route GET /api/v1/rooms/:roomId/messages
+ */
 exports.getMessages = async (req, res) => {
 	try {
 		const { roomId } = req.params;
 		const { page = 1, limit = 50 } = req.query;
 		const skip = (page - 1) * limit;
 
+		// Verify room exists
 		const room = await Room.findById(roomId);
-
 		if (!room) {
 			return sendError(res, 404, "Room not found");
 		}
 
-		if (room.isExpired) {
-			return sendError(res, 410, "This room has expired");
-		}
-
+		// Verify user is a participant
 		if (!room.participants.includes(req.user._id)) {
 			return sendError(res, 403, "You must join the room to view messages");
 		}
 
+		// Count total messages for pagination info
 		const totalMessages = await Message.countDocuments({ room: roomId });
+
+		// Get messages with pagination, sorted by creation time (oldest first)
 		const messages = await Message.find({ room: roomId })
 			.sort({ createdAt: 1 })
 			.skip(skip)
-			.limit(parseInt(limit));
+			.limit(parseInt(limit))
+			.populate({
+				path: "sender",
+				select: "username",
+			})
+			.exec();
 
 		return sendSuccess(res, 200, "Messages retrieved successfully", {
 			data: {
