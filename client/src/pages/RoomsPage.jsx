@@ -1,9 +1,8 @@
 // client/src/pages/RoomsPage.jsx
 import { Sparkles } from "lucide-react";
 import { useEffect } from "react";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Route, Routes, useLocation, Navigate } from "react-router-dom";
 import CreateRoomForm from "../components/rooms/CreateRoomForm";
-import JoinRoomForm from "../components/rooms/JoinRoomForm";
 import RoomDetail from "../components/rooms/RoomDetail";
 import RoomList from "../components/rooms/RoomList";
 import { useAuth } from "../context/AuthContext";
@@ -37,7 +36,8 @@ export default function RoomsPage() {
 						<Route path="/" element={<RoomList />} />
 						<Route path="/create" element={<CreateRoomForm />} />
 						<Route path="/:roomId" element={<RoomDetail />} />
-						<Route path="/:roomId/join" element={<JoinRoomForm />} />
+						{/* Redirect join URLs directly to room detail */}
+						<Route path="/:roomId/join" element={<Navigate to=".." relative="path" replace />} />
 					</Routes>
 				</div>
 			</main>

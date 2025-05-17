@@ -108,11 +108,11 @@ export const RoomProvider = ({ children }) => {
 
 	// Join a room
 	const joinRoom = useCallback(
-		async (roomId, accessCode = null) => {
+		async (roomId) => {
 			if (!user || !roomId) return false;
 
 			try {
-				const response = await RoomService.joinRoom(roomId, accessCode);
+				const response = await RoomService.joinRoom(roomId);
 
 				if (response.status === "success") {
 					showSuccess("Successfully joined the room");
@@ -173,10 +173,12 @@ export const RoomProvider = ({ children }) => {
 		[user, currentRoom, showSuccess, showError]
 	);
 
-	// Send a message in the current room
 	const sendMessage = useCallback(
 		async (content) => {
-			if (!user || !currentRoom || !anonymousIdentity) return null;
+			if (!user || !currentRoom || !anonymousIdentity) {
+				showError("Unable to send message - please try rejoining the room");
+				return null;
+			}
 
 			try {
 				const messageData = {
@@ -184,24 +186,25 @@ export const RoomProvider = ({ children }) => {
 					anonymousId: anonymousIdentity.anonymousId,
 					anonymousName: anonymousIdentity.anonymousName,
 				};
-
 				const response = await RoomService.sendMessage(
 					currentRoom._id,
 					messageData
 				);
 
-				if (response.status === "success") {
-					// Add the new message to the messages list
+				if (response.status === "success" && response.data.message) {
 					setMessages((prevMessages) => [
 						...prevMessages,
 						response.data.message,
 					]);
 					return response.data.message;
+				} else {
+					showError("Server returned an unexpected response");
+					return null;
 				}
-				return null;
 			} catch (error) {
-				console.error("Error sending message:", error);
-				showError(error.message || "Failed to send message");
+				const errorMessage =
+					error.response?.data?.message || "Failed to send message";
+				showError(errorMessage);
 				return null;
 			}
 		},

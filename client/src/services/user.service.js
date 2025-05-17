@@ -39,35 +39,6 @@ const UserService = {
 
 		return response.data;
 	},
-	
-	updateProfilePicture: async (formData) => {
-		try {
-			const token = localStorage.getItem("token");
-			const response = await api.patch(
-				`${USER_URL}/update-profile-picture`,
-				formData,
-				{
-					headers: {
-						Authorization: `Bearer ${token}`,
-					},
-				}
-			);
-
-			if (response.data && response.data.data && response.data.data.user) {
-				const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-				const updatedUser = {
-					...currentUser,
-					profilePicture: response.data.data.user.profilePicture,
-				};
-				localStorage.setItem("user", JSON.stringify(updatedUser));
-			}
-
-			return response.data;
-		} catch (error) {
-			console.error("Update profile picture error:", error);
-			throw error;
-		}
-	},
 
 	changePassword: async (passwordCurrent, password, passwordConfirm) => {
 		const token = localStorage.getItem("token");
@@ -103,7 +74,6 @@ const UserService = {
 			);
 
 			if (response.data && response.data.data && response.data.data.user) {
-				// Update user in local storage
 				const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 				const updatedUser = {
 					...currentUser,
@@ -129,7 +99,6 @@ const UserService = {
 			});
 
 			if (response.data && response.data.data && response.data.data.user) {
-				// Update user in local storage
 				const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 				const updatedUser = { ...currentUser, profilePicture: null };
 				localStorage.setItem("user", JSON.stringify(updatedUser));

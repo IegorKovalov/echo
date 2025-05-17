@@ -1,45 +1,42 @@
+const mongoose = require("mongoose");
 const Room = require("../models/roomModel");
 const Message = require("../models/messageModel");
+const UserModel = require("../models/userModel");
 const { sendError, sendSuccess } = require("../utils/http/responseUtils");
 const crypto = require("crypto");
+const bcrypt = require("bcrypt");
 
 exports.createRoom = async (req, res) => {
 	try {
-		const { name, description, duration, isPrivate, tags } = req.body;
+		const { name, description, duration, tags, maxUsers } = req.body;
 
 		if (!name || name.trim() === "") {
 			return sendError(res, 400, "Room name is required");
 		}
 
-		const expiresAt = new Date();
-		expiresAt.setHours(expiresAt.getHours() + (duration || 24));
+		// Parse duration as a number if it comes as a string
+		const durationHours = parseInt(duration) || 24;
 
-		let accessCode = null;
-		if (isPrivate) {
-			accessCode = crypto.randomBytes(3).toString("hex").toUpperCase();
-		}
+		// Calculate expiration date
+		const expiresAt = new Date();
+		expiresAt.setHours(expiresAt.getHours() + durationHours);
 
 		const roomData = {
 			name: name.trim(),
 			description: description ? description.trim() : "",
 			creator: req.user._id,
-			duration: duration || 24,
+			duration: durationHours,
 			expiresAt,
-			isPrivate: !!isPrivate,
-			accessCode,
 			participants: [req.user._id],
 			tags: tags || [],
+			maxUsers: maxUsers ? parseInt(maxUsers) : 50,
 		};
 
 		const newRoom = await Room.create(roomData);
 
-		const roomResponse = newRoom.toObject();
-		delete roomResponse.accessCode;
-
 		return sendSuccess(res, 201, "Room created successfully", {
 			data: {
-				room: roomResponse,
-				accessCode: isPrivate ? accessCode : null,
+				room: newRoom,
 			},
 		});
 	} catch (error) {
@@ -58,14 +55,8 @@ exports.getRooms = async (req, res) => {
 
 		if (filter === "joined") {
 			query.participants = req.user._id;
-		} else if (filter === "created") {
-			query.creator = req.user._id;
-		}
-		if (!filter || filter !== "joined") {
-			query.$or = [
-				{ isPrivate: false },
-				{ isPrivate: true, participants: req.user._id },
-			];
+		} else if (filter === "official") {
+			query.isOfficial = true;
 		}
 
 		const totalRooms = await Room.countDocuments(query);
@@ -104,13 +95,6 @@ exports.getRoom = async (req, res) => {
 		if (room.isExpired) {
 			return sendError(res, 410, "This room has expired");
 		}
-		if (room.isPrivate && !room.participants.includes(req.user._id)) {
-			return sendError(
-				res,
-				403,
-				"This is a private room. Please provide an access code to join"
-			);
-		}
 
 		return sendSuccess(res, 200, "Room retrieved successfully", {
 			data: { room },
@@ -125,9 +109,8 @@ exports.getRoom = async (req, res) => {
 exports.joinRoom = async (req, res) => {
 	try {
 		const { roomId } = req.params;
-		const { accessCode } = req.body;
 
-		const room = await Room.findById(roomId).select("+accessCode");
+		const room = await Room.findById(roomId);
 
 		if (!room) {
 			return sendError(res, 404, "Room not found");
@@ -142,14 +125,9 @@ exports.joinRoom = async (req, res) => {
 				data: { room },
 			});
 		}
-		if (room.isPrivate) {
-			if (!accessCode) {
-				return sendError(res, 400, "Access code is required for private rooms");
-			}
 
-			if (room.accessCode !== accessCode) {
-				return sendError(res, 403, "Invalid access code");
-			}
+		if (room.participants.length >= room.maxUsers) {
+			return sendError(res, 400, "This room has reached its maximum capacity");
 		}
 
 		room.participants.push(req.user._id);
@@ -314,3 +292,98 @@ exports.cleanupExpiredRooms = async () => {
 		console.error("Error cleaning up expired rooms:", error);
 	}
 };
+
+exports.ensureOfficialRooms = async () => {
+	try {
+		const officialRooms = [
+			{
+				name: "Mental Health Support",
+				description:
+					"A safe space to discuss mental health challenges anonymously",
+				duration: 168, // 7 days
+				maxUsers: 100,
+				officialName: "Echo Team",
+				isOfficial: true,
+			},
+			{
+				name: "Career Confessions",
+				description: "Share your workplace stories and career dilemmas",
+				duration: 168, // 7 days
+				maxUsers: 100,
+				officialName: "Echo Team",
+				isOfficial: true,
+			},
+			{
+				name: "Creative Writing",
+				description: "Share your writing and get anonymous feedback",
+				duration: 168, // 7 days
+				maxUsers: 100,
+				officialName: "Echo Team",
+				isOfficial: true,
+			},
+			{
+				name: "Tech Talk",
+				description: "Discuss technology without judgment or bias",
+				duration: 168, // 7 days
+				maxUsers: 100,
+				officialName: "Echo Team",
+				isOfficial: true,
+			},
+			{
+				name: "Daily Confessions",
+				description: "Share your thoughts, secrets, and confessions",
+				duration: 168, // 7 days
+				maxUsers: 100,
+				officialName: "Echo Team",
+				isOfficial: true,
+			},
+		];
+		const existingRooms = await Room.find({ isOfficial: true });
+		const existingRoomNames = existingRooms.map((room) => room.name);
+
+		// Find the admin user for official content
+		const adminUser = await UserModel.findOne({ username: "admin" });
+		if (!adminUser) {
+			console.log(
+				"Could not find admin user for official rooms. Make sure to run cleanDB.js first."
+			);
+			return;
+		}
+		for (const roomData of officialRooms) {
+			if (!existingRoomNames.includes(roomData.name)) {
+				const expiresAt = new Date();
+				expiresAt.setHours(expiresAt.getHours() + roomData.duration);
+
+				await Room.create({
+					...roomData,
+					creator: adminUser._id,
+					expiresAt,
+					participants: [],
+				});
+
+				console.log(`Created official room: ${roomData.name}`);
+			}
+		}
+		const now = new Date();
+		const expiredOfficialRooms = await Room.find({
+			isOfficial: true,
+			expiresAt: { $lte: now },
+		});
+
+		for (const room of expiredOfficialRooms) {
+			await require("../models/messageModel").deleteMany({ room: room._id });
+			const expiresAt = new Date();
+			expiresAt.setHours(expiresAt.getHours() + room.duration);
+
+			room.expiresAt = expiresAt;
+			await room.save();
+
+			console.log(`Reset official room: ${room.name}`);
+		}
+
+		console.log("Official rooms check completed");
+	} catch (error) {
+		console.error("Error ensuring official rooms:", error);
+	}
+};
+

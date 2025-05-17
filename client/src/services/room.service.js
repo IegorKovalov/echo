@@ -35,13 +35,11 @@ const RoomService = {
 		return response.data;
 	},
 
-	joinRoom: async (roomId, accessCode = null) => {
+	joinRoom: async (roomId) => {
 		const token = localStorage.getItem("token");
 		const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-		const data = accessCode ? { accessCode } : {};
-
-		const response = await api.post(`${ROOMS_URL}/${roomId}/join`, data, {
+		const response = await api.post(`${ROOMS_URL}/${roomId}/join`, {}, {
 			headers,
 		});
 		return response.data;

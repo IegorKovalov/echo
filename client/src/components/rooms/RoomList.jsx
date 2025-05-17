@@ -1,4 +1,4 @@
-import { Clock, Lock, MessageSquare, Plus, Sparkles } from "lucide-react";
+import { Clock, Filter, Plus, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useRoom } from "../../context/RoomContext";
@@ -7,43 +7,88 @@ import Card from "../UI/Card";
 export default function RoomList() {
 	const { rooms, loadingRooms, fetchRooms } = useRoom();
 	const [filter, setFilter] = useState(null);
+	const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
 	useEffect(() => {
 		fetchRooms(filter);
 	}, [fetchRooms, filter]);
 
-	const getTimeLeft = (expiresAt) => {
+	const formatResetTime = (expiresAt) => {
 		const now = new Date();
 		const expiry = new Date(expiresAt);
-		const diffMs = expiry - now;
-		const diffHrs = Math.round(diffMs / (1000 * 60 * 60));
-
-		if (diffHrs < 1) {
-			const diffMins = Math.round(diffMs / (1000 * 60));
-			return `${diffMins}m left`;
+		const diffMs = Math.max(0, expiry - now);
+		
+		const hours = Math.floor(diffMs / (1000 * 60 * 60));
+		const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+		
+		if (hours < 1) {
+			return `${minutes}m`;
+		} else if (hours < 24) {
+			return `${hours}h ${minutes}m`;
+		} else {
+			const days = Math.floor(hours / 24);
+			const remainingHours = hours % 24;
+			return `${days}d ${remainingHours}h`;
 		}
-		return `${diffHrs}h left`;
 	};
 
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
-				<h2 className="text-xl font-bold text-white">Anonymous Rooms</h2>
-				<Link
-					to="/rooms/create"
-					className="flex items-center gap-1 rounded-full bg-purple-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-purple-700"
-				>
-					<Plus className="h-4 w-4" />
-					New Room
-				</Link>
+				<div>
+					<h2 className="text-3xl font-bold text-white">Anonymous Rooms</h2>
+					<p className="text-gray-400 text-sm mt-1">Join anonymously, share openly, reset regularly</p>
+				</div>
+				<div className="flex gap-2">
+					<div className="relative">
+						<button 
+							onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+							className="flex items-center gap-1.5 rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors"
+						>
+							<Filter className="h-4 w-4" />
+							Filter
+						</button>
+						{showFilterDropdown && (
+							<div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg z-10 overflow-hidden border border-gray-700">
+								<div className="py-1">
+									<button
+										onClick={() => {
+											setFilter("official");
+											setShowFilterDropdown(false);
+										}}
+										className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 transition-colors"
+									>
+										Official Rooms
+									</button>
+									<button
+										onClick={() => {
+											setFilter(null);
+											setShowFilterDropdown(false);
+										}}
+										className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 transition-colors"
+									>
+										All Rooms
+									</button>
+								</div>
+							</div>
+						)}
+					</div>
+					<Link
+						to="/rooms/create"
+						className="flex items-center gap-1.5 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 transition-colors shadow-md shadow-purple-900/20"
+					>
+						<Plus className="h-4 w-4" />
+						Create Room
+					</Link>
+				</div>
 			</div>
 
 			<div className="flex flex-wrap gap-2 mb-4">
 				<button
 					onClick={() => setFilter(null)}
-					className={`rounded-full px-3 py-1 text-sm ${
+					className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
 						filter === null
-							? "bg-purple-600 text-white"
+							? "bg-purple-600 text-white shadow-md shadow-purple-900/20"
 							: "bg-gray-800 text-gray-300 hover:bg-gray-700"
 					}`}
 				>
@@ -51,67 +96,67 @@ export default function RoomList() {
 				</button>
 				<button
 					onClick={() => setFilter("joined")}
-					className={`rounded-full px-3 py-1 text-sm ${
+					className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
 						filter === "joined"
-							? "bg-purple-600 text-white"
+							? "bg-purple-600 text-white shadow-md shadow-purple-900/20"
 							: "bg-gray-800 text-gray-300 hover:bg-gray-700"
 					}`}
 				>
 					My Rooms
 				</button>
-				<button
-					onClick={() => setFilter("created")}
-					className={`rounded-full px-3 py-1 text-sm ${
-						filter === "created"
-							? "bg-purple-600 text-white"
-							: "bg-gray-800 text-gray-300 hover:bg-gray-700"
-					}`}
-				>
-					Created by Me
-				</button>
+				{filter === "official" && (
+					<button
+						onClick={() => setFilter(null)}
+						className="rounded-full bg-purple-600 px-4 py-1.5 text-sm font-medium text-white shadow-md shadow-purple-900/20 flex items-center gap-1"
+					>
+						Official Rooms
+						<span className="ml-1 text-xs">×</span>
+					</button>
+				)}
 			</div>
 
 			{loadingRooms ? (
-				<div className="text-center py-10">
-					<Sparkles className="mx-auto h-8 w-8 animate-pulse text-purple-500" />
-					<p className="mt-2 text-gray-400">Loading rooms...</p>
+				<div className="flex justify-center py-12">
+					<div className="animate-pulse text-purple-500">Loading rooms...</div>
 				</div>
 			) : rooms.length > 0 ? (
-				<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+				<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 					{rooms.map((room) => (
 						<Link
 							key={room._id}
 							to={`/rooms/${room._id}`}
-							className="transition-transform hover:scale-[1.02]"
+							className="block"
 						>
-							<Card className="h-full">
+							<Card className="h-full border border-gray-800 bg-gray-900 hover:border-gray-700 transition-colors p-5">
 								<div className="flex flex-col h-full">
-									<div className="flex items-start justify-between mb-2">
-										<h3 className="text-lg font-medium text-white">
-											{room.name}
-											{room.isPrivate && (
-												<Lock className="inline-block ml-2 h-4 w-4 text-yellow-500" />
-											)}
-										</h3>
-										<div className="rounded-full bg-purple-900/30 px-2 py-1 text-xs text-purple-400 flex items-center gap-1">
-											<Clock className="h-3 w-3" />
-											{getTimeLeft(room.expiresAt)}
-										</div>
-									</div>
-
+									<h3 className="text-xl font-bold text-white mb-2">
+										{room.name}
+									</h3>
+									
 									<p className="text-sm text-gray-300 mb-4 flex-grow">
-										{room.description || "No description provided"}
+										{room.description || "A safe space to discuss topics anonymously"}
 									</p>
 
-									<div className="flex items-center justify-between mt-auto">
-										<div className="flex items-center text-xs text-gray-400">
-											<MessageSquare className="h-3 w-3 mr-1" />
-											{room.participants?.length || 0} participants
+									<div className="mt-auto space-y-3">
+										<div className="flex items-center text-sm text-gray-400">
+											<Users className="h-4 w-4 mr-2" />
+											<span>{room.participants?.length || 0} active members</span>
 										</div>
-
-										<div className="text-xs text-gray-400">
-											Created by {room.creator?.username || "Anonymous"}
+										
+										<div className="flex items-center text-sm text-gray-400">
+											<Clock className="h-4 w-4 mr-2" />
+											<span>Resets in {formatResetTime(room.expiresAt)}</span>
 										</div>
+										
+										{room.isOfficial && (
+											<div className="text-sm text-purple-400 font-medium">
+												Official Echo Room
+											</div>
+										)}
+										
+										<button className="w-full py-2.5 text-center rounded-lg bg-gray-800 hover:bg-gray-700 text-white font-medium transition-colors">
+											Join Room
+										</button>
 									</div>
 								</div>
 							</Card>
@@ -119,27 +164,15 @@ export default function RoomList() {
 					))}
 				</div>
 			) : (
-				<Card>
-					<div className="text-center py-10">
-						<div className="mx-auto h-16 w-16 rounded-full bg-gray-800 p-4">
-							<MessageSquare className="h-8 w-8 text-gray-600" />
-						</div>
-						<h3 className="mt-4 text-lg font-medium text-white">
-							No rooms found
-						</h3>
-						<p className="mt-2 text-gray-400">
-							{filter
-								? "No rooms found matching your filter. Try a different filter or create a new room."
-								: "No rooms available. Be the first to create a room!"}
-						</p>
-						<Link
-							to="/rooms/create"
-							className="mt-4 inline-block rounded-lg bg-purple-600 px-4 py-2 text-white hover:bg-purple-700"
-						>
-							Create a Room
-						</Link>
-					</div>
-				</Card>
+				<div className="text-center py-12">
+					<p className="text-gray-400 mb-4">No rooms available at the moment</p>
+					<Link
+						to="/rooms/create"
+						className="inline-block rounded-lg bg-purple-600 px-5 py-2.5 text-white hover:bg-purple-700 transition-colors shadow-md shadow-purple-900/20"
+					>
+						Create a Room
+					</Link>
+				</div>
 			)}
 		</div>
 	);

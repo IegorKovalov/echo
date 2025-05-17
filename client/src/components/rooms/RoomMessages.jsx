@@ -13,14 +13,11 @@ export default function RoomMessages() {
 	const messagesEndRef = useRef(null);
 	const containerRef = useRef(null);
 
-	// Scroll to bottom on new messages
 	useEffect(() => {
 		if (messagesEndRef.current) {
 			messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
 		}
 	}, [messages]);
-
-	// Intersection observer for infinite scroll (upwards)
 	useEffect(() => {
 		if (!containerRef.current || !hasMoreMessages) return;
 

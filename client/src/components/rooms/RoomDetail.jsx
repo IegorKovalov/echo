@@ -1,4 +1,10 @@
-import { ArrowLeft, Clock, Lock, Send, Shield, UserX } from "lucide-react";
+import {
+	ArrowLeft,
+	Clock,
+	Send,
+	Shield,
+	UserX,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -26,10 +32,10 @@ export default function RoomDetail() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [isJoining, setIsJoining] = useState(false);
 	const [isLeaving, setIsLeaving] = useState(false);
-	const [accessCode, setAccessCode] = useState("");
+	const [isSending, setIsSending] = useState(false);
 	const [messageContent, setMessageContent] = useState("");
 	const [timeLeft, setTimeLeft] = useState("");
-	const [isSending, setIsSending] = useState(false);
+	const intervalRef = useRef(null);
 
 	const timerRef = useRef(null);
 
@@ -117,20 +123,15 @@ export default function RoomDetail() {
 	};
 
 	const handleJoinRoom = async () => {
-		if (currentRoom?.isPrivate && !accessCode) {
-			showError("Access code is required for private rooms");
-			return;
-		}
+		if (isJoining) return;
 
-		setIsJoining(true);
 		try {
-			const success = await joinRoom(
-				roomId,
-				currentRoom?.isPrivate ? accessCode : null
-			);
+			setIsJoining(true);
+			const success = await joinRoom(roomId);
 
 			if (success) {
-				await fetchMessages(roomId);
+				// Reset states
+				setIsJoining(false);
 			}
 		} catch (error) {
 			console.error("Error joining room:", error);
@@ -192,29 +193,29 @@ export default function RoomDetail() {
 	if (!currentRoom) {
 		return (
 			<div className="max-w-2xl mx-auto">
-				<div className="mb-6 flex items-center gap-2">
-					<Link to="/rooms" className="text-purple-400 hover:text-purple-300">
+				<div className="mb-6 flex items-center gap-3">
+					<Link to="/rooms" className="text-purple-400 hover:text-purple-300 transition-colors">
 						<ArrowLeft className="h-5 w-5" />
 					</Link>
 					<h1 className="text-2xl font-bold text-white">Room Not Found</h1>
 				</div>
 
-				<Card>
-					<div className="p-6 text-center">
-						<div className="mx-auto h-16 w-16 rounded-full bg-gray-800 flex items-center justify-center">
-							<UserX className="h-8 w-8 text-gray-600" />
+				<Card className="border border-gray-800">
+					<div className="text-center py-10">
+						<div className="mx-auto h-16 w-16 rounded-full bg-gray-800/50 flex items-center justify-center">
+							<Shield className="h-8 w-8 text-gray-600" />
 						</div>
-						<h2 className="mt-4 text-xl font-semibold text-white">
-							Room Not Found
-						</h2>
-						<p className="mt-2 text-gray-400">
+						<h3 className="mt-4 text-lg font-medium text-white">
+							Room Not Available
+						</h3>
+						<p className="mt-2 text-gray-400 max-w-md mx-auto">
 							This room may have expired or been deleted.
 						</p>
 						<Link
 							to="/rooms"
-							className="mt-6 inline-block rounded-lg bg-purple-600 px-4 py-2 text-white hover:bg-purple-700"
+							className="mt-5 inline-block rounded-lg bg-purple-600 px-5 py-2.5 text-white hover:bg-purple-700 transition-colors shadow-md shadow-purple-900/20"
 						>
-							Browse Available Rooms
+							Back to Rooms
 						</Link>
 					</div>
 				</Card>
@@ -224,148 +225,121 @@ export default function RoomDetail() {
 
 	return (
 		<div className="max-w-4xl mx-auto">
-			<div className="mb-4 flex items-center justify-between">
-				<div className="flex items-center gap-2">
-					<Link to="/rooms" className="text-purple-400 hover:text-purple-300">
+			<div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+				<div className="flex items-center gap-3">
+					<Link to="/rooms" className="text-purple-400 hover:text-purple-300 transition-colors">
 						<ArrowLeft className="h-5 w-5" />
 					</Link>
-					<h1 className="text-xl font-bold text-white">
-						{currentRoom.name}
-						{currentRoom.isPrivate && (
-							<Lock className="inline-block ml-2 h-4 w-4 text-yellow-500" />
-						)}
-					</h1>
-					{isParticipant && anonymousIdentity && (
-						<div className="ml-4 text-xs text-purple-400 flex items-center">
-							<Shield className="h-3 w-3 mr-1" />
-							{anonymousIdentity.anonymousName}
+					<div>
+						<div className="mb-6">
+							<div className="flex items-center justify-between">
+								<h1 className="text-2xl font-bold text-white">{currentRoom.name}</h1>
+								<div className="flex items-center gap-2">
+									{currentRoom.isOfficial && (
+										<div className="flex items-center text-purple-400 gap-1">
+											<Shield className="h-4 w-4" />
+											<span className="text-sm font-medium">Official Room</span>
+										</div>
+									)}
+									<div className="rounded-full bg-purple-500/10 px-3 py-1 text-xs font-medium text-purple-400 flex items-center gap-1 border border-purple-500/20">
+										<Clock className="h-3.5 w-3.5" />
+										{timeLeft}
+									</div>
+								</div>
+							</div>
+							<p className="mt-1 text-gray-400 text-sm">
+								{currentRoom.description || "No description provided"}
+							</p>
+							{currentRoom.isOfficial ? (
+								<p className="mt-3 text-xs text-gray-500">Created by {currentRoom.officialName || "Echo Team"}</p>
+							) : (
+								<p className="mt-3 text-xs text-gray-500">Created by {currentRoom.creator?.username || "Anonymous"}</p>
+							)}
 						</div>
-					)}
-				</div>
-
-				<div className="flex items-center gap-3">
-					<div className="rounded-full bg-purple-900/30 px-3 py-1 text-xs text-purple-400 flex items-center gap-1">
-						<Clock className="h-3 w-3" />
-						{timeLeft}
 					</div>
-
-					{isParticipant ? (
-						<button
-							onClick={handleLeaveRoom}
-							disabled={isLeaving}
-							className="rounded-full border border-red-500 bg-transparent px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-900/20"
-						>
-							{isLeaving ? "Leaving..." : "Leave Room"}
-						</button>
-					) : (
-						<button
-							onClick={handleJoinRoom}
-							disabled={isJoining}
-							className="rounded-full bg-purple-600 px-3 py-1 text-xs font-medium text-white hover:bg-purple-700"
-						>
-							{isJoining ? "Joining..." : "Join Room"}
-						</button>
-					)}
 				</div>
+
+				{isParticipant && (
+					<button
+						onClick={handleLeaveRoom}
+						disabled={isLeaving}
+						className="flex items-center gap-1.5 rounded-full bg-red-900/30 text-red-400 border border-red-900/40 px-4 py-1.5 text-sm font-medium hover:bg-red-900/40 transition-colors self-start sm:self-center"
+					>
+						<UserX className="h-4 w-4" />
+						{isLeaving ? "Leaving..." : "Leave Room"}
+					</button>
+				)}
 			</div>
 
 			{currentRoom.description && (
-				<Card className="mb-4">
-					<p className="text-sm text-gray-300">{currentRoom.description}</p>
-					{currentRoom.tags && currentRoom.tags.length > 0 && (
-						<div className="mt-3 flex flex-wrap gap-2">
-							{currentRoom.tags.map((tag) => (
-								<span
-									key={tag}
-									className="rounded-full bg-gray-800 px-2 py-1 text-xs text-gray-300"
-								>
-									#{tag}
-								</span>
-							))}
-						</div>
-					)}
+				<Card className="mb-6 border border-gray-800">
+					<p className="text-gray-300">{currentRoom.description}</p>
 				</Card>
 			)}
 
-			{/* Private room access code entry */}
-			{currentRoom.isPrivate && !isParticipant && (
-				<Card className="mb-4">
-					<div className="p-4 flex flex-col md:flex-row md:items-center">
-						<div className="flex-1">
-							<div className="flex items-center mb-2">
-								<Lock className="h-5 w-5 text-yellow-500 mr-2" />
-								<h3 className="text-lg font-medium text-white">Private Room</h3>
-							</div>
-							<p className="text-sm text-gray-400">
-								This room requires an access code to join. Enter the code to
-								participate.
-							</p>
+			{/* Room content */}
+			<Card className="mb-6 border border-gray-800">
+				{!isParticipant ? (
+					<div className="text-center py-10">
+						<div className="mx-auto h-16 w-16 rounded-full bg-purple-900/20 flex items-center justify-center">
+							<Shield className="h-8 w-8 text-purple-400" />
 						</div>
-
-						<div className="mt-4 md:mt-0 flex md:w-64">
-							<input
-								type="text"
-								placeholder="Enter access code"
-								value={accessCode}
-								onChange={(e) => setAccessCode(e.target.value)}
-								className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 uppercase"
-								maxLength={6}
-							/>
-						</div>
-					</div>
-				</Card>
-			)}
-
-			{/* Message area */}
-			<div className="flex flex-col h-[calc(100vh-260px)]">
-				{isParticipant ? (
-					<>
-						<div className="flex-1 overflow-y-auto mb-4">
-							<RoomMessages />
-						</div>
-
-						<form onSubmit={handleSendMessage} className="mt-auto">
-							<div className="relative">
-								<input
-									type="text"
-									placeholder="Type a message..."
-									value={messageContent}
-									onChange={(e) => setMessageContent(e.target.value)}
-									disabled={isSending}
-									className="w-full rounded-full border border-gray-700 bg-gray-800 px-4 py-3 pr-12 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-								/>
-								<button
-									type="submit"
-									disabled={!messageContent.trim() || isSending}
-									className="absolute right-2 top-2 rounded-full bg-purple-600 p-2 text-white hover:bg-purple-700 disabled:opacity-50"
-								>
-									<Send className="h-4 w-4" />
-								</button>
-							</div>
-						</form>
-					</>
-				) : (
-					<Card className="flex flex-col items-center justify-center py-16">
-						<div className="mb-4 h-16 w-16 rounded-full bg-gray-800 flex items-center justify-center">
-							<UserX className="h-8 w-8 text-gray-600" />
-						</div>
-						<h3 className="text-lg font-medium text-white">
-							You are not a member of this room
+						<h3 className="mt-4 text-xl font-medium text-white">
+							Join this Room
 						</h3>
-						<p className="mt-2 text-gray-400 text-center max-w-md">
-							Join this room to see messages and participate in the
-							conversation. All participants remain anonymous.
+						<p className="mt-2 text-gray-400 max-w-md mx-auto">
+							Join this anonymous room to see and send messages. Your identity will
+							remain anonymous.
 						</p>
 						<button
 							onClick={handleJoinRoom}
-							disabled={isJoining || (currentRoom.isPrivate && !accessCode)}
-							className="mt-6 rounded-lg bg-purple-600 px-4 py-2 text-white hover:bg-purple-700 disabled:opacity-50"
+							disabled={isJoining}
+							className="mt-5 rounded-lg bg-purple-600 px-5 py-2.5 text-white font-medium hover:bg-purple-700 transition-colors shadow-md shadow-purple-900/20 disabled:opacity-70 disabled:cursor-not-allowed"
 						>
 							{isJoining ? "Joining..." : "Join Room"}
 						</button>
-					</Card>
+					</div>
+				) : (
+					<div className="flex flex-col">
+						<div className="flex-1 overflow-hidden">
+							{/* Messages container */}
+							<RoomMessages />
+						</div>
+
+						{/* Message input */}
+						<div className="mt-4 pt-4 border-t border-gray-800">
+							<form onSubmit={handleSendMessage} className="flex gap-2">
+								<input
+									type="text"
+									value={messageContent}
+									onChange={(e) => setMessageContent(e.target.value)}
+									placeholder="Type a message..."
+									className="flex-1 rounded-lg border border-gray-700 bg-gray-800/80 p-3 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 transition-colors"
+								/>
+								<button
+									type="submit"
+									disabled={isSending || !messageContent.trim()}
+									className="rounded-lg bg-purple-600 px-4 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+								>
+									<Send className="h-5 w-5" />
+									<span className="sr-only">Send</span>
+								</button>
+							</form>
+							<div className="mt-2 flex items-center justify-between">
+								<p className="text-xs text-gray-500">
+									Posting as{" "}
+									<span className="font-medium text-purple-400">
+										{anonymousIdentity?.name || "Anonymous"}
+									</span>
+								</p>
+								<p className="text-xs text-gray-500">
+									Messages will disappear when the room expires
+								</p>
+							</div>
+						</div>
+					</div>
 				)}
-			</div>
+			</Card>
 		</div>
 	);
 }

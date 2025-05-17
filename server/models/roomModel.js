@@ -32,13 +32,19 @@ const roomSchema = new Schema({
 		min: [1, "Duration must be at least 1 hour"],
 		max: [168, "Duration cannot exceed 168 hours (7 days)"],
 	},
-	isPrivate: {
-		type: Boolean,
-		default: false,
+	maxUsers: {
+		type: Number,
+		default: 50,
+		min: [5, "Room must allow at least 5 users"],
+		max: [500, "Room cannot exceed 500 users"],
 	},
-	accessCode: {
+	isOfficial: {
+		type: Boolean,
+		default: false
+	},
+	officialName: {
 		type: String,
-		select: false,
+		default: null
 	},
 	participants: [
 		{
