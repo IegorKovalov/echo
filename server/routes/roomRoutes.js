@@ -37,14 +37,11 @@ router.post("/:roomId/kick/:memberId", roomController.kickRoomMember);
 // Message routes
 router.get("/:roomId/messages", roomController.getRoomMessages);
 router.post("/:roomId/messages", roomController.createMessage);
-router.patch("/:roomId/messages/:messageId", roomController.updateMessage);
-router.delete("/:roomId/messages/:messageId", roomController.deleteMessage);
 router.delete("/:roomId/messages/:messageId/admin", roomController.adminDeleteMessage);
 
 // Message interaction routes
 router.post("/:roomId/messages/:messageId/react", roomController.reactToMessage);
 router.delete("/:roomId/messages/:messageId/react", roomController.removeReaction);
 router.post("/:roomId/messages/:messageId/reply", roomController.replyToMessage);
-router.post("/:roomId/messages/:messageId/read", roomController.markMessageAsRead);
 
 module.exports = router; 

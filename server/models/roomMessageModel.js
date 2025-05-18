@@ -65,18 +65,6 @@ const roomMessageSchema = new Schema(
 			default: false
 		},
 		// Metrics
-		readBy: [
-			{
-				roomMember: {
-					type: Schema.Types.ObjectId,
-					ref: "RoomMember"
-				},
-				readAt: {
-					type: Date,
-					default: Date.now
-				}
-			}
-		],
 		reactions: [
 			{
 				emoji: {
@@ -115,24 +103,6 @@ roomMessageSchema.virtual("reactionCounts").get(function() {
 	return counts;
 });
 
-// Method to mark a message as read by a room member
-roomMessageSchema.methods.markAsRead = function(roomMemberId) {
-	// Check if already read by this member
-	const alreadyRead = this.readBy.some(read => 
-		read.roomMember.toString() === roomMemberId.toString()
-	);
-	
-	if (!alreadyRead) {
-		this.readBy.push({
-			roomMember: roomMemberId,
-			readAt: new Date()
-		});
-		return this.save();
-	}
-	
-	return Promise.resolve(this);
-};
-
 // Method to add a reaction to a message
 roomMessageSchema.methods.addReaction = function(roomMemberId, emoji) {
 	// Check if this member already reacted with this emoji
@@ -170,14 +140,6 @@ roomMessageSchema.methods.removeReaction = function(roomMemberId, emoji) {
 	}
 	
 	return Promise.resolve(this);
-};
-
-// Method for user to delete their own message
-roomMessageSchema.methods.softDelete = function() {
-	this.isDeleted = true;
-	this.deletedAt = new Date();
-	this.content = "[This message has been deleted]";
-	return this.save();
 };
 
 // Method for admin to delete a message

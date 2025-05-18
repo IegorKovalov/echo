@@ -2,8 +2,7 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const fs = require("fs");
 const path = require("path");
-const cron = require("node-cron");
-const roomController = require("./controllers/roomController");
+
 
 dotenv.config({ path: "./.env" });
 
