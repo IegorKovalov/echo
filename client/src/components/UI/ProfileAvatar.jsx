@@ -38,7 +38,7 @@ export default function ProfileAvatar({
 
 	return (
 		<div
-			className={`overflow-hidden rounded-full ${sizeClasses[size]} ${className}`}
+			className={`overflow-hidden rounded-full ring-1 ring-white/10 ${sizeClasses[size]} ${className} shadow-sm transition-transform duration-200 hover:scale-105`}
 		>
 			{user.profilePicture ? (
 				<img
@@ -47,8 +47,8 @@ export default function ProfileAvatar({
 					className="h-full w-full object-cover"
 				/>
 			) : (
-				<div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-purple-700 to-blue-700">
-					<span className={`font-bold text-white ${textSizeClasses[size]}`}>
+				<div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-purple-600 to-indigo-700 animate-gradient">
+					<span className={`font-bold text-white/90 ${textSizeClasses[size]}`}>
 						{getInitials()}
 					</span>
 				</div>

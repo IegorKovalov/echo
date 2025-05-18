@@ -90,11 +90,11 @@ export default function PostFeed({
 			/>
 
 			{/* Posts Feed */}
-			<div className="space-y-6">
+			<div className="space-y-6 mt-6">
 				{loadingPosts && posts.length === 0 ? (
-					<div className="text-center py-10">
+					<div className="text-center py-12 px-8 rounded-xl border border-gray-800/70 bg-gray-900/70">
 						<Sparkles className="mx-auto h-8 w-8 animate-pulse text-purple-500" />
-						<p className="mt-2 text-gray-400">Loading posts...</p>
+						<p className="mt-3 text-gray-400">Loading posts...</p>
 					</div>
 				) : visiblePosts.length > 0 ? (
 					<>
@@ -102,28 +102,32 @@ export default function PostFeed({
 							// Set ref for the last post for infinite scrolling
 							if (index === visiblePosts.length - 1) {
 								return (
-									<div key={post._id} ref={lastPostRef}>
+									<div key={post._id} ref={lastPostRef} className="transition-all duration-300 hover:translate-y-[-2px]">
 										<PostItem post={post} currentUser={user} />
 									</div>
 								);
 							}
-							return <PostItem key={post._id} post={post} currentUser={user} />;
+							return (
+								<div key={post._id} className="transition-all duration-300 hover:translate-y-[-2px]">
+									<PostItem post={post} currentUser={user} />
+								</div>
+							);
 						})}
 
 						{/* Show loading indicator when loading more posts */}
 						{loadingMore && (
-							<div className="text-center py-4">
+							<div className="text-center py-6 px-4 rounded-lg bg-gray-900/50 border border-gray-800/50">
 								<Sparkles className="mx-auto h-6 w-6 animate-pulse text-purple-500" />
-								<p className="mt-2 text-sm text-gray-400">Loading more...</p>
+								<p className="mt-2 text-sm text-gray-400">Loading more posts...</p>
 							</div>
 						)}
 
 						{/* Show load more button if there are more posts but not loading */}
 						{hasMore && !loadingMore && (
-							<div className="text-center py-4">
+							<div className="text-center py-5">
 								<button
 									onClick={handleLoadMore}
-									className="flex items-center justify-center gap-2 mx-auto px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-purple-400 transition-colors"
+									className="flex items-center justify-center gap-2 mx-auto px-6 py-2.5 rounded-lg bg-gray-800/80 hover:bg-gray-700/90 text-purple-400 hover:text-purple-300 shadow-md shadow-black/10 transition-all duration-200"
 								>
 									<ArrowDown className="h-4 w-4" />
 									Load more
@@ -133,18 +137,18 @@ export default function PostFeed({
 
 						{/* Show end of feed message when no more posts */}
 						{!hasMore && posts.length > 0 && (
-							<div className="text-center py-4">
-								<p className="text-sm text-gray-400">No more posts to load</p>
+							<div className="text-center py-6 px-4 rounded-lg bg-gray-900/50 border border-gray-800/50">
+								<p className="text-sm text-gray-400">You've reached the end of your feed</p>
 							</div>
 						)}
 					</>
 				) : (
-					<div className="rounded-xl border border-gray-800 bg-gray-900 p-8 text-center">
-						<div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gray-800 p-4">
+					<div className="rounded-xl border border-gray-800/70 bg-gray-900/80 p-10 text-center shadow-lg shadow-black/10">
+						<div className="mx-auto mb-5 h-16 w-16 rounded-full bg-gray-800/70 p-4 shadow-inner shadow-black/20">
 							<MessageCircle className="h-8 w-8 text-gray-600" />
 						</div>
-						<h3 className="text-lg font-medium text-white">No posts yet</h3>
-						<p className="mt-2 text-gray-400">
+						<h3 className="text-lg font-medium text-white mb-2">No posts yet</h3>
+						<p className="mt-2 text-gray-400 max-w-sm mx-auto">
 							Create your first Echo or follow more users to see their posts.
 						</p>
 					</div>
