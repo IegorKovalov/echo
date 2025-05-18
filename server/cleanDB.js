@@ -4,8 +4,6 @@ const dotenv = require("dotenv");
 
 const User = require("./models/userModel");
 const Post = require("./models/postModel");
-const Room = require("./models/roomModel");
-const Message = require("./models/messageModel");
 const Follower = require("./models/followerModel");
 
 dotenv.config({ path: "./.env" });
@@ -28,8 +26,6 @@ const clearDatabase = async () => {
 	try {
 		await User.deleteMany({});
 		await Post.deleteMany({});
-		await Room.deleteMany({});
-		await Message.deleteMany({});
 		await Follower.deleteMany({});
 		console.log("Database cleared!");
 	} catch (err) {
