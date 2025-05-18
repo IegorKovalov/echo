@@ -37,11 +37,6 @@ exports.generateOTP = async (req, res) => {
 	}
 };
 
-/**
- * Verify OTP code provided by user
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
 exports.verifyOTP = async (req, res) => {
 	try {
 		const { userId } = req.params;
@@ -111,11 +106,6 @@ exports.verifyOTP = async (req, res) => {
 	}
 };
 
-/**
- * Resend OTP code to user's email
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
 exports.resendOTP = async (req, res) => {
 	try {
 		const { userId } = req.params;

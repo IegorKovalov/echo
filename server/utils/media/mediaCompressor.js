@@ -51,12 +51,6 @@ const compressImage = async (filePath, maxSize = TARGET_SIZE) => {
 	}
 };
 
-/**
- * Compress a video file to reduce its size
- * @param {string} filePath - Path to the video file
- * @param {number} maxSize - Max file size in bytes
- * @returns {Promise<string>} - Path to the compressed video
- */
 const compressVideo = async (filePath, maxSize = TARGET_SIZE) => {
 	try {
 		const fileInfo = path.parse(filePath);
@@ -97,12 +91,6 @@ const compressVideo = async (filePath, maxSize = TARGET_SIZE) => {
 	}
 };
 
-/**
- * Compress a media file (image or video) if it exceeds the target size
- * @param {string} filePath - Path to the media file
- * @param {string} mimeType - MIME type of the file
- * @returns {Promise<string>} - Path to the compressed media file
- */
 const compressMedia = async (filePath, mimeType) => {
 	try {
 		if (mimeType.startsWith("image/")) {

@@ -3,20 +3,18 @@ const Room = require("../models/roomModel");
 const Message = require("../models/messageModel");
 const UserModel = require("../models/userModel");
 const { sendError, sendSuccess } = require("../utils/http/responseUtils");
-const crypto = require("crypto");
-const bcrypt = require("bcrypt");
+const roomUtils = require("../utils/room/roomUtils");
+const validationUtils = require("../utils/room/validationUtils");
 
-/**
- * Create a new room
- * @route POST /api/v1/rooms
- */
 exports.createRoom = async (req, res) => {
 	try {
-		const { name, description, duration, tags, maxUsers } = req.body;
-
-		if (!name || name.trim() === "") {
-			return sendError(res, 400, "Room name is required");
+		// Validate room data
+		const validation = validationUtils.validateRoomCreation(req.body);
+		if (!validation.isValid) {
+			return sendError(res, 400, validation.message);
 		}
+
+		const { name, description, duration, tags, maxUsers } = req.body;
 
 		// Parse duration as a number
 		const durationHours = parseInt(duration) || 24;
@@ -48,10 +46,6 @@ exports.createRoom = async (req, res) => {
 	}
 };
 
-/**
- * Get all non-expired rooms with optional filtering
- * @route GET /api/v1/rooms
- */
 exports.getRooms = async (req, res) => {
 	try {
 		const { page = 1, limit = 10, filter } = req.query;
@@ -90,10 +84,6 @@ exports.getRooms = async (req, res) => {
 	}
 };
 
-/**
- * Get a specific room by ID
- * @route GET /api/v1/rooms/:roomId
- */
 exports.getRoom = async (req, res) => {
 	try {
 		const { roomId } = req.params;
@@ -118,10 +108,6 @@ exports.getRoom = async (req, res) => {
 	}
 };
 
-/**
- * Join a room and get anonymous identity
- * @route POST /api/v1/rooms/:roomId/join
- */
 exports.joinRoom = async (req, res) => {
 	try {
 		const { roomId } = req.params;
@@ -152,21 +138,12 @@ exports.joinRoom = async (req, res) => {
 		await room.save();
 
 		// Generate anonymous identity for the user in this room
-		const anonymousId = crypto
-			.createHash("sha256")
-			.update(`${req.user._id}-${roomId}-${Date.now()}`)
-			.digest("hex")
-			.substring(0, 10);
-
-		const anonymousName = `Anonymous-${Math.floor(1000 + Math.random() * 9000)}`;
+		const identity = roomUtils.generateAnonymousIdentity(req.user._id, roomId);
 
 		return sendSuccess(res, 200, "Successfully joined the room", {
 			data: {
 				room,
-				identity: {
-					anonymousId,
-					anonymousName,
-				},
+				identity,
 			},
 		});
 	} catch (error) {
@@ -176,10 +153,6 @@ exports.joinRoom = async (req, res) => {
 	}
 };
 
-/**
- * Leave a room
- * @route DELETE /api/v1/rooms/:roomId/leave
- */
 exports.leaveRoom = async (req, res) => {
 	try {
 		const { roomId } = req.params;
@@ -205,18 +178,15 @@ exports.leaveRoom = async (req, res) => {
 	}
 };
 
-/**
- * Send a message in a room
- * @route POST /api/v1/rooms/:roomId/messages
- */
 exports.sendMessage = async (req, res) => {
 	try {
 		const { roomId } = req.params;
 		const { content, anonymousId, anonymousName } = req.body;
 
-		// Validate message content
-		if (!content || content.trim() === "") {
-			return sendError(res, 400, "Message content is required");
+		// Validate message
+		const validation = validationUtils.validateMessageCreation(req.body);
+		if (!validation.isValid) {
+			return sendError(res, 400, validation.message);
 		}
 
 		// Verify room exists and has not expired
@@ -261,10 +231,6 @@ exports.sendMessage = async (req, res) => {
 	}
 };
 
-/**
- * Get messages for a room with pagination
- * @route GET /api/v1/rooms/:roomId/messages
- */
 exports.getMessages = async (req, res) => {
 	try {
 		const { roomId } = req.params;
@@ -333,49 +299,7 @@ exports.cleanupExpiredRooms = async () => {
 
 exports.ensureOfficialRooms = async () => {
 	try {
-		const officialRooms = [
-			{
-				name: "Mental Health Support",
-				description:
-					"A safe space to discuss mental health challenges anonymously",
-				duration: 168, // 7 days
-				maxUsers: 100,
-				officialName: "Echo Team",
-				isOfficial: true,
-			},
-			{
-				name: "Career Confessions",
-				description: "Share your workplace stories and career dilemmas",
-				duration: 168, // 7 days
-				maxUsers: 100,
-				officialName: "Echo Team",
-				isOfficial: true,
-			},
-			{
-				name: "Creative Writing",
-				description: "Share your writing and get anonymous feedback",
-				duration: 168, // 7 days
-				maxUsers: 100,
-				officialName: "Echo Team",
-				isOfficial: true,
-			},
-			{
-				name: "Tech Talk",
-				description: "Discuss technology without judgment or bias",
-				duration: 168, // 7 days
-				maxUsers: 100,
-				officialName: "Echo Team",
-				isOfficial: true,
-			},
-			{
-				name: "Daily Confessions",
-				description: "Share your thoughts, secrets, and confessions",
-				duration: 168, // 7 days
-				maxUsers: 100,
-				officialName: "Echo Team",
-				isOfficial: true,
-			},
-		];
+		const officialRooms = roomUtils.getOfficialRoomTemplates();
 		const existingRooms = await Room.find({ isOfficial: true });
 		const existingRoomNames = existingRooms.map((room) => room.name);
 
@@ -387,6 +311,8 @@ exports.ensureOfficialRooms = async () => {
 			);
 			return;
 		}
+		
+		// Create missing official rooms
 		for (const roomData of officialRooms) {
 			if (!existingRoomNames.includes(roomData.name)) {
 				const expiresAt = new Date();
@@ -402,6 +328,8 @@ exports.ensureOfficialRooms = async () => {
 				console.log(`Created official room: ${roomData.name}`);
 			}
 		}
+		
+		// Reset expired official rooms
 		const now = new Date();
 		const expiredOfficialRooms = await Room.find({
 			isOfficial: true,
@@ -409,7 +337,7 @@ exports.ensureOfficialRooms = async () => {
 		});
 
 		for (const room of expiredOfficialRooms) {
-			await require("../models/messageModel").deleteMany({ room: room._id });
+			await Message.deleteMany({ room: room._id });
 			const expiresAt = new Date();
 			expiresAt.setHours(expiresAt.getHours() + room.duration);
 

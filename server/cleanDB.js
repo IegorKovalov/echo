@@ -2,20 +2,12 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 
-// Import models
 const User = require("./models/userModel");
 const Post = require("./models/postModel");
 const Room = require("./models/roomModel");
 const Message = require("./models/messageModel");
 const Follower = require("./models/followerModel");
 
-/*
- * This script connects to the MongoDB database, clears all data from the specified collections,
- * and then closes the connection.
- * It uses Mongoose for database operations and dotenv for environment variable management.
- * The script is designed to be run in a Node.js environment.
- * It is important to note that this script will permanently delete all data in the specified collections.
- */
 dotenv.config({ path: "./.env" });
 
 const connectDB = async () => {
@@ -32,7 +24,6 @@ const connectDB = async () => {
 	}
 };
 
-// Clear existing data
 const clearDatabase = async () => {
 	try {
 		await User.deleteMany({});
@@ -47,7 +38,6 @@ const clearDatabase = async () => {
 	}
 };
 
-// Create admin user
 const createAdminUser = async () => {
 	try {
 		const adminUser = await User.create({
@@ -74,7 +64,7 @@ const cleanDatabase = async () => {
 	try {
 		await connectDB();
 		await clearDatabase();
-		await createAdminUser(); // Create admin user after cleaning the database
+		await createAdminUser();
 	} catch (err) {
 		console.error("Error cleaning database:", err);
 		process.exit(1);

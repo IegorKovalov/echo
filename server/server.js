@@ -19,7 +19,6 @@ mongoose
 	.then(() => {
 		console.log("DB connection successful!");
 		
-		// Create official rooms on server startup
 		roomController.ensureOfficialRooms()
 			.then(() => console.log("Official rooms initialized!"))
 			.catch(err => console.error("Error initializing official rooms:", err));
@@ -34,13 +33,11 @@ if (!fs.existsSync(uploadDir)) {
 }
 const port = process.env.PORT || 8000;
 
-// Run cleanup for expired rooms every hour
 cron.schedule("0 * * * *", async () => {
 	console.log("Running scheduled cleanup of expired rooms...");
 	await roomController.cleanupExpiredRooms();
 });
 
-// Ensure official rooms exist and reset them if needed (daily at midnight)
 cron.schedule("0 0 * * *", async () => {
 	console.log("Running daily check of official rooms...");
 	await roomController.ensureOfficialRooms();
@@ -50,7 +47,6 @@ const server = app.listen(port, () => {
 	console.log(`App running on port ${port} in ${process.env.NODE_ENV} mode...`);
 });
 
-// Handle unhandled promise rejections
 process.on("unhandledRejection", (err) => {
 	console.log("UNHANDLED REJECTION! 💥 Shutting down...");
 	console.log(err.name, err.message);

@@ -26,48 +26,40 @@ const fileFilter = (req, file, cb) => {
 	}
 };
 
-// Base upload configuration with increased size limit
 const upload = multer({
 	storage: storage,
 	limits: {
-		fileSize: 200 * 1024 * 1024, // 200MB max per file (will be compressed if needed)
-		files: 5, // up to 5 files
+		fileSize: 200 * 1024 * 1024,
+		files: 5,
 	},
 	fileFilter: fileFilter,
 });
 
-// Create a middleware to compress files after multer processes them
 const compressFiles = async (req, res, next) => {
 	try {
-		// If no files were uploaded, continue
 		if (!req.files || req.files.length === 0) {
 			return next();
 		}
 
-		// Process each file for compression
 		for (let i = 0; i < req.files.length; i++) {
 			const file = req.files[i];
 
-			// Check if file size exceeds 100MB
 			const stats = fs.statSync(file.path);
 			if (stats.size > 100 * 1024 * 1024) {
 				console.log(
 					`Compressing file: ${file.originalname} (${Math.round(stats.size / (1024 * 1024))}MB)`
 				);
 
-				// Compress the file and get the new path
 				const compressedFilePath = await compressMedia(
 					file.path,
 					file.mimetype
 				);
 
 				if (compressedFilePath !== file.path) {
-					// Update the file path to the compressed version
 					const originalPath = file.path;
 					file.path = compressedFilePath;
 					file.size = fs.statSync(compressedFilePath).size;
 
-					// Delete the original file if it's different from the compressed one
 					try {
 						fs.unlinkSync(originalPath);
 					} catch (err) {
@@ -87,7 +79,6 @@ const compressFiles = async (req, res, next) => {
 	}
 };
 
-// Export both the original upload middleware and a version with compression
 module.exports = {
 	upload,
 	uploadAndCompress: (fieldName, maxCount) => [

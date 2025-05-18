@@ -21,7 +21,6 @@ router
 	.patch(uploadAndCompress("media", 5), postController.updatePost)
 	.delete(postController.deletePost);
 
-// View counter routes
 router.patch("/:id/view", postController.incrementViews);
 router.post("/batch-view", postController.batchIncrementViews);
 

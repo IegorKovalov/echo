@@ -29,12 +29,6 @@ exports.enhancePostWithVirtuals = (post) => {
   return postObj;
 };
 
-/**
- * Validates expiration time in hours
- * @param {string|number} hours - Hours to validate
- * @param {number} defaultHours - Default hours if not provided
- * @returns {Object} - Validation result
- */
 exports.validateExpirationTime = (hours, defaultHours = 24) => {
   const parsedHours = parseFloat(hours || defaultHours);
   
@@ -75,4 +69,4 @@ exports.getPaginationInfo = (page, limit, totalItems) => {
     nextPage: hasMore ? pageNum + 1 : null,
     skip,
   };
-}; 
+};

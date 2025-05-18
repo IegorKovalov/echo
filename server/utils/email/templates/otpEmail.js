@@ -1,9 +1,3 @@
-/**
- * Generate HTML content for OTP verification email
- * @param {string} otp - The one-time password to be included in the email
- * @param {string} userName - The user's name or username
- * @returns {string} - HTML content for the email
- */
 const otpEmailTemplate = (otp, userName) => {
   return `
   <!DOCTYPE html>

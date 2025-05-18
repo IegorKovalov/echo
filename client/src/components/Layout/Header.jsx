@@ -2,7 +2,6 @@ import {
 	Bell,
 	Home,
 	LogOut,
-	MessageSquareDashed,
 	Search,
 	Settings,
 	Sparkles,
@@ -104,17 +103,6 @@ export default function Header() {
 						>
 							<Home className="h-4 w-4" />
 							Feed
-						</Link>
-						<Link
-							to="/rooms"
-							className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${
-								isActive("/rooms")
-									? "text-purple-400"
-									: "text-gray-200 hover:text-purple-400"
-							}`}
-						>
-							<MessageSquareDashed className="h-4 w-4" />
-							Rooms
 						</Link>
 						<button
 							ref={searchButtonRef}
@@ -231,17 +219,6 @@ export default function Header() {
 							>
 								<Home className="h-5 w-5" />
 								Feed
-							</Link>
-							<Link
-								to="/rooms"
-								className={`flex items-center gap-2 px-3 py-2 rounded-md ${
-									isActive("/rooms")
-										? "bg-gray-800 text-white"
-										: "text-gray-300 hover:bg-gray-800 hover:text-white"
-								}`}
-							>
-								<MessageSquareDashed className="h-5 w-5" />
-								Rooms
 							</Link>
 							<button
 								onClick={() => {
