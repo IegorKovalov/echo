@@ -1,10 +1,12 @@
 import { useAuth } from "../../context/AuthContext";
-import { PostProvider } from "../../context/PostContext";
+// Remove this import as we no longer need it
+// import { PostProvider } from "../../context/PostContext";
 import Header from "./Header";
 
 export default function Layout({ children, showHeader = true }) {
 	const { user } = useAuth();
-	const content = user ? <PostProvider>{children}</PostProvider> : children;
+	// Remove PostProvider wrapping and directly use children
+	const content = user ? children : children;
 
 	return (
 		<div className="flex min-h-screen flex-col bg-gradient-to-b from-gray-900 to-gray-950">

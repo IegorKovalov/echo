@@ -43,6 +43,14 @@ export default function PostItem({
 	const initializedRef = useRef(false);
 	const isOwnPost = user._id === post.user._id;
 	const commentCount = post.comments ? post.comments.length : 0;
+	const isMounted = useRef(true);
+
+	// Add cleanup for the component
+	useEffect(() => {
+		return () => {
+			isMounted.current = false;
+		};
+	}, []);
 
 	useEffect(() => {
 		if (!initializedRef.current) {
@@ -52,10 +60,13 @@ export default function PostItem({
 	}, [post._id, post.views, initializeViewCount]);
 
 	useEffect(() => {
+		// Only track views once and only for non-expired posts
 		if (!hasTrackedView && !post.expired) {
 			trackView(post._id);
 			setHasTrackedView(true);
 		}
+
+		// No cleanup needed - view tracking is batched at context level
 	}, [post._id, post.expired, hasTrackedView, trackView]);
 
 	const viewCount = getViewCount(post._id) || post.views || 0;
@@ -71,8 +82,13 @@ export default function PostItem({
 				}
 			} catch (error) {
 				console.error("Error deleting post:", error);
+				if (isMounted.current) {
+					showError("Failed to delete post");
+				}
 			} finally {
-				setIsDeleting(false);
+				if (isMounted.current) {
+					setIsDeleting(false);
+				}
 			}
 		}
 	};
@@ -81,14 +97,19 @@ export default function PostItem({
 		setIsRenewing(true);
 		try {
 			const renewedPost = await renewPost(post._id);
-			if (onRenew) {
+			if (onRenew && isMounted.current) {
 				onRenew(post._id);
 			}
 			return renewedPost;
 		} catch (error) {
 			console.error("Error renewing post:", error);
+			if (isMounted.current) {
+				showError("Failed to renew post");
+			}
 		} finally {
-			setIsRenewing(false);
+			if (isMounted.current) {
+				setIsRenewing(false);
+			}
 		}
 	};
 
@@ -102,15 +123,22 @@ export default function PostItem({
 			}
 			
 			const updatedPost = await updatePost(post._id, updatedPostData);
-			setIsEditing(false);
-			if (onEdit) {
-				onEdit(updatedPost);
+			if (isMounted.current) {
+				setIsEditing(false);
+				if (onEdit) {
+					onEdit(updatedPost);
+				}
 			}
 			return updatedPost;
 		} catch (error) {
 			console.error("Error updating post:", error);
+			if (isMounted.current) {
+				showError("Failed to update post");
+			}
 		} finally {
-			setIsSubmitting(false);
+			if (isMounted.current) {
+				setIsSubmitting(false);
+			}
 		}
 	};
 
@@ -119,10 +147,14 @@ export default function PostItem({
 		navigator.clipboard
 			.writeText(postUrl)
 			.then(() => {
-				showInfo("Post link copied to clipboard");
+				if (isMounted.current) {
+					showInfo("Post link copied to clipboard");
+				}
 			})
 			.catch(() => {
-				showError("Failed to copy link");
+				if (isMounted.current) {
+					showError("Failed to copy link");
+				}
 			});
 	};
 

@@ -477,11 +477,11 @@ export const PostProvider = ({ children }) => {
 	}, []);
 
 	useEffect(() => {
-		if (user) {
+		if (user && (initialLoad || posts.length === 0)) {
 			fetchPosts(1, 15);
 			fetchTrendingPosts();
 		}
-	}, [user, fetchPosts, fetchTrendingPosts]);
+	}, [user?._id, initialLoad, fetchPosts, fetchTrendingPosts, posts.length]);
 
 	const contextValue = useMemo(
 		() => ({

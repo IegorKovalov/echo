@@ -15,6 +15,14 @@ export default function PostFeed({
 	const [loadingMore, setLoadingMore] = useState(false);
 	const observerRef = useRef(null);
 	const lastPostRef = useRef(null);
+	const isMounted = useRef(true);
+
+	// Add cleanup for component unmounting
+	useEffect(() => {
+		return () => {
+			isMounted.current = false;
+		};
+	}, []);
 
 	const handleCreatePost = useCallback(
 		async (formData) => {
@@ -24,7 +32,9 @@ export default function PostFeed({
 			} catch (error) {
 				console.error("Error creating post:", error);
 			} finally {
-				setIsSubmitting(false);
+				if (isMounted.current) {
+					setIsSubmitting(false);
+				}
 			}
 		},
 		[createPost]
@@ -39,12 +49,19 @@ export default function PostFeed({
 		} catch (error) {
 			console.error("Error loading more posts:", error);
 		} finally {
-			setLoadingMore(false);
+			if (isMounted.current) {
+				setLoadingMore(false);
+			}
 		}
 	}, [loadingPosts, loadingMore, hasMore, loadMorePosts]);
 
 	// Setup intersection observer for infinite scrolling
 	useEffect(() => {
+		// Avoid creating observer if there's no more content or already loading
+		if (!hasMore || loadingPosts || loadingMore) {
+			return;
+		}
+
 		const currentObserver = new IntersectionObserver(
 			(entries) => {
 				const [entry] = entries;
@@ -57,9 +74,11 @@ export default function PostFeed({
 
 		observerRef.current = currentObserver;
 
+		// Clean up observer when component unmounts or dependencies change
 		return () => {
 			if (observerRef.current) {
 				observerRef.current.disconnect();
+				observerRef.current = null;
 			}
 		};
 	}, [hasMore, loadingPosts, loadingMore, handleLoadMore]);
@@ -72,7 +91,10 @@ export default function PostFeed({
 			lastPostRef.current &&
 			observerRef.current
 		) {
+			// First disconnect any existing observations
 			observerRef.current.disconnect();
+			
+			// Then observe the last post element
 			observerRef.current.observe(lastPostRef.current);
 		}
 	}, [posts, loadingPosts]);

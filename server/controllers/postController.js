@@ -21,7 +21,6 @@ const enhancePostsWithVirtuals = (posts) => {
 
 exports.createPost = async (req, res) => {
 	try {
-		console.log("Creating post with data:", req.body);
 		const { content, expirationTime } = req.body;
 		if (!content) {
 			return sendError(res, 400, "Post content is required");
@@ -40,18 +39,19 @@ exports.createPost = async (req, res) => {
 		try {
 			postData.media = await uploadMediaToCloudinary(req.files);
 		} catch (error) {
+			console.error("Media upload error:", error);
 			return sendError(res, 500, `Error uploading media: ${error.message}`);
 		}
-
 		const newPost = await Post.create(postData);
-		const populatedPost = await populatePostFields(Post.findById(newPost._id));
 
+		const populatedPost = await populatePostFields(Post.findById(newPost._id));
 		return sendSuccess(res, 201, "Post created successfully", {
 			data: {
 				post: populatedPost,
 			},
 		});
 	} catch (error) {
+		console.error("Error in createPost:", error);
 		cleanupTempFiles(req.files);
 		return sendError(res, 500, "Error creating post", {
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
