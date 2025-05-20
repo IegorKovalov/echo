@@ -4,9 +4,10 @@ import PostFeed from "../components/UI/PostFeed";
 import TrendingSidebar from "../components/UI/TrendingSidebar";
 import { useAuth } from "../context/AuthContext";
 import { usePost } from "../context/PostContext";
+import LoadingSpinner from "../components/UI/LoadingSpinner";
 
 export default function HomePage() {
-	const { user, loading } = useAuth();
+	const { user, loading: authLoading } = useAuth();
 	const {
 		posts,
 		trendingPosts,
@@ -18,19 +19,10 @@ export default function HomePage() {
 		getHoursLeft,
 	} = usePost();
 
-	if (loading) {
+	if (authLoading) {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-gray-950">
-				<div className="text-center bg-gray-900/40 backdrop-blur-sm p-10 rounded-2xl border border-gray-800/50 shadow-xl float">
-					<Sparkles className="mx-auto h-14 w-14 text-purple-500 pulse-purple" />
-					<div className="mt-6 space-y-2">
-						<p className="text-xl font-medium text-white">Loading your Echo feed...</p>
-						<p className="text-gray-400">Please wait while we gather your moments</p>
-					</div>
-					<div className="mt-6 w-48 h-1.5 bg-gray-800/80 rounded-full mx-auto overflow-hidden">
-						<div className="h-full bg-gradient-to-r from-purple-600 to-blue-600 rounded-full shimmer"></div>
-					</div>
-				</div>
+				<LoadingSpinner />
 			</div>
 		);
 	}

@@ -5,8 +5,8 @@ import Header from "./Header";
 
 export default function Layout({ children, showHeader = true }) {
 	const { user } = useAuth();
-	// Remove PostProvider wrapping and directly use children
-	const content = user ? children : children;
+	// Simplified content assignment
+	const content = children;
 
 	return (
 		<div className="flex min-h-screen flex-col bg-gradient-to-b from-gray-900 to-gray-950">

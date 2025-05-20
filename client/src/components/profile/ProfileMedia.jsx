@@ -1,5 +1,7 @@
 import { Clock, ImageIcon, Sparkles } from "lucide-react";
 import React from "react";
+import LoadingSpinner from "../UI/LoadingSpinner";
+import EmptyState from "../UI/EmptyState";
 
 export default function ProfileMedia({
 	loadingPosts,
@@ -14,22 +16,15 @@ export default function ProfileMedia({
 			<div className="container mt-4 px-4 pb-16">
 				{loadingPosts ? (
 					<div className="mt-8 text-center">
-						<Sparkles className="mx-auto h-8 w-8 animate-pulse text-purple-500" />
-						<p className="mt-2 text-gray-400">Loading...</p>
+						<LoadingSpinner />
 					</div>
 				) : mediaPosts.length === 0 ? (
-					<div className="mt-8 rounded-lg bg-gray-900 p-8 text-center">
-						<div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gray-800 p-4">
-							<ImageIcon className="h-8 w-8 text-gray-600" />
-						</div>
-						<h3 className="text-lg font-medium text-white">
-							No media uploads yet
-						</h3>
-						<p className="mt-2 text-gray-400">
-							{isOwnProfile
-								? "When you share photos or videos, they'll appear here."
-								: "This user hasn't shared any photos or videos yet."}
-						</p>
+					<div className="mt-8 text-center">
+						<EmptyState 
+							message={isOwnProfile 
+								? "When you share photos or videos, they\'ll appear here."
+								: "This user hasn\'t shared any photos or videos yet."}
+						/>
 					</div>
 				) : (
 					<div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">

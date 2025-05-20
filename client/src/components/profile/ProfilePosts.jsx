@@ -2,6 +2,8 @@ import { MessageCircle, Sparkles } from "lucide-react";
 import React from "react";
 import PostForm from "../UI/PostForm";
 import PostItem from "../UI/PostItem";
+import LoadingSpinner from "../UI/LoadingSpinner";
+import EmptyState from "../UI/EmptyState";
 
 export default function ProfilePosts({
 	loadingPosts,
@@ -53,20 +55,15 @@ export default function ProfilePosts({
 			<div className="container mt-4 px-4 pb-16">
 				{loadingPosts ? (
 					<div className="mt-8 text-center">
-						<Sparkles className="mx-auto h-8 w-8 animate-pulse text-purple-500" />
-						<p className="mt-2 text-gray-400">Loading...</p>
+						<LoadingSpinner />
 					</div>
 				) : posts.length === 0 ? (
-					<div className="mt-8 rounded-lg bg-gray-900 p-8 text-center">
-						<div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gray-800 p-4">
-							<MessageCircle className="h-8 w-8 text-gray-600" />
-						</div>
-						<h3 className="text-lg font-medium text-white">No echoes yet</h3>
-						<p className="mt-2 text-gray-400">
-							{isOwnProfile
+					<div className="mt-8 text-center">
+						<EmptyState 
+							message={isOwnProfile 
 								? "Create your first Echo using the form above."
-								: "This user hasn't posted any Echoes yet."}
-						</p>
+								: "This user hasn\'t posted any Echoes yet."}
+						/>
 					</div>
 				) : (
 					<div className="space-y-6">

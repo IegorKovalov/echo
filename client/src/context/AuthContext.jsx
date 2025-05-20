@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import authService from "../services/auth.service";
+import { useToast } from "./ToastContext";
 
 // Create context
 const AuthContext = createContext();
@@ -8,8 +9,9 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
 	const [user, setUser] = useState(null);
 	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(null);
+	const [contextError, setContextError] = useState(null);
 	const navigate = useNavigate();
+	const { showError } = useToast();
 
 	// Check if user is already logged in
 	useEffect(() => {
@@ -24,20 +26,18 @@ export function AuthProvider({ children }) {
 	const login = async (email, password) => {
 		try {
 			setLoading(true);
-			setError(null);
+			setContextError(null);
 			const response = await authService.login(email, password);
 			setUser(response.data.user);
 			navigate("/");
 			return response;
 		} catch (err) {
-			// Check if this is an unverified user error
-			if (err.userId) {
-				// Redirect to OTP verification page
+			if (err.isVerificationError && err.userId) {
 				navigate(`/verify-email/${err.userId}`);
 				throw err;
 			}
 			
-			setError(err.message);
+			setContextError(err.message || "Login failed");
 			throw err;
 		} finally {
 			setLoading(false);
@@ -48,17 +48,16 @@ export function AuthProvider({ children }) {
 	const signup = async (userData) => {
 		try {
 			setLoading(true);
-			setError(null);
+			setContextError(null);
 			const response = await authService.signup(userData);
 			
-			// If signup successful, redirect to OTP verification page
 			if (response.status === "success" && response.userId) {
 				navigate(`/verify-email/${response.userId}`);
 			}
 			
 			return response;
 		} catch (err) {
-			setError(err.message);
+			setContextError(err.message || "Signup failed");
 			throw err;
 		} finally {
 			setLoading(false);
@@ -69,7 +68,7 @@ export function AuthProvider({ children }) {
 	const verifyOTP = async (userId, otp) => {
 		try {
 			setLoading(true);
-			setError(null);
+			setContextError(null);
 			const response = await authService.verifyOTP(userId, otp);
 			
 			if (response.status === "success") {
@@ -79,7 +78,7 @@ export function AuthProvider({ children }) {
 			
 			return response;
 		} catch (err) {
-			setError(err.message);
+			setContextError(err.message || "OTP Verification failed");
 			throw err;
 		} finally {
 			setLoading(false);
@@ -90,11 +89,11 @@ export function AuthProvider({ children }) {
 	const resendOTP = async (userId) => {
 		try {
 			setLoading(true);
-			setError(null);
+			setContextError(null);
 			const response = await authService.resendOTP(userId);
 			return response;
 		} catch (err) {
-			setError(err.message);
+			setContextError(err.message || "Failed to resend OTP");
 			throw err;
 		} finally {
 			setLoading(false);
@@ -105,13 +104,21 @@ export function AuthProvider({ children }) {
 	const logout = async () => {
 		try {
 			setLoading(true);
-			setError(null);
+			setContextError(null);
 			await authService.logout();
 			setUser(null);
 			navigate("/login");
 		} catch (err) {
-			setError(err.message);
-			throw err;
+			if (err.isLogoutError) {
+				setContextError(err.message);
+				showError(err.message);
+			} else {
+				const defaultMessage = "An error occurred during logout.";
+				setContextError(err.message || defaultMessage);
+				showError(err.message || defaultMessage);
+			}
+			setUser(null);
+			navigate("/login");
 		} finally {
 			setLoading(false);
 		}
@@ -119,22 +126,24 @@ export function AuthProvider({ children }) {
 
 	// Update user function
 	const updateUser = (userData) => {
-		if (user) {
-			// Update the user data in context
-			setUser((prevUser) => ({
-				...prevUser,
-				...userData,
-			}));
-
-			// Also update the user in localStorage to persist changes
-			const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-			localStorage.setItem(
-				"user",
-				JSON.stringify({
-					...storedUser,
+		try {
+			if (user) {
+				setUser((prevUser) => ({
+					...prevUser,
 					...userData,
-				})
-			);
+				}));
+				const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+				localStorage.setItem(
+					"user",
+					JSON.stringify({
+						...storedUser,
+						...userData,
+					})
+				);
+			}
+		} catch (e) {
+			console.error("AuthContext: Error updating user in localStorage", e);
+			showError("Could not save user changes locally.");
 		}
 	};
 
@@ -142,11 +151,11 @@ export function AuthProvider({ children }) {
 	const forgotPassword = async (email) => {
 		try {
 			setLoading(true);
-			setError(null);
+			setContextError(null);
 			const response = await authService.forgotPassword(email);
 			return response;
 		} catch (err) {
-			setError(err.message);
+			setContextError(err.message || "Failed to send password reset email");
 			throw err;
 		} finally {
 			setLoading(false);
@@ -157,17 +166,16 @@ export function AuthProvider({ children }) {
 	const resetPassword = async (token, password, passwordConfirm) => {
 		try {
 			setLoading(true);
-			setError(null);
+			setContextError(null);
 			const response = await authService.resetPassword(
 				token,
 				password,
 				passwordConfirm
 			);
 			setUser(response.data.user);
-			navigate("/success");
 			return response;
 		} catch (err) {
-			setError(err.message);
+			setContextError(err.message || "Password reset failed");
 			throw err;
 		} finally {
 			setLoading(false);
@@ -177,7 +185,7 @@ export function AuthProvider({ children }) {
 	const value = {
 		user,
 		loading,
-		error,
+		error: contextError,
 		login,
 		signup,
 		logout,

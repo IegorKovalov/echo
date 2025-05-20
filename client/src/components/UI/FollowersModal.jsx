@@ -4,7 +4,11 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import FollowerService from "../../services/follower.service";
+import { useFollower } from "../../context/FollowerContext";
 import ProfileAvatar from "./ProfileAvatar";
+import LoadingSpinner from "./LoadingSpinner";
+import EmptyState from "./EmptyState";
+import ErrorMessage from "./ErrorMessage";
 
 export default function FollowersModal({
 	isOpen,
@@ -15,6 +19,7 @@ export default function FollowersModal({
 	const [activeTab, setActiveTab] = useState(initialTab || "followers");
 	const [users, setUsers] = useState([]);
 	const [loading, setLoading] = useState(true);
+	const [fetchError, setFetchError] = useState(null);
 	const [hasMore, setHasMore] = useState(false);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(1);
@@ -22,6 +27,7 @@ export default function FollowersModal({
 
 	const { user } = useAuth();
 	const { showError, showSuccess } = useToast();
+	const { toggleFollow: contextToggleFollow } = useFollower();
 
 	useEffect(() => {
 		if (initialTab) {
@@ -35,6 +41,7 @@ export default function FollowersModal({
 			setLoading(true);
 			setUsers([]);
 			setCurrentPage(1);
+			setFetchError(null);
 			fetchUsers(1);
 		}
 	}, [isOpen, userId, activeTab]);
@@ -42,6 +49,8 @@ export default function FollowersModal({
 	const fetchUsers = async (page = 1) => {
 		try {
 			if (!userId) return;
+			setLoading(true);
+			setFetchError(null);
 
 			let response;
 			if (activeTab === "followers") {
@@ -69,7 +78,9 @@ export default function FollowersModal({
 			}
 		} catch (error) {
 			console.error(`Error fetching ${activeTab}:`, error);
-			showError(`Failed to load ${activeTab}`);
+			const errorMessage = error.message || `Failed to load ${activeTab}`;
+			setFetchError(errorMessage);
+			showError(errorMessage);
 		} finally {
 			setLoading(false);
 		}
@@ -83,21 +94,21 @@ export default function FollowersModal({
 
 	const handleFollowToggle = async (targetUserId, isFollowing) => {
 		try {
-			if (isFollowing) {
-				await FollowerService.unfollowUser(targetUserId);
-				showSuccess("User unfollowed successfully");
-			} else {
-				await FollowerService.followUser(targetUserId);
-				showSuccess("User followed successfully");
-			}
+			const success = await contextToggleFollow(targetUserId, isFollowing);
 
-			setUsers(
-				users.map((u) =>
-					u.user._id === targetUserId ? { ...u, isFollowing: !isFollowing } : u
-				)
-			);
+			if (success) {
+				setUsers((prevUsers) =>
+					prevUsers.map((u) =>
+						u.user._id === targetUserId
+							? { ...u, isFollowing: !isFollowing }
+							: u
+					)
+				);
+			} else {
+				showError("Failed to update follow status from modal.");
+			}
 		} catch (error) {
-			console.error("Error toggling follow:", error);
+			console.error("Error toggling follow in modal:", error);
 			showError(error.message || "Failed to update follow status");
 		}
 	};
@@ -174,10 +185,9 @@ export default function FollowersModal({
 				{/* User list */}
 				<div className="max-h-96 overflow-y-auto">
 					{loading ? (
-						<div className="flex flex-col items-center justify-center py-12">
-							<Sparkles className="h-8 w-8 text-purple-500 mb-2 animate-pulse" />
-							<p className="text-gray-400 text-sm">Loading...</p>
-						</div>
+						<LoadingSpinner />
+					) : fetchError ? (
+						<ErrorMessage message={fetchError} />
 					) : users.length > 0 ? (
 						<div>
 							{users.map((item) => (
@@ -243,21 +253,11 @@ export default function FollowersModal({
 							)}
 						</div>
 					) : (
-						<div className="py-12 text-center">
-							<div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gray-800 p-4">
-								<User className="h-8 w-8 text-gray-600" />
-							</div>
-							<h3 className="text-lg font-medium text-white">
-								{activeTab === "followers"
-									? "No followers yet"
-									: "Not following anyone"}
-							</h3>
-							<p className="mt-2 text-sm text-gray-400">
-								{activeTab === "followers"
-									? "When people follow you, they'll appear here."
-									: "When you follow people, they'll appear here."}
-							</p>
-						</div>
+						<EmptyState 
+							message={activeTab === "followers" 
+								? "This user doesn\'t have any followers yet."
+								: "This user isn\'t following anyone yet."}
+						/>
 					)}
 				</div>
 			</div>

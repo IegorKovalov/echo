@@ -2,6 +2,8 @@ import { ArrowDown, MessageCircle, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import PostForm from "../UI/PostForm";
 import PostItem from "../UI/PostItem";
+import LoadingSpinner from "./LoadingSpinner";
+import EmptyState from "./EmptyState";
 
 export default function PostFeed({
 	user,
@@ -114,13 +116,7 @@ export default function PostFeed({
 			{/* Posts Feed */}
 			<div className="space-y-6 mt-6">
 				{loadingPosts && posts.length === 0 ? (
-					<div className="text-center py-12 px-8 rounded-xl border border-gray-800/50 bg-gray-900/40 backdrop-blur-sm shadow-xl">
-						<Sparkles className="mx-auto h-10 w-10 text-purple-500 pulse-purple" />
-						<p className="mt-4 text-gray-300 font-medium">Loading posts...</p>
-						<div className="mt-4 w-40 h-1 bg-gray-800/80 rounded-full mx-auto overflow-hidden">
-							<div className="h-full bg-gradient-to-r from-purple-600 to-blue-600 rounded-full shimmer"></div>
-						</div>
-					</div>
+					<LoadingSpinner />
 				) : visiblePosts.length > 0 ? (
 					<>
 						{visiblePosts.map((post, index) => {
@@ -171,15 +167,7 @@ export default function PostFeed({
 						)}
 					</>
 				) : (
-					<div className="rounded-xl border border-gray-800/50 bg-gray-900/40 backdrop-blur-sm p-10 text-center shadow-xl">
-						<div className="mx-auto mb-6 h-20 w-20 rounded-full bg-gradient-to-br from-purple-900/30 to-blue-900/30 p-5 flex items-center justify-center shadow-inner">
-							<MessageCircle className="h-10 w-10 text-gray-400" />
-						</div>
-						<h3 className="text-xl font-medium text-white mb-3">No posts yet</h3>
-						<p className="mt-2 text-gray-400 max-w-sm mx-auto">
-							Create your first Echo or follow more users to see their posts.
-						</p>
-					</div>
+					<EmptyState message="No posts yet. Create your first Echo or follow more users to see their posts." />
 				)}
 			</div>
 		</div>

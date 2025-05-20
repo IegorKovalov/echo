@@ -1,6 +1,8 @@
 import { Clock, Eye, MessageCircle, Sparkles, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import ProfileAvatar from "../UI/ProfileAvatar";
+import LoadingSpinner from "./LoadingSpinner";
+import EmptyState from "./EmptyState";
 
 export default function TrendingSidebar({
 	trendingPosts,
@@ -16,14 +18,9 @@ export default function TrendingSidebar({
 				</h3>
 
 				{loadingTrending ? (
-					<div className="py-12 text-center">
-						<Sparkles className="mx-auto h-6 w-6 animate-pulse text-purple-500" />
-						<p className="mt-2 text-xs text-gray-400">Loading trends...</p>
-					</div>
+					<LoadingSpinner />
 				) : trendingPosts.length === 0 ? (
-					<div className="py-8 text-center">
-						<p className="text-sm text-gray-400">No trending posts yet</p>
-					</div>
+					<EmptyState message="No trending posts yet" />
 				) : (
 					<div className="space-y-4">
 						{trendingPosts.map((post) => (

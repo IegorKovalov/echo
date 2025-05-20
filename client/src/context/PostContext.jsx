@@ -481,7 +481,7 @@ export const PostProvider = ({ children }) => {
 			fetchPosts(1, 15);
 			fetchTrendingPosts();
 		}
-	}, [user?._id, initialLoad, fetchPosts, fetchTrendingPosts, posts.length]);
+	}, [user?._id, initialLoad, fetchPosts, fetchTrendingPosts, posts.length, showError]);
 
 	const contextValue = useMemo(
 		() => ({

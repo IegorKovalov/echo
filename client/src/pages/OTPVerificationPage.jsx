@@ -1,16 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Sparkles } from "lucide-react";
+import { Sparkles, ArrowLeft, CheckCircle } from "lucide-react";
 import { useToast } from "../context/ToastContext";
-import authService from "../services/auth.service";
+import { useAuth } from "../context/AuthContext";
+import LoadingSpinner from "../components/UI/LoadingSpinner";
 
 const OTPVerificationPage = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
+  const { verifyOTP: contextVerifyOTP, resendOTP: contextResendOTP, loading: authLoading } = useAuth();
   
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [loading, setLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
   const [resendDisabled, setResendDisabled] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -81,59 +82,58 @@ const OTPVerificationPage = () => {
     }
   };
   
-  // Verify OTP
-  const verifyOTP = async (e) => {
+  // Verify OTP using AuthContext method
+  const handleVerifyOTP = async (e) => {
     e.preventDefault();
-    
     const otpString = otp.join("");
     if (otpString.length !== 6) {
       setError("Please enter all 6 digits of the verification code");
       showError("Please enter all 6 digits of the verification code");
       return;
     }
-    
-    setLoading(true);
     setError("");
-    
     try {
-      const response = await authService.verifyOTP(userId, otpString);
-      
-      if (response.status === "success") {
-        showSuccess("Email verified successfully!");
-        navigate("/"); // Redirect to home page
-      }
+      // Use contextVerifyOTP which handles its own loading and localStorage updates
+      await contextVerifyOTP(userId, otpString);
+      // Navigation on success is handled by AuthContext's verifyOTP method
+      // showSuccess might be redundant if AuthContext handles it, but can be kept for now.
+      showSuccess("Email verified successfully!");
     } catch (err) {
       const errorMessage = err.message || "Verification failed";
       setError(errorMessage);
       showError(errorMessage);
-    } finally {
-      setLoading(false);
     }
   };
   
-  // Resend OTP
-  const resendOTP = async () => {
+  // Resend OTP using AuthContext method
+  const handleResendOTP = async () => {
     setResendDisabled(true);
-    setCountdown(60); // Disable for 60 seconds
-    setLoading(true);
-    
+    setCountdown(60);
+    setError("");
     try {
-      const response = await authService.resendOTP(userId);
-      
-      if (response.status === "success") {
-        showSuccess("Verification code resent to your email");
-        setTimeLeft(600); // Reset timer to 10 minutes
-        setOtp(["", "", "", "", "", ""]); // Clear input fields
-      }
+      // Use contextResendOTP which handles its own loading
+      await contextResendOTP(userId);
+      showSuccess("Verification code resent to your email");
+      setTimeLeft(600);
+      setOtp(["", "", "", "", "", ""]);
     } catch (err) {
       const errorMessage = err.message || "Failed to resend verification code";
       setError(errorMessage);
       showError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+    } 
+    // authLoading will become false when contextResendOTP finishes
+    // setResendDisabled is handled by the countdown useEffect
   };
   
+  // Show top-level spinner if AuthContext is performing an async operation
+  if (authLoading && !error) { // Don't show spinner if there's an error message displayed
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-950">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col md:flex-row bg-gray-950">
       {/* Left Column - OTP Form */}
@@ -170,7 +170,7 @@ const OTPVerificationPage = () => {
             </div>
           )}
 
-          <form onSubmit={verifyOTP} className="space-y-6">
+          <form onSubmit={handleVerifyOTP} className="space-y-6">
             <div className="flex flex-col space-y-4">
               <label htmlFor="otp" className="block text-sm font-medium text-gray-300">
                 Verification Code
@@ -195,22 +195,22 @@ const OTPVerificationPage = () => {
             
             <button
               type="submit"
-              disabled={loading || timeLeft === 0}
-              className="w-full rounded-md bg-gradient-to-r from-purple-600 to-blue-600 py-2 text-sm font-medium text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-70"
+              disabled={authLoading || timeLeft === 0} // Disable if context is loading or time expired
+              className="w-full rounded-md bg-gradient-to-r from-purple-600 to-blue-600 py-2.5 text-sm font-medium text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-70"
             >
-              {loading ? "Verifying..." : "Verify Email"}
+              {authLoading ? "Processing..." : "Verify Account"} 
             </button>
             
             <div className="flex items-center justify-between">
               <button 
                 type="button"
-                onClick={resendOTP}
-                disabled={resendDisabled || loading}
+                onClick={handleResendOTP}
+                disabled={resendDisabled || authLoading} // Disable if context is loading
                 className="text-sm text-purple-400 hover:text-purple-300 disabled:text-gray-500"
               >
-                {resendDisabled 
+                {authLoading && resendDisabled ? "Processing..." : (resendDisabled 
                   ? `Resend code in ${countdown}s` 
-                  : "Resend verification code"}
+                  : "Resend verification code")}
               </button>
               
               <Link

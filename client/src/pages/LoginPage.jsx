@@ -1,36 +1,70 @@
 import { Sparkles } from "lucide-react";
-import { useState } from "react";
+// import { useState } from "react"; // No longer needed for form fields
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import { useForm } from "../hooks/useForm"; // Import useForm
+import LoadingSpinner from "../components/UI/LoadingSpinner"; // Added
 
 export default function LoginPage() {
-	const { login, loading } = useAuth();
+	const { login, loading: authLoading } = useAuth(); // Renamed, use this for top-level spinner
 	const { showSuccess, showError } = useToast();
-	const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
-	const [formError, setFormError] = useState("");
 
-	const handleSubmit = async (e) => {
-		e.preventDefault();
-		setFormError("");
+	const initialValues = {
+		email: "",
+		password: "",
+	};
 
-		if (!email || !password) {
-			setFormError("Please enter both email and password");
-			showError("Please enter both email and password");
-			return;
+	const validate = (values) => {
+		const errors = {};
+		if (!values.email) {
+			errors.email = "Email is required";
+		} else if (!/\S+@\S+\.\S+/.test(values.email)) {
+			errors.email = "Email address is invalid";
 		}
+		if (!values.password) {
+			errors.password = "Password is required";
+		}
+		return errors;
+	};
 
+	const handleLoginSubmit = async (values) => {
 		try {
-			await login(email, password);
+			await login(values.email, values.password);
 			showSuccess("Login successful! Welcome back.");
 			// Redirect is handled in the auth context
 		} catch (err) {
-			const errorMessage = err.message || "Login failed. Please try again.";
-			setFormError(errorMessage);
-			showError(errorMessage);
+			// Errors from login (e.g., wrong credentials) will be caught by useForm's submitError
+			// We can also use showError for a toast if desired, but submitError handles general form error display
+			// showError(err.message || "Login failed. Please try again.");
+			throw err; // Re-throw to allow useForm to catch it and set submitError
 		}
 	};
+
+	const form = useForm({
+		initialValues,
+		validate,
+		onSubmit: handleLoginSubmit,
+	});
+
+	// Display API error as a toast if it occurs, in addition to inline form error
+	// This is an alternative to the old formError state + toast duplication
+	// We can rely on the form.submitError for the inline display and AuthContext's own error handling for toasts if preferred.
+	// For now, let's use the toast for API errors for consistency with previous behavior.
+	// useEffect(() => {
+	//  if (form.submitError) {
+	//    showError(form.submitError);
+	//  }
+	// }, [form.submitError, showError]);
+
+	// Top-level loading spinner for initial auth check
+	if (authLoading) {
+		return (
+			<div className="flex min-h-screen items-center justify-center bg-gray-950">
+				<LoadingSpinner />
+			</div>
+		);
+	}
 
 	return (
 		<div className="flex min-h-screen flex-col md:flex-row bg-gray-950">
@@ -52,13 +86,14 @@ export default function LoginPage() {
 						</p>
 					</div>
 
-					{formError && (
+					{/* Display general submission error from useForm */}
+					{form.submitError && (
 						<div className="rounded-md bg-red-900/30 p-3 border border-red-900">
-							<p className="text-sm text-red-400">{formError}</p>
+							<p className="text-sm text-red-400">{form.submitError}</p>
 						</div>
 					)}
 
-					<form onSubmit={handleSubmit} className="space-y-4">
+					<form onSubmit={form.handleSubmit} className="space-y-4">
 						<div className="space-y-2">
 							<label
 								htmlFor="email"
@@ -68,12 +103,16 @@ export default function LoginPage() {
 							</label>
 							<input
 								id="email"
+								name="email" // Ensure name attribute is present
 								placeholder="hello@example.com"
 								type="email"
-								value={email}
-								onChange={(e) => setEmail(e.target.value)}
-								className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+								value={form.values.email}
+								onChange={form.handleChange}
+								className={`w-full rounded-md border ${form.errors.email ? 'border-red-500' : 'border-gray-800'} bg-gray-900 px-3 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500`}
 							/>
+							{form.errors.email && (
+								<p className="text-xs text-red-400 mt-1">{form.errors.email}</p>
+							)}
 						</div>
 						<div className="space-y-2">
 							<div className="flex items-center justify-between">
@@ -92,18 +131,22 @@ export default function LoginPage() {
 							</div>
 							<input
 								id="password"
+								name="password" // Ensure name attribute is present
 								type="password"
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-								className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+								value={form.values.password}
+								onChange={form.handleChange}
+								className={`w-full rounded-md border ${form.errors.password ? 'border-red-500' : 'border-gray-800'} bg-gray-900 px-3 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500`}
 							/>
+							{form.errors.password && (
+								<p className="text-xs text-red-400 mt-1">{form.errors.password}</p>
+							)}
 						</div>
 						<button
 							type="submit"
-							disabled={loading}
+							disabled={authLoading || form.isSubmitting} // Keep authLoading here for button state too
 							className="w-full rounded-md bg-gradient-to-r from-purple-600 to-blue-600 py-2 text-sm font-medium text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-70"
 						>
-							{loading ? "Signing In..." : "Sign In"}
+							{authLoading || form.isSubmitting ? "Signing In..." : "Sign In"}
 						</button>
 					</form>
 

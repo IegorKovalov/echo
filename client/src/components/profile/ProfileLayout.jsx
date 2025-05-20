@@ -11,6 +11,8 @@ import ProfileMedia from "./ProfileMedia";
 import ProfilePosts from "./ProfilePosts";
 import ProfileStats from "./ProfileStats";
 import ProfileTabs from "./ProfileTabs";
+import LoadingSpinner from "../UI/LoadingSpinner";
+import ErrorMessage from "../UI/ErrorMessage";
 
 export default function ProfileLayout({ userId }) {
 	const { user } = useAuth();
@@ -20,40 +22,55 @@ export default function ProfileLayout({ userId }) {
 
 	const [isLoading, setIsLoading] = useState(true);
 	const [profileData, setProfileData] = useState(null);
+	const [profileError, setProfileError] = useState(null);
 	const [activeTab, setActiveTab] = useState("posts");
 	const [showExpiredPosts, setShowExpiredPosts] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
 	const [followersModalTab, setFollowersModalTab] = useState("");
-	const [isOwnProfile, setIsOwnProfile] = useState(true);
+	const [isOwnProfile, setIsOwnProfile] = useState(false);
 	const [userPosts, setUserPosts] = useState([]);
 
 	const profilePostIds = useRef(new Set());
 
 	useEffect(() => {
-		if (user) {
-			const fetchProfileData = async () => {
-				try {
-					setIsLoading(true);
-					let data;
-					if (userId && userId !== user._id) {
-						setIsOwnProfile(false);
-						data = await UserService.getUserProfile(userId);
-					} else {
-						setIsOwnProfile(true);
-						data = await UserService.getProfile();
-					}
-					setProfileData(data.data.user);
-				} catch (error) {
-					console.error("Error fetching profile:", error);
-					if (error.response && error.response.status === 404) {
-						navigate("/profile");
-					}
-				} finally {
-					setIsLoading(false);
-				}
-			};
+		const fetchProfileData = async () => {
+			try {
+				setIsLoading(true);
+				setProfileData(null);
+				setProfileError(null);
+				let data;
+				const viewingOwnProfile = !userId || (user && userId === user._id);
+				setIsOwnProfile(viewingOwnProfile);
 
+				if (viewingOwnProfile && user) {
+					setProfileData(user);
+					data = await UserService.getProfile();
+					setProfileData(data.data.user);
+				} else if (userId) {
+					data = await UserService.getUserProfile(userId);
+					setProfileData(data.data.user);
+				} else {
+					navigate("/login");
+					return;
+				}
+			} catch (error) {
+				console.error("Error fetching profile:", error);
+				if (error.response && error.response.status === 404) {
+					setProfileError("Profile not found. It may have been moved or deleted.");
+				} else {
+					setProfileError(error.message || "Could not load profile. Please try again later.");
+				}
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		if (user) {
+			fetchProfileData();
+		} else if (!userId) {
+			navigate("/login");
+		} else if (userId) {
 			fetchProfileData();
 		}
 	}, [user, userId, navigate]);
@@ -150,13 +167,28 @@ export default function ProfileLayout({ userId }) {
 		setFollowersModalTab("");
 		setIsFollowersModalOpen(false);
 	};
-	if (isLoading || !user || !profileData) {
+
+	if (isLoading) {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-gray-950">
-				<div className="text-center">
-					<Sparkles className="mx-auto h-12 w-12 animate-pulse text-purple-500" />
-					<p className="mt-4 text-gray-400">Loading profile...</p>
-				</div>
+				<LoadingSpinner />
+			</div>
+		);
+	}
+
+	if (profileError) {
+		return (
+			<div className="flex min-h-screen items-center justify-center bg-gray-950 p-4">
+				<ErrorMessage message={profileError} />
+			</div>
+		);
+	}
+
+	if (!user || !profileData) {
+		if(!user) navigate("/login");
+		return (
+			<div className="flex min-h-screen items-center justify-center bg-gray-950 p-4">
+				<ErrorMessage message="Profile data could not be loaded or user not authenticated." />
 			</div>
 		);
 	}

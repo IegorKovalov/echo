@@ -5,6 +5,7 @@ import { usePost } from "../../context/PostContext";
 import { useToast } from "../../context/ToastContext";
 import CommentItem from "./CommentItem";
 import ProfileAvatar from "./ProfileAvatar";
+import EmptyState from "./EmptyState";
 
 export default function CommentSection({
 	post,
@@ -112,9 +113,9 @@ export default function CommentSection({
 					)}
 				</div>
 			) : (
-				<p className="text-center text-sm text-gray-400 py-4 border-t border-gray-800/50">
-					Be the first to comment on this post
-				</p>
+				<div className="border-t border-gray-800/50 pt-4 pb-4">
+					<EmptyState message="Be the first to comment on this post" />
+				</div>
 			)}
 		</div>
 	);

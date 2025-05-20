@@ -49,7 +49,6 @@ export const ViewTrackingProvider = ({ children }) => {
 		if (pendingViews.size === 0 || isProcessing) return;
 
 		setIsProcessing(true);
-		// Clear any existing timer to prevent double processing
 		if (timerRef.current) {
 			clearTimeout(timerRef.current);
 			timerRef.current = null;
@@ -59,33 +58,36 @@ export const ViewTrackingProvider = ({ children }) => {
 			const postIds = Array.from(pendingViews);
 			console.log(`Processing batch of ${postIds.length} views`);
 
-			// Send batch request to track views
 			const result = await PostService.batchIncrementViews(postIds);
 
-			if (result.status === "success") {
-				// Clear processed views
+			// If batchIncrementViews was successful, 'result' contains the success data.
+			// Assuming 'result' has a 'status' field and 'data.updatedCounts' upon success from the service structure.
+			if (result.status === "success" && result.data && result.data.updatedCounts) {
 				setPendingViews(new Set());
-
-				// Update view counts based on returned data or incremental update
-				if (result.data && result.data.updatedCounts) {
-					// Server returned actual counts
-					setViewCounts((prev) => ({
-						...prev,
-						...result.data.updatedCounts
-					}));
-				} else {
-					// Fallback to incremental update
-					setViewCounts((prev) => {
-						const updated = { ...prev };
-						postIds.forEach((id) => {
-							updated[id] = (updated[id] || 0) + 1;
-						});
-						return updated;
+				setViewCounts((prev) => ({
+					...prev,
+					...result.data.updatedCounts
+				}));
+			} else if (result.status === "success") { // Successful but structure might vary (e.g., no updatedCounts)
+				 console.warn("ViewTrackingContext: Batch increment success but no updatedCounts, falling back to local increment.");
+				 setPendingViews(new Set());
+				 setViewCounts((prev) => {
+					const updated = { ...prev };
+					postIds.forEach((id) => {
+						updated[id] = (updated[id] || 0) + 1;
 					});
-				}
+					return updated;
+				});
+			} else {
+				// This case should ideally not be hit if service throws errors or returns a clear success structure.
+				console.warn("ViewTrackingContext: Unexpected result structure from successful batchIncrementViews:", result);	
 			}
 		} catch (error) {
-			console.error("Error processing batch view tracking:", error);
+			console.warn(
+				"ViewTrackingContext: Failed to batch increment views. Message:",
+				error.message || "No specific error message returned from service."
+			);
+			// Pending views are not cleared here, allowing for a retry on the next batch attempt.
 		} finally {
 			setIsProcessing(false);
 		}
