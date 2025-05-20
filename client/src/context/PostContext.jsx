@@ -235,11 +235,15 @@ export const PostProvider = ({ children }) => {
 	const updatePost = useCallback(
 		async (postId, postData) => {
 			try {
+				console.log("Updating post with data:", postData);
 				const response = await PostService.updatePost(postId, postData);
 				console.log("Update Post Response:", response);
 				let updatedPost = {};
 				if (response.status === "success" && response.data) {
 					updatedPost = response.data.post;
+					
+					// Debug the media object to ensure it's correctly formed
+					console.log("Updated post media:", updatedPost.media);
 				}
 				if (updatedPost) {
 					setPosts((prevPosts) =>

@@ -7,7 +7,7 @@ export default function Layout({ children, showHeader = true }) {
 	const content = user ? <PostProvider>{children}</PostProvider> : children;
 
 	return (
-		<div className="flex min-h-screen flex-col bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 transition-colors duration-500 ease-in-out">
+		<div className="flex min-h-screen flex-col bg-gradient-to-b from-gray-900 to-gray-950">
 			{showHeader && <Header />}
 			<main className="flex-1 relative">{content}</main>
 		</div>

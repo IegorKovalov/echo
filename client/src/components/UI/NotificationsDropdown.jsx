@@ -90,15 +90,15 @@ export default function NotificationsDropdown({ isOpen, onClose, anchorRect }) {
 			></div>
 			<div
 				ref={dropdownRef}
-				className="rounded-xl border border-gray-800 bg-gray-900 shadow-lg transform transition-all duration-200 ease-out z-50 overflow-hidden"
+				className="rounded-xl border border-gray-800/50 bg-gray-900/90 backdrop-blur-sm shadow-xl transform transition-all duration-200 ease-out z-50 overflow-hidden"
 				style={{
 					...style,
-					boxShadow: "0 10px 25px rgba(0, 0, 0, 0.3)",
+					boxShadow: "0 10px 25px rgba(0, 0, 0, 0.4)",
 				}}
 			>
 				{/* Small decorative arrow pointing up to navbar */}
 				<div
-					className="absolute w-4 h-4 bg-gray-900 border-t border-l border-gray-800 transform rotate-45 -translate-y-2"
+					className="absolute w-4 h-4 bg-gray-900/90 backdrop-blur-sm border-t border-l border-gray-800/50 transform rotate-45 -translate-y-2"
 					style={{
 						top: "0",
 						right: "24px",
@@ -107,12 +107,12 @@ export default function NotificationsDropdown({ isOpen, onClose, anchorRect }) {
 
 				<div className="max-h-96 overflow-y-auto">
 					{/* Header */}
-					<div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-3 flex justify-between items-center">
+					<div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/50 p-3.5 flex justify-between items-center">
 						<h3 className="font-medium text-white flex items-center gap-2">
 							<Bell className="h-4 w-4 text-purple-400" />
 							Notifications
 						</h3>
-						<button className="text-xs text-purple-400 hover:text-purple-300">
+						<button className="text-xs text-purple-400 hover:text-purple-300 transition-colors duration-200">
 							Mark all as read
 						</button>
 					</div>
@@ -123,11 +123,11 @@ export default function NotificationsDropdown({ isOpen, onClose, anchorRect }) {
 							{mockNotifications.map((notification) => (
 								<div
 									key={notification.id}
-									className={`p-3 border-b border-gray-800 hover:bg-gray-800/50 transition-colors flex gap-3 items-start ${
+									className={`p-3.5 border-b border-gray-800/30 hover:bg-gray-800/50 transition-colors duration-200 flex gap-3 items-start ${
 										!notification.read ? "bg-gray-800/20" : ""
 									}`}
 								>
-									<div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-900/50 to-blue-900/50 flex items-center justify-center flex-shrink-0">
+									<div className="h-9 w-9 rounded-full bg-gradient-to-br from-purple-700/30 to-blue-700/30 flex items-center justify-center flex-shrink-0 shadow-sm">
 										{notification.icon}
 									</div>
 									<div className="flex-1 min-w-0">
@@ -143,30 +143,30 @@ export default function NotificationsDropdown({ isOpen, onClose, anchorRect }) {
 										</p>
 									</div>
 									{!notification.read && (
-										<div className="w-2 h-2 rounded-full bg-purple-500 flex-shrink-0 mt-1"></div>
+										<div className="w-2 h-2 rounded-full bg-purple-500 flex-shrink-0 mt-1 shadow-sm shadow-purple-500/50"></div>
 									)}
 								</div>
 							))}
 						</div>
 					) : (
-						<div className="py-10 text-center">
-							<div className="mx-auto mb-3 h-12 w-12 rounded-full bg-gray-800 p-3 flex items-center justify-center">
-								<Bell className="h-6 w-6 text-gray-600" />
+						<div className="py-12 text-center">
+							<div className="mx-auto mb-4 h-14 w-14 rounded-full bg-gradient-to-br from-purple-900/20 to-blue-900/20 p-4 flex items-center justify-center">
+								<Bell className="h-6 w-6 text-gray-500" />
 							</div>
-							<h3 className="text-sm font-medium text-white">
+							<h3 className="text-base font-medium text-white">
 								No notifications
 							</h3>
-							<p className="mt-1 text-xs text-gray-400">
+							<p className="mt-2 text-sm text-gray-400">
 								You're all caught up!
 							</p>
 						</div>
 					)}
 
 					{/* Footer */}
-					<div className="p-3 text-center border-t border-gray-800">
+					<div className="p-3.5 text-center border-t border-gray-800/50 bg-gray-900/70">
 						<Link
 							to="#"
-							className="text-xs text-purple-400 hover:text-purple-300"
+							className="text-xs text-purple-400 hover:text-purple-300 transition-colors duration-200 font-medium"
 						>
 							View all notifications
 						</Link>

@@ -1,26 +1,27 @@
 const Post = require("../models/postModel");
 const fs = require("fs");
 const { sendError, sendSuccess } = require("../utils/http/responseUtils");
-const { 
-	populatePostFields, 
-	enhancePostWithVirtuals, 
+const {
+	populatePostFields,
+	enhancePostWithVirtuals,
 	validateExpirationTime,
 	calculateExpirationDate,
-	getPaginationInfo
+	getPaginationInfo,
 } = require("../utils/post/postUtils");
 const {
 	uploadMediaToCloudinary,
 	deleteMediaFromCloudinary,
 	cleanupTempFiles,
-	cleanupOldTempFiles
+	cleanupOldTempFiles,
 } = require("../utils/media/mediaUtils");
 
 const enhancePostsWithVirtuals = (posts) => {
-	return posts.map(post => enhancePostWithVirtuals(post));
+	return posts.map((post) => enhancePostWithVirtuals(post));
 };
 
 exports.createPost = async (req, res) => {
 	try {
+		console.log("Creating post with data:", req.body);
 		const { content, expirationTime } = req.body;
 		if (!content) {
 			return sendError(res, 400, "Post content is required");
@@ -35,7 +36,7 @@ exports.createPost = async (req, res) => {
 			}
 			postData.expiresAt = calculateExpirationDate(validation.hours);
 		}
-		
+
 		try {
 			postData.media = await uploadMediaToCloudinary(req.files);
 		} catch (error) {
@@ -71,7 +72,10 @@ exports.getUserPosts = async (req, res) => {
 		}
 
 		const totalPosts = await Post.countDocuments(query.getQuery());
-		query = query.skip(pagination.skip).limit(pagination.itemsPerPage).sort({ createdAt: -1 });
+		query = query
+			.skip(pagination.skip)
+			.limit(pagination.itemsPerPage)
+			.sort({ createdAt: -1 });
 		const posts = await populatePostFields(query);
 		const enhancedPosts = enhancePostsWithVirtuals(posts);
 
@@ -105,7 +109,10 @@ exports.getAllPosts = async (req, res) => {
 
 		const totalPosts = await Post.countDocuments(query);
 		const posts = await populatePostFields(
-			Post.find(query).skip(pagination.skip).limit(pagination.itemsPerPage).sort(sortBy)
+			Post.find(query)
+				.skip(pagination.skip)
+				.limit(pagination.itemsPerPage)
+				.sort(sortBy)
 		);
 		const enhancedPosts = enhancePostsWithVirtuals(posts);
 
@@ -198,18 +205,22 @@ exports.updatePost = async (req, res) => {
 			const mediaToDelete = post.media.filter(
 				(item) => !existingMediaIds.includes(item._id.toString())
 			);
-			
+
 			await deleteMediaFromCloudinary(mediaToDelete);
 			post.media = mediaToKeep;
 		}
-		
+
 		// Add new media
 		if (req.files && req.files.length > 0) {
 			try {
 				const newMedia = await uploadMediaToCloudinary(req.files);
 				post.media = [...post.media, ...newMedia];
 			} catch (uploadError) {
-				return sendError(res, 500, `Error uploading media: ${uploadError.message}`);
+				return sendError(
+					res,
+					500,
+					`Error uploading media: ${uploadError.message}`
+				);
 			}
 		}
 
@@ -241,11 +252,11 @@ exports.deletePost = async (req, res) => {
 		if (post.user.toString() !== req.user._id.toString()) {
 			return sendError(res, 403, "You're not authorized to delete this post");
 		}
-		
+
 		// Delete associated media
 		await deleteMediaFromCloudinary(post.media);
 		await post.deleteOne();
-		
+
 		// Clean up old temporary files
 		cleanupOldTempFiles();
 
@@ -331,34 +342,35 @@ exports.deleteComment = async (req, res) => {
 exports.addCommentReply = async (req, res) => {
 	try {
 		const { replyContent } = req.body;
-		
+
 		if (!replyContent || replyContent.trim() === "") {
 			return sendError(res, 400, "Reply Content is required");
 		}
-		
+
 		let post = await Post.findById(req.params.id);
 		if (!post) {
 			return sendError(res, 404, "Post not found");
 		}
-		
+
 		const commentIndex = post.comments.findIndex(
 			(c) => c._id.toString() === req.params.commentId
 		);
-		
+
 		if (commentIndex === -1) {
 			return sendError(res, 404, "Comment not found");
 		}
-		
+
 		const newReply = {
 			user: req.user._id,
 			content: replyContent.trim(),
 			replyToUser: req.body.replyToUser || post.comments[commentIndex].user,
 		};
-		
-		post.comments[commentIndex].replies = post.comments[commentIndex].replies || [];
+
+		post.comments[commentIndex].replies =
+			post.comments[commentIndex].replies || [];
 		post.comments[commentIndex].replies.push(newReply);
 		await post.save();
-		
+
 		post = await populatePostFields(Post.findById(post._id));
 
 		return sendSuccess(res, 201, "Reply added successfully", {
@@ -377,18 +389,20 @@ exports.deleteCommentReply = async (req, res) => {
 		if (!post) {
 			return sendError(res, 404, "Post not found");
 		}
-		
-		const comment = post.comments.find(c => c._id.toString() === req.params.commentId);
+
+		const comment = post.comments.find(
+			(c) => c._id.toString() === req.params.commentId
+		);
 		if (!comment) {
 			return sendError(res, 404, "Comment not found");
 		}
-		
+
 		const replyIndex = comment.replies.findIndex(
 			(r) =>
 				r._id.toString() === req.params.replyId &&
 				r.user.toString() === req.user._id.toString()
 		);
-		
+
 		if (replyIndex === -1) {
 			return sendError(
 				res,
@@ -396,7 +410,7 @@ exports.deleteCommentReply = async (req, res) => {
 				"Reply not found or you're not authorized to delete it"
 			);
 		}
-		
+
 		comment.replies.splice(replyIndex, 1);
 		await post.save();
 		post = await populatePostFields(Post.findById(post._id));
@@ -437,7 +451,7 @@ exports.renewPost = async (req, res) => {
 
 		const { hours } = req.body;
 		const validation = validateExpirationTime(hours);
-		
+
 		if (!validation.valid) {
 			return sendError(res, 400, validation.message);
 		}

@@ -92,9 +92,12 @@ export default function PostFeed({
 			{/* Posts Feed */}
 			<div className="space-y-6 mt-6">
 				{loadingPosts && posts.length === 0 ? (
-					<div className="text-center py-12 px-8 rounded-xl border border-gray-800/70 bg-gray-900/70">
-						<Sparkles className="mx-auto h-8 w-8 animate-pulse text-purple-500" />
-						<p className="mt-3 text-gray-400">Loading posts...</p>
+					<div className="text-center py-12 px-8 rounded-xl border border-gray-800/50 bg-gray-900/40 backdrop-blur-sm shadow-xl">
+						<Sparkles className="mx-auto h-10 w-10 text-purple-500 pulse-purple" />
+						<p className="mt-4 text-gray-300 font-medium">Loading posts...</p>
+						<div className="mt-4 w-40 h-1 bg-gray-800/80 rounded-full mx-auto overflow-hidden">
+							<div className="h-full bg-gradient-to-r from-purple-600 to-blue-600 rounded-full shimmer"></div>
+						</div>
 					</div>
 				) : visiblePosts.length > 0 ? (
 					<>
@@ -102,13 +105,13 @@ export default function PostFeed({
 							// Set ref for the last post for infinite scrolling
 							if (index === visiblePosts.length - 1) {
 								return (
-									<div key={post._id} ref={lastPostRef} className="transition-all duration-300 hover:translate-y-[-2px]">
+									<div key={post._id} ref={lastPostRef} className="transition-all duration-300">
 										<PostItem post={post} currentUser={user} />
 									</div>
 								);
 							}
 							return (
-								<div key={post._id} className="transition-all duration-300 hover:translate-y-[-2px]">
+								<div key={post._id} className="transition-all duration-300">
 									<PostItem post={post} currentUser={user} />
 								</div>
 							);
@@ -116,9 +119,12 @@ export default function PostFeed({
 
 						{/* Show loading indicator when loading more posts */}
 						{loadingMore && (
-							<div className="text-center py-6 px-4 rounded-lg bg-gray-900/50 border border-gray-800/50">
-								<Sparkles className="mx-auto h-6 w-6 animate-pulse text-purple-500" />
-								<p className="mt-2 text-sm text-gray-400">Loading more posts...</p>
+							<div className="text-center py-6 px-6 rounded-lg bg-gray-900/40 border border-gray-800/50 backdrop-blur-sm shadow-md">
+								<Sparkles className="mx-auto h-6 w-6 text-purple-500 pulse-purple" />
+								<p className="mt-3 text-sm text-gray-300">Loading more posts...</p>
+								<div className="mt-3 w-32 h-1 bg-gray-800/80 rounded-full mx-auto overflow-hidden">
+									<div className="h-full bg-gradient-to-r from-purple-600 to-blue-600 rounded-full shimmer"></div>
+								</div>
 							</div>
 						)}
 
@@ -127,7 +133,7 @@ export default function PostFeed({
 							<div className="text-center py-5">
 								<button
 									onClick={handleLoadMore}
-									className="flex items-center justify-center gap-2 mx-auto px-6 py-2.5 rounded-lg bg-gray-800/80 hover:bg-gray-700/90 text-purple-400 hover:text-purple-300 shadow-md shadow-black/10 transition-all duration-200"
+									className="flex items-center justify-center gap-2 mx-auto px-6 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-md shadow-purple-900/20 transition-all duration-200"
 								>
 									<ArrowDown className="h-4 w-4" />
 									Load more
@@ -137,17 +143,17 @@ export default function PostFeed({
 
 						{/* Show end of feed message when no more posts */}
 						{!hasMore && posts.length > 0 && (
-							<div className="text-center py-6 px-4 rounded-lg bg-gray-900/50 border border-gray-800/50">
-								<p className="text-sm text-gray-400">You've reached the end of your feed</p>
+							<div className="text-center py-6 px-6 rounded-lg bg-gray-900/40 border border-gray-800/50 backdrop-blur-sm shadow-md">
+								<p className="text-sm text-gray-300">You've reached the end of your feed</p>
 							</div>
 						)}
 					</>
 				) : (
-					<div className="rounded-xl border border-gray-800/70 bg-gray-900/80 p-10 text-center shadow-lg shadow-black/10">
-						<div className="mx-auto mb-5 h-16 w-16 rounded-full bg-gray-800/70 p-4 shadow-inner shadow-black/20">
-							<MessageCircle className="h-8 w-8 text-gray-600" />
+					<div className="rounded-xl border border-gray-800/50 bg-gray-900/40 backdrop-blur-sm p-10 text-center shadow-xl">
+						<div className="mx-auto mb-6 h-20 w-20 rounded-full bg-gradient-to-br from-purple-900/30 to-blue-900/30 p-5 flex items-center justify-center shadow-inner">
+							<MessageCircle className="h-10 w-10 text-gray-400" />
 						</div>
-						<h3 className="text-lg font-medium text-white mb-2">No posts yet</h3>
+						<h3 className="text-xl font-medium text-white mb-3">No posts yet</h3>
 						<p className="mt-2 text-gray-400 max-w-sm mx-auto">
 							Create your first Echo or follow more users to see their posts.
 						</p>

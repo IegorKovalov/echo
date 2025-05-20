@@ -49,7 +49,7 @@ export default function ReplyItem({ reply, postId, commentId, onDelete }) {
 	}
 
 	return (
-		<div className="flex items-center gap-3 py-3 px-2 ml-6 border-l border-gray-800 pl-3 hover:bg-gray-800/30 transition-colors">
+		<div className="flex items-start gap-3 py-3 px-2 hover:bg-gray-800/20 rounded-md transition-colors duration-200">
 			{reply.user && reply.user._id ? (
 				<Link to={`/profile/${reply.user._id}`} className="flex items-center">
 					<ProfileAvatar user={reply.user} size="xs" />
@@ -64,7 +64,7 @@ export default function ReplyItem({ reply, postId, commentId, onDelete }) {
 						{reply.user && reply.user._id ? (
 							<Link
 								to={`/profile/${reply.user._id}`}
-								className="font-medium text-white hover:text-purple-400 transition-colors"
+								className="font-medium text-white hover:text-purple-400 transition-colors duration-200"
 							>
 								{reply.user?.fullName || "User"}
 							</Link>
@@ -81,7 +81,7 @@ export default function ReplyItem({ reply, postId, commentId, onDelete }) {
 									<span className="text-gray-500 mx-1">replying to</span>
 									<Link
 										to={`/profile/${reply.replyToUser._id}`}
-										className="text-purple-400 hover:text-purple-300 transition-colors"
+										className="text-purple-400 hover:text-purple-300 transition-colors duration-200"
 									>
 										@{reply.replyToUser.username || "user"}
 									</Link>
@@ -97,7 +97,7 @@ export default function ReplyItem({ reply, postId, commentId, onDelete }) {
 						<button
 							onClick={handleDelete}
 							disabled={isDeleting}
-							className="rounded-full p-1.5 text-gray-500 hover:bg-gray-800 hover:text-red-400 transition-colors"
+							className="rounded-full p-1.5 text-gray-500 hover:bg-gray-800/70 hover:text-red-400 transition-colors duration-200"
 							aria-label="Delete reply"
 						>
 							<Trash2 className="h-3 w-3" />
@@ -105,7 +105,7 @@ export default function ReplyItem({ reply, postId, commentId, onDelete }) {
 					)}
 				</div>
 
-				<p className="mt-1 text-sm text-gray-300 break-words">
+				<p className="mt-1 text-xs text-gray-300 break-words">
 					{reply.content}
 				</p>
 			</div>

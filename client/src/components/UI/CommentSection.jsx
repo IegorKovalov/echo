@@ -61,13 +61,13 @@ export default function CommentSection({
 						value={commentContent}
 						onChange={(e) => setCommentContent(e.target.value)}
 						placeholder="Add a comment..."
-						className="w-full rounded-full border border-gray-800 bg-gray-800/50 pl-4 pr-12 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 transition-colors"
+						className="w-full rounded-full border border-gray-800/80 bg-gray-900/50 pl-4 pr-12 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 transition-colors duration-200"
 						disabled={isSubmitting}
 					/>
 					<button
 						type="submit"
 						disabled={!commentContent.trim() || isSubmitting}
-						className="absolute right-1 top-1 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 p-1.5 text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 transition-all"
+						className="absolute right-1.5 top-1.5 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 p-1.5 text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 transition-all duration-200 shadow-sm shadow-purple-900/20"
 					>
 						<Send className="h-4 w-4" />
 						<span className="sr-only">Post comment</span>
@@ -81,17 +81,17 @@ export default function CommentSection({
 					{hasMoreComments && !isExpanded && (
 						<button
 							onClick={() => setIsExpanded(true)}
-							className="mb-3 ml-2 text-xs text-purple-400 hover:text-purple-300 transition-colors"
+							className="mb-3 ml-2 text-xs text-purple-400 hover:text-purple-300 transition-colors duration-200 font-medium"
 						>
 							View all {comments.length} comments
 						</button>
 					)}
 
-					<div className="border-t border-gray-800 pt-2">
+					<div className="border-t border-gray-800/50 pt-3">
 						{displayedComments.map((comment) => (
 							<div
 								key={comment._id}
-								className="border-b border-gray-800 last:border-b-0 hover:bg-gray-800/30 transition-colors"
+								className="border-b border-gray-800/30 last:border-b-0 hover:bg-gray-800/30 transition-colors duration-200 rounded-md"
 							>
 								<CommentItem
 									comment={comment}
@@ -105,14 +105,14 @@ export default function CommentSection({
 					{isExpanded && comments.length > 3 && (
 						<button
 							onClick={() => setIsExpanded(false)}
-							className="mt-3 ml-2 mb-2 text-xs text-purple-400 hover:text-purple-300 transition-colors"
+							className="mt-3 ml-2 mb-2 text-xs text-purple-400 hover:text-purple-300 transition-colors duration-200 font-medium"
 						>
 							Show less
 						</button>
 					)}
 				</div>
 			) : (
-				<p className="text-center text-xs text-gray-500 py-4 border-t border-gray-800">
+				<p className="text-center text-sm text-gray-400 py-4 border-t border-gray-800/50">
 					Be the first to comment on this post
 				</p>
 			)}

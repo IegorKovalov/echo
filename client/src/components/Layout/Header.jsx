@@ -79,7 +79,7 @@ export default function Header() {
 
 	return (
 		<>
-			<header className="sticky top-0 z-20 border-b border-gray-800/80 bg-gray-950/85 backdrop-blur-xl shadow-md shadow-black/20">
+			<header className="sticky top-0 z-20 border-b border-gray-800/20 bg-gray-950/80 backdrop-blur-xl shadow-lg shadow-black/10">
 				<div className="container flex h-16 items-center justify-between px-4">
 					{/* Logo */}
 					<div className="flex items-center gap-2">
@@ -165,9 +165,9 @@ export default function Header() {
 									<ProfileAvatar user={user} size="xs" />
 									<span className="sr-only">Profile</span>
 								</button>
-								<div className="absolute right-0 top-full mt-2 w-56 origin-top-right rounded-xl border border-gray-800/80 bg-gray-900 shadow-lg shadow-black/40 focus:outline-none invisible opacity-0 translate-y-2 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-250 ease-out z-[999]">
+								<div className="absolute right-0 top-full mt-2 w-56 origin-top-right rounded-xl border border-gray-800/50 bg-gray-900/90 shadow-xl shadow-black/20 backdrop-blur-sm focus:outline-none invisible opacity-0 translate-y-2 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-250 ease-out z-[999]">
 									<div className="py-2">
-										<div className="px-4 py-3 text-sm text-gray-200 border-b border-gray-800/80">
+										<div className="px-4 py-3 text-sm text-gray-200 border-b border-gray-800/50">
 											<div className="font-medium">
 												{user.fullName || "User"}
 											</div>
@@ -189,7 +189,7 @@ export default function Header() {
 											<Settings className="h-4 w-4" />
 											Settings
 										</Link>
-										<div className="border-t border-gray-800/80 mt-1 pt-1">
+										<div className="border-t border-gray-800/50 mt-1 pt-1">
 											<button
 												onClick={handleLogout}
 												className="w-full text-left flex items-center px-4 py-3 text-sm text-red-400 hover:bg-gray-800/70 hover:text-red-300 transition-colors duration-150"

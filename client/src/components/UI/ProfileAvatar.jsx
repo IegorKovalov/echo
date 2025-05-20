@@ -5,6 +5,7 @@ export default function ProfileAvatar({
 }) {
 	// Define size classes
 	const sizeClasses = {
+		"2xs": "h-6 w-6",
 		xs: "h-8 w-8",
 		sm: "h-10 w-10",
 		md: "h-12 w-12",
@@ -16,6 +17,7 @@ export default function ProfileAvatar({
 
 	// Define text size classes for fallback initials
 	const textSizeClasses = {
+		"2xs": "text-[10px]",
 		xs: "text-xs",
 		sm: "text-sm",
 		md: "text-md",
@@ -38,7 +40,7 @@ export default function ProfileAvatar({
 
 	return (
 		<div
-			className={`overflow-hidden rounded-full ring-1 ring-white/10 ${sizeClasses[size]} ${className} shadow-sm transition-transform duration-200 hover:scale-105`}
+			className={`overflow-hidden rounded-full border border-purple-900/20 ${sizeClasses[size]} ${className} shadow-md shadow-purple-900/10 transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-purple-900/15`}
 		>
 			{user.profilePicture ? (
 				<img
@@ -47,8 +49,8 @@ export default function ProfileAvatar({
 					className="h-full w-full object-cover"
 				/>
 			) : (
-				<div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-purple-600 to-indigo-700 animate-gradient">
-					<span className={`font-bold text-white/90 ${textSizeClasses[size]}`}>
+				<div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-purple-700 to-blue-700">
+					<span className={`font-bold text-white ${textSizeClasses[size]}`}>
 						{getInitials()}
 					</span>
 				</div>

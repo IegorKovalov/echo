@@ -20,10 +20,16 @@ export default function HomePage() {
 
 	if (loading) {
 		return (
-			<div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
-				<div className="text-center bg-gray-900/40 backdrop-blur-sm p-8 rounded-2xl border border-gray-800/50 shadow-xl">
-					<Sparkles className="mx-auto h-12 w-12 animate-pulse text-purple-500" />
-					<p className="mt-4 text-gray-300 font-medium">Loading your Echo feed...</p>
+			<div className="flex min-h-screen items-center justify-center bg-gray-950">
+				<div className="text-center bg-gray-900/40 backdrop-blur-sm p-10 rounded-2xl border border-gray-800/50 shadow-xl float">
+					<Sparkles className="mx-auto h-14 w-14 text-purple-500 pulse-purple" />
+					<div className="mt-6 space-y-2">
+						<p className="text-xl font-medium text-white">Loading your Echo feed...</p>
+						<p className="text-gray-400">Please wait while we gather your moments</p>
+					</div>
+					<div className="mt-6 w-48 h-1.5 bg-gray-800/80 rounded-full mx-auto overflow-hidden">
+						<div className="h-full bg-gradient-to-r from-purple-600 to-blue-600 rounded-full shimmer"></div>
+					</div>
 				</div>
 			</div>
 		);

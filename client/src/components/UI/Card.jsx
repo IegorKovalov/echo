@@ -9,11 +9,11 @@ export default function Card({
 }) {
 	return (
 		<div
-			className={`rounded-xl border border-gray-800 bg-gray-900 overflow-hidden shadow-md shadow-black/20 backdrop-blur-sm transition-all hover:shadow-lg hover:shadow-black/30 hover:border-gray-700/80 ${className}`}
+			className={`rounded-xl border border-gray-800/30 bg-gray-900/60 backdrop-blur-md shadow-lg ${className}`}
 			{...props}
 		>
 			{(title || subtitle || headerAction) && (
-				<div className="flex items-center justify-between border-b border-gray-800 px-5 py-3.5">
+				<div className="flex items-center justify-between border-b border-gray-800/20 px-5 py-4">
 					<div>
 						{title && (
 							<h3 className="text-lg font-medium text-white tracking-tight">{title}</h3>
@@ -27,7 +27,7 @@ export default function Card({
 			<div className="p-5">{children}</div>
 
 			{footer && (
-				<div className="border-t border-gray-800 px-5 py-3.5 bg-gray-900/50">{footer}</div>
+				<div className="border-t border-gray-800/20 px-5 py-4 bg-gray-950/30">{footer}</div>
 			)}
 		</div>
 	);

@@ -95,6 +95,12 @@ export default function PostItem({
 	const handleEdit = async (updatedPostData) => {
 		setIsSubmitting(true);
 		try {
+			// Make a copy of the form data entries for debugging
+			if (updatedPostData instanceof FormData) {
+				console.log("Media files in form:", updatedPostData.getAll('media'));
+				console.log("Existing media IDs:", updatedPostData.getAll('existingMediaIds'));
+			}
+			
 			const updatedPost = await updatePost(post._id, updatedPostData);
 			setIsEditing(false);
 			if (onEdit) {
@@ -136,6 +142,7 @@ export default function PostItem({
 	};
 
 	if (isEditing) {
+		console.log("Editing post with media:", post.media);
 		return (
 			<Card className="mb-4">
 				<div className="mb-3 flex items-center justify-between">
@@ -165,7 +172,7 @@ export default function PostItem({
 	}
 
 	return (
-		<Card className="mb-4 overflow-visible hover:border-gray-700/50 transition-all duration-200">
+		<Card className="mb-4 overflow-visible">
 			<div className="mb-4 flex items-center justify-between">
 				<div className="flex items-center gap-3">
 					<ProfileAvatar user={post.user || currentUser} size="sm" />
@@ -189,123 +196,177 @@ export default function PostItem({
 				</div>
 
 				{!post.expired ? (
-					<div className="flex items-center gap-1.5 rounded-full bg-purple-900/30 px-3 py-1 text-xs font-medium text-purple-400 shadow-sm">
+					<div className="flex items-center gap-1.5 rounded-full bg-purple-900/30 px-3 py-1 text-xs font-medium text-purple-400 shadow-sm border border-purple-900/20">
 						<Clock className="h-3 w-3" />
 						<span>{getHoursLeft()}h left</span>
 					</div>
 				) : (
-					<div className="flex items-center gap-1.5 rounded-full bg-gray-800/70 px-3 py-1 text-xs font-medium text-gray-400">
+					<div className="flex items-center gap-1.5 rounded-full bg-gray-800/70 px-3 py-1 text-xs font-medium text-gray-400 border border-gray-800/50">
 						<Clock className="h-3 w-3" />
 						<span>Expired</span>
 					</div>
 				)}
 			</div>
 
-			<p className="mb-5 text-sm leading-relaxed text-gray-200">{post.content}</p>
+			{/* Post Content */}
+			<div className="mb-4">
+				<p className="text-white/90 whitespace-pre-wrap break-words">{post.content}</p>
+			</div>
 
-			{/* Render media items (images or videos) */}
+			{/* Post Media - Modern Style */}
 			{post.media && post.media.length > 0 && (
-				<div className="mb-5 space-y-3">
-					{post.media.map((mediaItem, index) => (
-						<div
-							key={mediaItem.publicId || index}
-							className="rounded-lg overflow-hidden ring-1 ring-white/5 shadow-md"
-						>
-							{mediaItem.type === "image" && (
+				<div className="mb-4 overflow-hidden rounded-xl bg-gray-900/30">
+					{post.media.length === 1 ? (
+						<div className="aspect-video relative">
+							{(post.media[0].type === "image" || post.media[0].type?.startsWith("image/")) && (
 								<img
-									src={mediaItem.url}
-									alt={`Post media ${index + 1}`}
-									className="h-auto w-full max-h-[600px] object-contain rounded-lg hover:scale-[1.01] transition-transform duration-200"
+									src={post.media[0].url}
+									alt="Post media"
+									className="h-full w-full object-cover"
 								/>
 							)}
-							{mediaItem.type === "video" && (
+							{(post.media[0].type === "video" || post.media[0].type?.startsWith("video/")) && (
 								<video
-									src={mediaItem.url}
+									src={post.media[0].url}
 									controls
-									className="h-auto w-full max-h-[600px] rounded-lg bg-black"
+									className="h-full w-full object-cover bg-black"
 								>
 									Your browser does not support the video tag.
 								</video>
 							)}
 						</div>
-					))}
-				</div>
-			)}
-
-			{showActions && (
-				<div className="flex items-center justify-between border-t border-gray-800/80 pt-4 mt-1">
-					<div className="flex gap-5">
-						<button
-							onClick={() => setShowComments(!showComments)}
-							className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-purple-400 transition-colors duration-200"
-						>
-							<MessageCircle className="h-4 w-4" />
-							<span>{commentCount} comments</span>
-							{showComments ? (
-								<ChevronUp className="h-3 w-3 ml-0.5" />
-							) : (
-								<ChevronDown className="h-3 w-3 ml-0.5" />
-							)}
-						</button>
-
-						<button
-							onClick={handleShare}
-							className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-purple-400 transition-colors duration-200"
-						>
-							<Send className="h-4 w-4" />
-							<span>Share</span>
-						</button>
-
-						<div className="flex items-center gap-1.5 text-xs text-gray-400">
-							<Eye className="h-4 w-4" />
-							<span>{viewCount} views</span>
+					) : (
+						<div className={`grid gap-1 ${
+							post.media.length === 2 ? 'grid-cols-2' : 
+							post.media.length === 3 ? 'grid-cols-3' : 
+							'grid-cols-2'
+						}`}>
+							{post.media.map((mediaItem, index) => {
+								// Only show the first 4 items in the grid view
+								if (post.media.length > 4 && index > 3) return null;
+								
+								return (
+									<div
+										key={`media-${mediaItem._id || mediaItem.publicId || index}-${Date.now()}`}
+										className={`overflow-hidden ${post.media.length === 4 && index >= 2 ? 'col-span-1' : post.media.length > 4 && index === 0 ? 'col-span-2 row-span-2' : ''} relative`}
+									>
+										{(mediaItem.type === "image" || mediaItem.type?.startsWith("image/")) && (
+											<div className="aspect-square">
+												<img
+													src={mediaItem.url}
+													alt={`Post media ${index + 1}`}
+													className="h-full w-full object-cover"
+												/>
+											</div>
+										)}
+										{(mediaItem.type === "video" || mediaItem.type?.startsWith("video/")) && (
+											<div className="aspect-square relative">
+												<video
+													src={mediaItem.url}
+													className="h-full w-full object-cover bg-black"
+												>
+													Your browser does not support the video tag.
+												</video>
+												<div className="absolute inset-0 flex items-center justify-center">
+													<button 
+														onClick={(e) => {
+															e.stopPropagation();
+															// Create a fullscreen modal with the video
+															const modal = document.createElement('div');
+															modal.className = 'fixed inset-0 bg-black/90 z-50 flex items-center justify-center';
+															modal.onclick = () => modal.remove();
+															
+															const videoElement = document.createElement('video');
+															videoElement.src = mediaItem.url;
+															videoElement.className = 'max-h-screen max-w-screen-lg';
+															videoElement.controls = true;
+															videoElement.autoplay = true;
+															
+															modal.appendChild(videoElement);
+															document.body.appendChild(modal);
+														}}
+														className="h-12 w-12 rounded-full bg-black/50 flex items-center justify-center text-white"
+													>
+														<Send className="h-5 w-5 transform rotate-90" />
+													</button>
+												</div>
+											</div>
+										)}
+										{post.media.length > 4 && index === 3 && (
+											<div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+												<span className="text-white text-xl font-bold">+{post.media.length - 4}</span>
+											</div>
+										)}
+									</div>
+								);
+							})}
 						</div>
-					</div>
-
-					<div className="flex gap-2.5">
-						{!post.expired && isOwnPost && (
-							<button
-								onClick={handleRenew}
-								disabled={isRenewing}
-								className="rounded-full bg-gradient-to-r from-purple-600 to-blue-600 px-3.5 py-1.5 text-xs font-medium text-white hover:from-purple-500 hover:to-blue-500 disabled:opacity-50 shadow-md shadow-purple-900/20 transition-all duration-200 hover:shadow-lg hover:shadow-purple-900/30"
-							>
-								{isRenewing ? "Renewing..." : "Renew"}
-							</button>
-						)}
-
-						{/* Edit button - only show if the post belongs to the current user */}
-						{isOwnPost && (
-							<button
-								onClick={() => setIsEditing(true)}
-								className="rounded-full bg-blue-600/20 p-1.5 text-blue-400 hover:bg-blue-600/30 transition-colors duration-200"
-							>
-								<Edit2 className="h-4 w-4" />
-								<span className="sr-only">Edit</span>
-							</button>
-						)}
-
-						{isOwnPost && (
-							<button
-								onClick={handleDelete}
-								disabled={isDeleting}
-								className="rounded-full bg-red-600/20 p-1.5 text-red-400 hover:bg-red-600/30 transition-colors duration-200 disabled:opacity-50"
-							>
-								<Trash2 className="h-4 w-4" />
-								<span className="sr-only">Delete</span>
-							</button>
-						)}
-					</div>
+					)}
 				</div>
 			)}
 
-			{/* Comments Section */}
+			{/* Post Actions */}
+			<div className="flex items-center justify-between">
+				<div className="flex items-center gap-4">
+					{/* View count */}
+					<div className="flex items-center gap-1 text-gray-400 text-sm">
+						<Eye className="h-4 w-4" />
+						<span>{viewCount}</span>
+					</div>
+
+					{/* Comment button */}
+					<button
+						onClick={() => setShowComments(!showComments)}
+						className="flex items-center gap-1 text-gray-400 hover:text-purple-400 transition-colors duration-200 text-sm"
+					>
+						<MessageCircle className="h-4 w-4" />
+						<span>{commentCount}</span>
+					</button>
+				</div>
+
+				{/* Admin actions */}
+				{showActions && isOwnPost && !post.expired && (
+					<div className="flex items-center gap-2">
+						<button
+							onClick={() => setIsEditing(true)}
+							className="rounded-md bg-gray-800 px-2.5 py-1 text-xs font-medium text-white hover:bg-gray-700 transition-colors duration-200"
+						>
+							<Edit2 className="h-3.5 w-3.5" />
+							<span className="sr-only">Edit</span>
+						</button>
+						<button
+							onClick={handleDelete}
+							disabled={isDeleting}
+							className="rounded-md bg-red-900/30 px-2.5 py-1 text-xs font-medium text-red-400 hover:bg-red-900/50 transition-colors duration-200"
+						>
+							<Trash2 className="h-3.5 w-3.5" />
+							<span className="sr-only">Delete</span>
+						</button>
+					</div>
+				)}
+
+				{/* Renew Post button */}
+				{showActions && post.expired && isOwnPost && (
+					<button
+						onClick={handleRenew}
+						disabled={isRenewing}
+						className="rounded-md bg-gradient-to-r from-purple-600 to-blue-600 px-3 py-1 text-xs font-medium text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-70 transition-colors duration-200"
+					>
+						{isRenewing ? "Renewing..." : "Renew Post"}
+					</button>
+				)}
+			</div>
+
+			{/* Comments section */}
 			{showComments && (
-				<CommentSection
-					post={post}
-					currentUser={currentUser}
-					onAddComment={addComment}
-					onDeleteComment={deleteComment}
-				/>
+				<div className="mt-4 pt-4 border-t border-gray-800/50">
+					<CommentSection
+						post={post}
+						onAddComment={addComment}
+						onDeleteComment={deleteComment}
+						currentUser={user}
+					/>
+				</div>
 			)}
 		</Card>
 	);

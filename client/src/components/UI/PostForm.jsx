@@ -7,7 +7,6 @@ import ProfileAvatar from "./ProfileAvatar";
 export default function PostForm({
 	user,
 	initialContent = "",
-	initialDuration = 24,
 	initialMedia = [],
 	isEditing = false,
 	onSubmit,
@@ -15,28 +14,38 @@ export default function PostForm({
 }) {
 	const { showError, showInfo } = useToast();
 	const [content, setContent] = useState(initialContent);
-	const [duration, setDuration] = useState(initialDuration);
+	const [expirationTime, setExpirationTime] = useState("24");
 	const [mediaItems, setMediaItems] = useState([]);
 
 	useEffect(() => {
 		setContent(initialContent);
-		setDuration(initialDuration);
-		const initialExistingMedia = initialMedia
-			.filter((item) => item && (item.url || item._id))
-			.map((item) => ({
-				id: item._id || item.id,
-				url: item.url,
-				type: item.type || (item.url && determineMediaTypeFromUrl(item.url)),
-				isExisting: true,
-				publicId: item.publicId,
-			}));
+		const initialExistingMedia = Array.isArray(initialMedia)
+			? initialMedia
+					.filter((item) => {
+						return item && (item.url || item._id);
+					})
+					.map((item) => {
+						let mediaType = item.type;
+						if (!mediaType && item.url) {
+							mediaType = determineMediaTypeFromUrl(item.url);
+						}
+
+						return {
+							id: item._id || item.id,
+							url: item.url,
+							type: mediaType,
+							isExisting: true,
+							publicId: item.publicId,
+						};
+					})
+			: [];
 		setMediaItems(initialExistingMedia);
-	}, [initialContent, initialDuration, initialMedia]);
+	}, [initialContent, initialMedia]);
 
 	const determineMediaTypeFromUrl = (url) => {
 		if (!url) return "unknown";
-		if (url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) return "image/jpeg";
-		if (url.match(/\.(mp4|webm|ogg)$/i)) return "video/mp4";
+		if (url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) return "image";
+		if (url.match(/\.(mp4|webm|ogg)$/i)) return "video";
 		return "unknown";
 	};
 
@@ -60,7 +69,7 @@ export default function PostForm({
 				return;
 			}
 			if (file.size > 200 * 1024 * 1024) {
-				showError("Each file must be less than 100MB.");
+				showError("Each file must be less than 200MB.");
 				e.target.value = null;
 				return;
 			}
@@ -99,22 +108,21 @@ export default function PostForm({
 		}
 		const formData = new FormData();
 		formData.append("content", content);
-		formData.append("duration", duration);
+		formData.append("expirationTime", expirationTime);
 		const existingMediaIdsToKeep = mediaItems
 			.filter((item) => item.isExisting)
-			.map((item) => item.id);
-
+			.map((item) => item.id || item._id)
+			.filter(Boolean);
 		mediaItems.forEach((item) => {
 			if (!item.isExisting && item.file) {
 				formData.append("media", item.file);
 			}
 		});
-
 		if (isEditing) {
 			if (existingMediaIdsToKeep.length > 0) {
-				existingMediaIdsToKeep.forEach((id) =>
-					formData.append("existingMediaIds", id)
-				);
+				existingMediaIdsToKeep.forEach((id) => {
+					formData.append("existingMediaIds", id);
+				});
 			} else {
 				formData.append("existingMediaIds", "");
 			}
@@ -122,9 +130,36 @@ export default function PostForm({
 
 		try {
 			await onSubmit(formData);
+			// Clear form after successful submission (only if not editing)
+			if (!isEditing) {
+				setContent("");
+				setMediaItems([]);
+				setExpirationTime("24");
+			}
 		} catch (error) {
 			showError(error.message || "Failed to create post. Please try again.");
 		}
+	};
+
+	// Helper functions for media type checking
+	const isImage = (type) => {
+		return (
+			type === "image" ||
+			type === "image/jpeg" ||
+			type === "image/png" ||
+			type === "image/gif" ||
+			type.startsWith("image/")
+		);
+	};
+
+	const isVideo = (type) => {
+		return (
+			type === "video" ||
+			type === "video/mp4" ||
+			type === "video/webm" ||
+			type === "video/ogg" ||
+			type.startsWith("video/")
+		);
 	};
 
 	return (
@@ -135,16 +170,16 @@ export default function PostForm({
 
 					<div className="flex-1">
 						<textarea
-							className="min-h-[80px] w-full resize-none rounded-lg border border-gray-800 bg-transparent p-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+							className="min-h-[80px] w-full resize-none rounded-lg border border-gray-800/80 bg-gray-900/50 p-3 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 transition-colors duration-200"
 							placeholder={`What's on your mind? It'll disappear in ${
-								duration || 24
+								expirationTime || 24
 							} hours..`}
 							value={content}
 							onChange={(e) => setContent(e.target.value)}
 						/>
 
 						{mediaItems.length > 0 && (
-							<div className="mt-2 flex flex-wrap gap-2">
+							<div className="mt-3 flex flex-wrap gap-2">
 								{mediaItems.map((item, idx) => {
 									const url = item.isExisting ? item.url : item.previewUrl;
 
@@ -153,9 +188,9 @@ export default function PostForm({
 									return (
 										<div
 											key={item.id || item.tempId || idx}
-											className="relative group h-24 w-24"
+											className="relative group h-24 w-24 rounded-md overflow-hidden shadow-md"
 										>
-											{item.type && item.type.startsWith("image") ? (
+											{isImage(item.type) ? (
 												<img
 													src={url}
 													alt={
@@ -163,16 +198,16 @@ export default function PostForm({
 															? "Existing media"
 															: `Preview of ${item.file.name}`
 													}
-													className="h-full w-full rounded object-cover"
+													className="h-full w-full object-cover"
 												/>
-											) : item.type && item.type.startsWith("video") ? (
+											) : isVideo(item.type) ? (
 												<video
 													src={url}
 													controls
-													className="h-full w-full rounded object-cover"
+													className="h-full w-full object-cover"
 												/>
 											) : (
-												<div className="h-full w-full rounded bg-gray-700 text-white flex items-center justify-center text-center text-xs p-1">
+												<div className="h-full w-full bg-gray-800 text-white flex items-center justify-center text-center text-xs p-1">
 													Cannot preview{" "}
 													{item.isExisting
 														? `Media (${item.id})`
@@ -182,7 +217,7 @@ export default function PostForm({
 											<button
 												type="button"
 												onClick={() => removeMedia(item)}
-												className="absolute top-1 right-1 rounded-full bg-gray-900/80 text-white hover:bg-gray-900 p-1 transition-opacity opacity-0 group-hover:opacity-100"
+												className="absolute top-1 right-1 rounded-full bg-gray-900/90 text-white hover:bg-gray-900 p-1 transition-all opacity-0 group-hover:opacity-100"
 												aria-label="Remove media"
 											>
 												<XCircle className="h-4 w-4" aria-hidden="true" />
@@ -193,53 +228,49 @@ export default function PostForm({
 							</div>
 						)}
 
-						<div className="mt-2 flex items-center justify-between">
+						<div className="mt-3 flex items-center justify-between">
 							<div className="flex gap-2">
-								<label className="cursor-pointer rounded-full p-2 hover:bg-gray-800">
+								<label className="cursor-pointer rounded-full p-2 hover:bg-gray-800/70 transition-colors duration-200">
 									<input
 										type="file"
-										className="hidden"
-										name="media"
-										multiple
 										accept="image/*,video/*"
+										className="hidden"
 										onChange={handleFileChange}
+										multiple
 									/>
-									<Image className="h-4 w-4 text-gray-500" aria-hidden="true" />
+									<Image
+										className="h-5 w-5 text-purple-400"
+										aria-hidden="true"
+									/>
 									<span className="sr-only">Add media</span>
 								</label>
-
-								<div className="flex items-center gap-1 rounded-lg border border-gray-800 px-2 py-1">
-									<Clock className="h-3 w-3 text-gray-500" aria-hidden="true" />
-									<label htmlFor="duration-select" className="sr-only">
-										Post duration
-									</label>
-									<select
-										id="duration-select"
-										className="bg-transparent text-xs text-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500 rounded"
-										value={duration}
-										onChange={(e) => setDuration(Number(e.target.value))}
-									>
-										<option value={24}>24 hours</option>
-										<option value={48}>48 hours</option>
-										<option value={72}>3 days</option>
-										<option value={168}>7 days</option>
-									</select>
-								</div>
 							</div>
 
-							<button
-								type="submit"
-								disabled={!content.trim() || isSubmitting}
-								className="rounded-full bg-gradient-to-r from-purple-600 to-blue-500 px-4 py-1 text-sm font-medium text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-60 transition-opacity"
-							>
-								{isSubmitting
-									? isEditing
-										? "Updating..."
-										: "Posting..."
-									: isEditing
-									? "Update"
-									: "Echo"}
-							</button>
+							<div className="flex items-center gap-3">
+								<div className="flex items-center gap-1.5 text-sm">
+									<Clock className="h-4 w-4 text-gray-400" aria-hidden="true" />
+									<span className="text-gray-400">Duration:</span>
+									<select
+										value={expirationTime}
+										onChange={(e) => setExpirationTime(e.target.value)}
+										className="rounded border border-gray-800/80 bg-gray-900/50 px-1.5 py-1 text-sm text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+									>
+										<option value="12">12 hours</option>
+										<option value="24">24 hours</option>
+										<option value="48">48 hours</option>
+										<option value="72">3 days</option>
+										<option value="168">7 days</option>
+									</select>
+								</div>
+
+								<button
+									type="submit"
+									disabled={isSubmitting}
+									className="rounded-md bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:from-purple-700 hover:to-blue-700 transition-all duration-200 disabled:opacity-70"
+								>
+									{isSubmitting ? "Posting..." : isEditing ? "Update" : "Post"}
+								</button>
+							</div>
 						</div>
 					</div>
 				</div>
