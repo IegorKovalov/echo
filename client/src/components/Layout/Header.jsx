@@ -2,6 +2,7 @@ import {
 	Bell,
 	Home,
 	LogOut,
+	Radio,
 	Search,
 	Settings,
 	Sparkles,
@@ -25,7 +26,6 @@ export default function Header() {
 	const location = useLocation();
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-	// Close mobile menu when route changes
 	useEffect(() => {
 		setIsMobileMenuOpen(false);
 	}, [location.pathname]);
@@ -33,14 +33,12 @@ export default function Header() {
 	const handleLogout = async () => {
 		try {
 			await logout();
-			// Navigation is handled in AuthContext
 		} catch (err) {
 			console.error("Logout failed:", err);
 		}
 	};
 
 	const handleOpenSearch = () => {
-		// Get the position of the search button to anchor the search bubble
 		if (searchButtonRef.current) {
 			setSearchAnchorRect(searchButtonRef.current.getBoundingClientRect());
 		}
@@ -53,7 +51,6 @@ export default function Header() {
 	};
 
 	const handleToggleNotifications = () => {
-		// Get the position of the notifications button to anchor the dropdown
 		if (notificationsButtonRef.current) {
 			setNotificationsAnchorRect(
 				notificationsButtonRef.current.getBoundingClientRect()
@@ -103,6 +100,16 @@ export default function Header() {
 						>
 							<Home className="h-4 w-4" />
 							Feed
+						</Link>
+						<Link
+							to="/rooms"
+							className={`text-sm font-medium flex items-center gap-1.5 transition-all duration-200 ${
+								isActive("/rooms")
+									? "text-purple-400"
+									: "text-gray-200 hover:text-purple-400"
+							}`}
+						>
+							<Radio className="h-4 w-4" /> Rooms
 						</Link>
 						<button
 							ref={searchButtonRef}

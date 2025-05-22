@@ -66,7 +66,7 @@ export default function ProfilePosts({
 						/>
 					</div>
 				) : (
-					<div className="space-y-6">
+					<div className="space-y-6 max-w-2xl mx-auto">
 						{/* Post List using PostItem component */}
 						{posts.map((post) => (
 							<PostItem

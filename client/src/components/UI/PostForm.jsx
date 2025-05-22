@@ -74,6 +74,11 @@ export default function PostForm({
 				return;
 			}
 		}
+		if (mediaItems.length + selectedFiles.length > 5) {
+			showError("You can add a maximum of 5 media items per post.");
+			e.target.value = null;
+			return;
+		}
 
 		const newMedia = selectedFiles.map((file) => ({
 			file: file,
@@ -130,7 +135,6 @@ export default function PostForm({
 
 		try {
 			await onSubmit(formData);
-			// Clear form after successful submission (only if not editing)
 			if (!isEditing) {
 				setContent("");
 				setMediaItems([]);
@@ -138,7 +142,7 @@ export default function PostForm({
 			}
 		} catch (error) {
 			showError(error.message || "Failed to create post. Please try again.");
-		}
+		} 
 	};
 
 	// Helper functions for media type checking
@@ -225,6 +229,9 @@ export default function PostForm({
 										</div>
 									);
 								})}
+								{mediaItems.length > 0 && (
+									<p className="w-full mt-1 text-xs text-gray-400">{mediaItems.length} media item(s) selected {mediaItems.length >= 5 && "(Maximum reached)"}</p>
+								)}
 							</div>
 						)}
 

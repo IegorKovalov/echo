@@ -9,6 +9,8 @@ import NotFoundPage from "./pages/NotFoundPage";
 import OTPVerificationPage from "./pages/OTPVerificationPage";
 import ProfilePage from "./pages/ProfilePage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import RoomDetailPage from "./pages/RoomDetailPage";
+import RoomsPage from "./pages/RoomsPage";
 import SearchPage from "./pages/SearchPage";
 import SettingsPage from "./pages/SettingsPage";
 import SignupPage from "./pages/SignupPage";
@@ -66,6 +68,28 @@ function App() {
 							<ProtectedRoute>
 								<Layout>
 									<SearchPage />
+								</Layout>
+							</ProtectedRoute>
+						}
+					/>
+					<Route
+						path="/rooms"
+						element={
+							<ProtectedRoute>
+								<Layout>
+									<RoomsPage />
+								</Layout>
+							</ProtectedRoute>
+						}
+					/>
+					<Route
+						path="/room/:roomId"
+						element={
+							<ProtectedRoute>
+								<Layout showHeader={false}>
+									{" "}
+									{/* RoomDetailPage has its own header */}
+									<RoomDetailPage />
 								</Layout>
 							</ProtectedRoute>
 						}

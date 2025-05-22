@@ -34,6 +34,7 @@ export default function PostItem({
 	const [showComments, setShowComments] = useState(false);
 	const [isEditing, setIsEditing] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [showAllMedia, setShowAllMedia] = useState(false);
 
 	const { showSuccess, showError, showInfo } = useToast();
 	const { trackView, getViewCount, initializeViewCount } = useViewTracking();
@@ -268,71 +269,87 @@ export default function PostItem({
 							)}
 						</div>
 					) : (
-						<div className={`grid gap-1 ${
-							post.media.length === 2 ? 'grid-cols-2' : 
-							post.media.length === 3 ? 'grid-cols-3' : 
-							'grid-cols-2'
-						}`}>
-							{post.media.map((mediaItem, index) => {
-								// Only show the first 4 items in the grid view
-								if (post.media.length > 4 && index > 3) return null;
-								
-								return (
-									<div
-										key={`media-${mediaItem._id || mediaItem.publicId || index}-${Date.now()}`}
-										className={`overflow-hidden ${post.media.length === 4 && index >= 2 ? 'col-span-1' : post.media.length > 4 && index === 0 ? 'col-span-2 row-span-2' : ''} relative`}
-									>
-										{(mediaItem.type === "image" || mediaItem.type?.startsWith("image/")) && (
-											<div className="aspect-square">
-												<img
-													src={mediaItem.url}
-													alt={`Post media ${index + 1}`}
-													className="h-full w-full object-cover"
-												/>
-											</div>
-										)}
-										{(mediaItem.type === "video" || mediaItem.type?.startsWith("video/")) && (
-											<div className="aspect-square relative">
-												<video
-													src={mediaItem.url}
-													className="h-full w-full object-cover bg-black"
-												>
-													Your browser does not support the video tag.
-												</video>
-												<div className="absolute inset-0 flex items-center justify-center">
-													<button 
-														onClick={(e) => {
-															e.stopPropagation();
-															// Create a fullscreen modal with the video
-															const modal = document.createElement('div');
-															modal.className = 'fixed inset-0 bg-black/90 z-50 flex items-center justify-center';
-															modal.onclick = () => modal.remove();
-															
-															const videoElement = document.createElement('video');
-															videoElement.src = mediaItem.url;
-															videoElement.className = 'max-h-screen max-w-screen-lg';
-															videoElement.controls = true;
-															videoElement.autoplay = true;
-															
-															modal.appendChild(videoElement);
-															document.body.appendChild(modal);
-														}}
-														className="h-12 w-12 rounded-full bg-black/50 flex items-center justify-center text-white"
-													>
-														<Send className="h-5 w-5 transform rotate-90" />
-													</button>
+						<>
+							<div className={`grid gap-1 ${
+								showAllMedia && post.media.length > 4 ? 'grid-cols-3 md:grid-cols-4' :
+								post.media.length === 2 ? 'grid-cols-2' : 
+								post.media.length === 3 ? 'grid-cols-3' : 
+								'grid-cols-2 grid-rows-2'
+							}`}>
+								{post.media.map((mediaItem, index) => {
+									// Show first 4 in grid view or all if showAllMedia is true
+									if (!showAllMedia && index > 3) return null;
+									if (showAllMedia && index > 4) return null; // Cap at 5 visible items max
+									
+									const isFirstItemInGridOfMany = post.media.length > 3 && index === 0;
+									
+									return (
+										<div
+											key={`media-${mediaItem._id || mediaItem.publicId || index}-${Date.now()}`}
+											className={`overflow-hidden relative ${isFirstItemInGridOfMany ? 'col-span-1 row-span-1 md:col-span-1' : ''}`}
+										>
+											{(mediaItem.type === "image" || mediaItem.type?.startsWith("image/")) && (
+												<div className="aspect-square">
+													<img
+														src={mediaItem.url}
+														alt={`Post media ${index + 1}`}
+														className="h-full w-full object-cover"
+													/>
 												</div>
-											</div>
-										)}
-										{post.media.length > 4 && index === 3 && (
-											<div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-												<span className="text-white text-xl font-bold">+{post.media.length - 4}</span>
-											</div>
-										)}
-									</div>
-								);
-							})}
-						</div>
+											)}
+											{(mediaItem.type === "video" || mediaItem.type?.startsWith("video/")) && (
+												<div className="aspect-square relative">
+													<video
+														src={mediaItem.url}
+														className="h-full w-full object-cover bg-black"
+													>
+														Your browser does not support the video tag.
+													</video>
+													<div className="absolute inset-0 flex items-center justify-center">
+														<button 
+															onClick={(e) => {
+																e.stopPropagation();
+																// Create a fullscreen modal with the video
+																const modal = document.createElement('div');
+																modal.className = 'fixed inset-0 bg-black/90 z-50 flex items-center justify-center';
+																modal.onclick = () => modal.remove();
+																
+																const videoElement = document.createElement('video');
+																videoElement.src = mediaItem.url;
+																videoElement.className = 'max-h-screen max-w-screen-lg';
+																videoElement.controls = true;
+																videoElement.autoplay = true;
+																
+																modal.appendChild(videoElement);
+																document.body.appendChild(modal);
+															}}
+															className="h-12 w-12 rounded-full bg-black/50 flex items-center justify-center text-white"
+														>
+															<Send className="h-5 w-5 transform rotate-90" />
+														</button>
+													</div>
+												</div>
+											)}
+											{!showAllMedia && post.media.length > 4 && index === 3 && (
+												<div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+													<span className="text-white text-xl font-bold">+{post.media.length - 4}</span>
+												</div>
+											)}
+										</div>
+									);
+								})}
+							</div>
+							{post.media.length > 4 && (
+								<div className="mt-2 px-2 pb-2">
+									<button 
+										onClick={() => setShowAllMedia(!showAllMedia)}
+										className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+									>
+										{showAllMedia ? "Show less" : `Show all ${post.media.length} media items`}
+									</button>
+								</div>
+							)}
+						</>
 					)}
 				</div>
 			)}
