@@ -7,53 +7,25 @@ import {
 	Timer,
 	UserCheck,
 	Users,
+	ArrowRight,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Card from "../UI/Card";
-
-const categoryColors = {
-	Support: "bg-green-600/20 text-green-400 border-green-600/30",
-	Professional: "bg-blue-600/20 text-blue-400 border-blue-600/30",
-	Creative: "bg-purple-600/20 text-purple-400 border-purple-600/30",
-	Relationships: "bg-pink-600/20 text-pink-400 border-pink-600/30",
-	Technology: "bg-cyan-600/20 text-cyan-400 border-cyan-600/30",
-	Discussion: "bg-orange-600/20 text-orange-400 border-orange-600/30",
-};
+import { categoryColors } from "../../data/roomsData";
+import { useTimeFormatting } from "../../hooks/useTimeFormatting";
+import { isRoomFull, isRoomNearCapacity } from "../../utils/anonymousUtils";
 
 export default function RoomCard({ room, onClick, variant = "card" }) {
-	const timeUntilReset = () => {
-		const now = new Date();
-		const resetTime = new Date(room.nextResetAt);
-		const diff = resetTime - now;
+	const navigate = useNavigate();
+	const { timeUntilReset, timeUntilExpiry } = useTimeFormatting();
 
-		if (diff <= 0) return "Resetting now";
-
-		const hours = Math.floor(diff / (1000 * 60 * 60));
-		const days = Math.floor(hours / 24);
-
-		if (days > 0) {
-			return `${days}d ${hours % 24}h`;
-		}
-		return `${hours}h`;
+	const handleJoinChat = (e) => {
+		e.stopPropagation(); // Prevent card click event
+		navigate(`/rooms/${room._id}`);
 	};
 
-	const timeUntilExpiry = () => {
-		if (!room.expiresAt) return null;
-
-		const now = new Date();
-		const expiryTime = new Date(room.expiresAt);
-		const diff = expiryTime - now;
-
-		if (diff <= 0) return "Expired";
-
-		const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-		return `${days} days left`;
-	};
-
-	const isNearCapacity =
-		room.maxParticipants && room.participantCount / room.maxParticipants > 0.8;
-
-	const isFull =
-		room.maxParticipants && room.participantCount >= room.maxParticipants;
+	const isFull = isRoomFull(room);
+	const isNearCapacity = isRoomNearCapacity(room);
 
 	if (variant === "list") {
 		return (
@@ -99,13 +71,13 @@ export default function RoomCard({ room, onClick, variant = "card" }) {
 
 							<div className="flex items-center gap-1">
 								<Timer className="h-3 w-3" />
-								<span>Resets in {timeUntilReset()}</span>
+								<span>Resets in {timeUntilReset(room.nextResetAt)}</span>
 							</div>
 
 							{room.expiresAt && (
 								<div className="flex items-center gap-1">
 									<Calendar className="h-3 w-3" />
-									<span>{timeUntilExpiry()}</span>
+									<span>{timeUntilExpiry(room.expiresAt)}</span>
 								</div>
 							)}
 						</div>
@@ -217,17 +189,39 @@ export default function RoomCard({ room, onClick, variant = "card" }) {
 					)}
 				</div>
 
+				{/* Join Chat Button */}
+				<div className="pt-2 border-t border-gray-800/50">
+					<button
+						onClick={handleJoinChat}
+						disabled={isFull}
+						className={`w-full py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+							isFull
+								? "bg-gray-800 text-gray-500 cursor-not-allowed"
+								: "bg-purple-600 text-white hover:bg-purple-700 hover:shadow-md hover:shadow-purple-900/20"
+						}`}
+					>
+						{isFull ? (
+							"Room Full"
+						) : (
+							<>
+								Join Chat
+								<ArrowRight className="h-4 w-4" />
+							</>
+						)}
+					</button>
+				</div>
+
 				{/* Footer info */}
 				<div className="pt-2 border-t border-gray-800/50 space-y-1">
 					<div className="flex items-center gap-1 text-xs text-gray-400">
 						<Timer className="h-3 w-3" />
-						<span>Resets in {timeUntilReset()}</span>
+						<span>Resets in {timeUntilReset(room.nextResetAt)}</span>
 					</div>
 
 					{room.expiresAt && (
 						<div className="flex items-center gap-1 text-xs text-gray-400">
 							<Calendar className="h-3 w-3" />
-							<span>{timeUntilExpiry()}</span>
+							<span>{timeUntilExpiry(room.expiresAt)}</span>
 						</div>
 					)}
 				</div>

@@ -4,119 +4,15 @@ import CreateRoomModal from "../components/rooms/CreateRoomModal";
 import RoomDetailModal from "../components/rooms/RoomDetailModal";
 import RoomsList from "../components/rooms/RoomsList";
 import Card from "../components/UI/Card";
-
-// Mock data matching the backend schema
-const mockRooms = [
-	{
-		_id: "1",
-		name: "Mental Health Support",
-		description:
-			"A safe space to discuss mental health challenges and find support",
-		category: "Support",
-		roomType: "official",
-		resetInterval: 168,
-		nextResetAt: new Date(Date.now() + 168 * 60 * 60 * 1000),
-		expiresAt: null,
-		participantCount: 127,
-		maxParticipants: null,
-		createdBy: null,
-		createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-	},
-	{
-		_id: "2",
-		name: "Career Confessions",
-		description: "Share your work struggles and triumphs anonymously",
-		category: "Professional",
-		roomType: "official",
-		resetInterval: 168,
-		nextResetAt: new Date(Date.now() + 168 * 60 * 60 * 1000),
-		expiresAt: null,
-		participantCount: 89,
-		maxParticipants: null,
-		createdBy: null,
-		createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-	},
-	{
-		_id: "3",
-		name: "Creative Writing Circle",
-		description:
-			"Share your poetry, short stories, and creative writing pieces",
-		category: "Creative",
-		roomType: "official",
-		resetInterval: 168,
-		nextResetAt: new Date(Date.now() + 168 * 60 * 60 * 1000),
-		expiresAt: null,
-		participantCount: 156,
-		maxParticipants: null,
-		createdBy: null,
-		createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-	},
-	{
-		_id: "4",
-		name: "Dating Stories",
-		description: "The good, the bad, and the awkward dating experiences",
-		category: "Relationships",
-		roomType: "official",
-		resetInterval: 168,
-		nextResetAt: new Date(Date.now() + 168 * 60 * 60 * 1000),
-		expiresAt: null,
-		participantCount: 203,
-		maxParticipants: null,
-		createdBy: null,
-		createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
-	},
-	{
-		_id: "5",
-		name: "Late Night Thoughts",
-		description: "A place for those midnight reflections and random musings",
-		category: "Discussion",
-		roomType: "user-created",
-		resetInterval: 24,
-		nextResetAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-		expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-		participantCount: 45,
-		maxParticipants: 100,
-		createdBy: "user123",
-		createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-	},
-	{
-		_id: "6",
-		name: "Tech Startup Stories",
-		description: "Share your startup experiences, failures, and successes",
-		category: "Technology",
-		roomType: "user-created",
-		resetInterval: 72,
-		nextResetAt: new Date(Date.now() + 72 * 60 * 60 * 1000),
-		expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-		participantCount: 78,
-		maxParticipants: 200,
-		createdBy: "user456",
-		createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-	},
-];
-
-const categories = [
-	"All",
-	"Support",
-	"Professional",
-	"Creative",
-	"Relationships",
-	"Technology",
-	"Discussion",
-];
+import { mockRooms, categories, filterRoomsByCategory } from "../data/roomsData";
 
 export default function RoomsPage() {
 	const [selectedCategory, setSelectedCategory] = useState("All");
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 	const [selectedRoom, setSelectedRoom] = useState(null);
-	const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'list'
 
 	// Filter rooms based on current category selection
-	const filteredRooms = mockRooms.filter((room) => {
-		const matchesCategory =
-			selectedCategory === "All" || room.category === selectedCategory;
-		return matchesCategory;
-	});
+	const filteredRooms = filterRoomsByCategory(mockRooms, selectedCategory);
 
 	return (
 		<div className="flex flex-col bg-gradient-to-b from-gray-900 to-gray-950 min-h-screen">
@@ -217,51 +113,18 @@ export default function RoomsPage() {
 					</div>
 
 					{/* Results Info */}
-					<div className="mb-6 flex items-center justify-between">
+					<div className="mb-6">
 						<p className="text-gray-400">
 							{filteredRooms.length} room{filteredRooms.length !== 1 ? "s" : ""}{" "}
 							found
 							{selectedCategory !== "All" && ` in ${selectedCategory}`}
 						</p>
-
-						<div className="flex items-center gap-2">
-							<button
-								onClick={() => setViewMode("grid")}
-								className={`p-2 rounded-md ${
-									viewMode === "grid"
-										? "bg-purple-600 text-white"
-										: "bg-gray-800 text-gray-400 hover:text-white"
-								}`}
-							>
-								<div className="grid grid-cols-2 gap-0.5 w-4 h-4">
-									<div className="bg-current rounded-sm"></div>
-									<div className="bg-current rounded-sm"></div>
-									<div className="bg-current rounded-sm"></div>
-									<div className="bg-current rounded-sm"></div>
-								</div>
-							</button>
-							<button
-								onClick={() => setViewMode("list")}
-								className={`p-2 rounded-md ${
-									viewMode === "list"
-										? "bg-purple-600 text-white"
-										: "bg-gray-800 text-gray-400 hover:text-white"
-								}`}
-							>
-								<div className="flex flex-col gap-0.5 w-4 h-4">
-									<div className="bg-current h-1 rounded-sm"></div>
-									<div className="bg-current h-1 rounded-sm"></div>
-									<div className="bg-current h-1 rounded-sm"></div>
-								</div>
-							</button>
-						</div>
 					</div>
 
 					{/* Rooms List */}
 					<RoomsList
 						rooms={filteredRooms}
 						onRoomClick={setSelectedRoom}
-						viewMode={viewMode}
 					/>
 
 					{/* Empty State */}

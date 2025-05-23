@@ -9,19 +9,16 @@ import {
 	X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-
-const categoryColors = {
-	Support: "bg-green-600/20 text-green-400 border-green-600/30",
-	Professional: "bg-blue-600/20 text-blue-400 border-blue-600/30",
-	Creative: "bg-purple-600/20 text-purple-400 border-purple-600/30",
-	Relationships: "bg-pink-600/20 text-pink-400 border-pink-600/30",
-	Technology: "bg-cyan-600/20 text-cyan-400 border-cyan-600/30",
-	Discussion: "bg-orange-600/20 text-orange-400 border-orange-600/30",
-};
+import { useNavigate } from "react-router-dom";
+import { categoryColors } from "../../data/roomsData";
+import { useTimeFormatting } from "../../hooks/useTimeFormatting";
+import { isRoomFull, isRoomNearCapacity } from "../../utils/anonymousUtils";
 
 export default function RoomDetailModal({ room, isOpen, onClose }) {
 	const [isJoining, setIsJoining] = useState(false);
 	const modalRef = useRef(null);
+	const navigate = useNavigate();
+	const { timeUntilReset, timeUntilExpiry, formatTime } = useTimeFormatting();
 
 	useEffect(() => {
 		const handleClickOutside = (event) => {
@@ -58,12 +55,8 @@ export default function RoomDetailModal({ room, isOpen, onClose }) {
 
 			console.log("Joining room:", room._id);
 
-			// In real implementation, this would:
-			// 1. Call the join room API
-			// 2. Navigate to the room chat interface
-			// 3. Close this modal
-
-			onClose();
+			// Navigate to the room chat page
+			navigate(`/rooms/${room._id}`);
 		} catch (error) {
 			console.error("Error joining room:", error);
 		} finally {
@@ -71,58 +64,8 @@ export default function RoomDetailModal({ room, isOpen, onClose }) {
 		}
 	};
 
-	const timeUntilReset = () => {
-		if (!room) return "";
-
-		const now = new Date();
-		const resetTime = new Date(room.nextResetAt);
-		const diff = resetTime - now;
-
-		if (diff <= 0) return "Resetting now";
-
-		const hours = Math.floor(diff / (1000 * 60 * 60));
-		const days = Math.floor(hours / 24);
-
-		if (days > 0) {
-			return `${days}d ${hours % 24}h`;
-		}
-		return `${hours}h`;
-	};
-
-	const timeUntilExpiry = () => {
-		if (!room || !room.expiresAt) return null;
-
-		const now = new Date();
-		const expiryTime = new Date(room.expiresAt);
-		const diff = expiryTime - now;
-
-		if (diff <= 0) return "Expired";
-
-		const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-		return `${days} days left`;
-	};
-
-	const formatTime = (date) => {
-		const now = new Date();
-		const diff = now - date;
-		const minutes = Math.floor(diff / (1000 * 60));
-		const hours = Math.floor(minutes / 60);
-		const days = Math.floor(hours / 24);
-
-		if (days > 0) return `${days}d ago`;
-		if (hours > 0) return `${hours}h ago`;
-		if (minutes > 0) return `${minutes}m ago`;
-		return "Just now";
-	};
-
-	const isFull =
-		room &&
-		room.maxParticipants &&
-		room.participantCount >= room.maxParticipants;
-	const isNearCapacity =
-		room &&
-		room.maxParticipants &&
-		room.participantCount / room.maxParticipants > 0.8;
+	const isFull = isRoomFull(room);
+	const isNearCapacity = isRoomNearCapacity(room);
 
 	if (!isOpen || !room) return null;
 
@@ -253,7 +196,7 @@ export default function RoomDetailModal({ room, isOpen, onClose }) {
 									<span className="text-sm text-gray-400">Next Reset</span>
 								</div>
 								<p className="text-xl font-semibold text-white">
-									{timeUntilReset()}
+									{timeUntilReset(room.nextResetAt)}
 								</p>
 								<p className="text-xs text-gray-500 mt-1">
 									Every {room.resetInterval}h
@@ -270,7 +213,7 @@ export default function RoomDetailModal({ room, isOpen, onClose }) {
 								</p>
 								{room.expiresAt && (
 									<p className="text-xs text-gray-500 mt-1">
-										{timeUntilExpiry()}
+										{timeUntilExpiry(room.expiresAt)}
 									</p>
 								)}
 							</div>

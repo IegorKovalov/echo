@@ -10,6 +10,7 @@ import OTPVerificationPage from "./pages/OTPVerificationPage";
 import ProfilePage from "./pages/ProfilePage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import RoomsPage from "./pages/RoomsPage";
+import RoomChatPage from "./pages/RoomChatPage";
 import SearchPage from "./pages/SearchPage";
 import SettingsPage from "./pages/SettingsPage";
 import SignupPage from "./pages/SignupPage";
@@ -77,6 +78,16 @@ function App() {
 							<ProtectedRoute>
 								<Layout>
 									<RoomsPage />
+								</Layout>
+							</ProtectedRoute>
+						}
+					/>
+					<Route
+						path="/rooms/:roomId"
+						element={
+							<ProtectedRoute>
+								<Layout showHeader={false}>
+									<RoomChatPage />
 								</Layout>
 							</ProtectedRoute>
 						}
