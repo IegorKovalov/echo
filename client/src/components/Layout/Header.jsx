@@ -6,6 +6,7 @@ import {
 	Settings,
 	Sparkles,
 	User,
+	Users,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -99,6 +100,17 @@ export default function Header() {
 						>
 							<Home className="h-4 w-4" />
 							Feed
+						</Link>
+						<Link
+							to="/rooms"
+							className={`text-sm font-medium flex items-center gap-1.5 transition-all duration-200 ${
+								isActive("/rooms")
+									? "text-purple-400"
+									: "text-gray-200 hover:text-purple-400"
+							}`}
+						>
+							<Users className="h-4 w-4" />
+							Rooms
 						</Link>
 						<button
 							ref={searchButtonRef}
