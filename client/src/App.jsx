@@ -2,7 +2,6 @@ import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import Layout from "./components/Layout/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AppProviders } from "./context/AppProviders";
-import CreateRoomPage from "./pages/CreateRoomPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
@@ -10,8 +9,6 @@ import NotFoundPage from "./pages/NotFoundPage";
 import OTPVerificationPage from "./pages/OTPVerificationPage";
 import ProfilePage from "./pages/ProfilePage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
-import RoomDetailPage from "./pages/RoomDetailPage";
-import RoomsPage from "./pages/RoomsPage";
 import SearchPage from "./pages/SearchPage";
 import SettingsPage from "./pages/SettingsPage";
 import SignupPage from "./pages/SignupPage";
@@ -69,38 +66,6 @@ function App() {
 							<ProtectedRoute>
 								<Layout>
 									<SearchPage />
-								</Layout>
-							</ProtectedRoute>
-						}
-					/>
-					<Route
-						path="/rooms"
-						element={
-							<ProtectedRoute>
-								<Layout>
-									<RoomsPage />
-								</Layout>
-							</ProtectedRoute>
-						}
-					/>
-					<Route
-						path="/create-room"
-						element={
-							<ProtectedRoute>
-								<Layout>
-									<CreateRoomPage />
-								</Layout>
-							</ProtectedRoute>
-						}
-					/>
-					<Route
-						path="/room/:roomId"
-						element={
-							<ProtectedRoute>
-								<Layout showHeader={false}>
-									{" "}
-									{/* RoomDetailPage has its own header */}
-									<RoomDetailPage />
 								</Layout>
 							</ProtectedRoute>
 						}
