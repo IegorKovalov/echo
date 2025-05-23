@@ -2,6 +2,7 @@ import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import Layout from "./components/Layout/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AppProviders } from "./context/AppProviders";
+import CreateRoomPage from "./pages/CreateRoomPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
@@ -83,6 +84,16 @@ function App() {
 						}
 					/>
 					<Route
+						path="/create-room"
+						element={
+							<ProtectedRoute>
+								<Layout>
+									<CreateRoomPage />
+								</Layout>
+							</ProtectedRoute>
+						}
+					/>
+					<Route
 						path="/room/:roomId"
 						element={
 							<ProtectedRoute>
@@ -94,7 +105,6 @@ function App() {
 							</ProtectedRoute>
 						}
 					/>
-
 					{/* Public routes */}
 					<Route
 						path="/login"
@@ -144,7 +154,6 @@ function App() {
 							</Layout>
 						}
 					/>
-
 					{/* 404 - Not Found Page (catch all) */}
 					<Route
 						path="*"

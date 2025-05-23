@@ -1,20 +1,35 @@
-import { ArrowLeft, Info, LogIn, LogOut, Settings, Users } from "lucide-react"; // Added icons
-import React, { useCallback, useEffect, useState } from "react";
+// client/src/pages/RoomDetailPage.jsx
+import {
+	ArrowLeft,
+	Info,
+	Loader2,
+	LogIn,
+	LogOut,
+	MessageSquare,
+	Settings,
+	Users,
+	X,
+} from "lucide-react"; // Added MessageSquare, X
+import React, { useCallback, useEffect, useRef, useState } from "react"; // Added useRef
 import { Link, useNavigate, useParams } from "react-router-dom";
-import RoomHeader from "../components/Rooms/RoomHeader";
+import RoomHeader from "../components/Rooms/RoomHeader"; // This component doesn't exist. We are using the header in RoomDetailPage itself.
 import RoomMemberList from "../components/Rooms/RoomMemberList";
 import RoomMessageList from "../components/Rooms/RoomMessageList";
-import Card from "../components/UI/Card"; // For room info display
+import Card from "../components/UI/Card";
 import ErrorMessage from "../components/UI/ErrorMessage";
 import LoadingSpinner from "../components/UI/LoadingSpinner";
-import RoomMessageForm from "../components/UI/RoomMessageForm"; // Phase 3
+import RoomMessageForm from "../components/UI/RoomMessageForm";
 import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
+import { useToast } from "../context/ToastContext";
+
+const POLLING_INTERVAL = 15000; // 15 seconds for polling new messages
 
 const RoomDetailPage = () => {
 	const { roomId } = useParams();
 	const navigate = useNavigate();
 	const { user } = useAuth();
+	const { showSuccess, showError } = useToast();
 	const {
 		currentRoom,
 		currentRoomMembers,
@@ -22,52 +37,128 @@ const RoomDetailPage = () => {
 		loadingCurrentRoom,
 		loadingMembers,
 		loadingMessages,
+		loadingMoreMessages,
 		fetchRoomDetails,
+		fetchRoomMessages, // fetchRoomMessages is now separate
+		messagesPage,
+		hasMoreMessages, // from context
 		joinRoom,
 		leaveRoom,
-		sendMessage, // Phase 2 & 3
+		sendMessage,
+		replyToMessage,
+		adminDeleteMessage,
+		reactToMessage, // Added reactToMessage
 	} = useRoom();
 
-	const [error, setError] = useState(null);
-	const [isSendingMessage, setIsSendingMessage] = useState(false); // Phase 3
-	const [showMembersAside, setShowMembersAside] = useState(false); // State for mobile member list
-	const [showInfoModal, setShowInfoModal] = useState(false); // State for room info modal
+	const [pageError, setPageError] = useState(null);
+	const [isJoining, setIsJoining] = useState(false);
+	const [isLeaving, setIsLeaving] = useState(false);
+	const [isSendingMessage, setIsSendingMessage] = useState(false);
+	const [showMembersAside, setShowMembersAside] = useState(false);
+	const [showInfoModal, setShowInfoModal] = useState(false);
 
-	useEffect(() => {
+	const [replyingTo, setReplyingTo] = useState(null); // { messageId, userName, contentSnippet }
+	const pollingTimerRef = useRef(null);
+
+	const loadInitialData = useCallback(() => {
 		if (roomId) {
-			fetchRoomDetails(roomId).catch((err) => {
-				setError(err.message || "Failed to load room details.");
-				if (err.response && err.response.status === 404) {
-					// Handle 404 from backend if room doesn't exist
-					navigate("/404", { replace: true });
-				}
-			});
+			setPageError(null);
+			fetchRoomDetails(roomId) // This will also fetch initial messages (page 1)
+				.catch((err) => {
+					const errorMsg = err.message || "Failed to load room details.";
+					setPageError(errorMsg);
+				});
 		}
-		// Reset aside/modal on room change
 		setShowMembersAside(false);
 		setShowInfoModal(false);
-	}, [roomId, fetchRoomDetails, navigate]);
+	}, [roomId, fetchRoomDetails]);
+
+	useEffect(() => {
+		loadInitialData();
+	}, [loadInitialData]); // Changed dependency to the memoized function
+
+	// Polling for new messages
+	useEffect(() => {
+		if (roomId && currentRoom) {
+			// Only poll if room is loaded
+			const poll = () => {
+				// Fetch messages from page 1 to get the latest, context will handle merging or replacing
+				// We want new messages, so we'd typically fetch a page *after* the current latest, or just page 1 and merge.
+				// For simplicity, let's just refetch page 1 of messages. RoomContext needs to handle this intelligently.
+				// A better polling would get messages *since* the last message timestamp.
+				// Current RoomContext's fetchRoomMessages(roomId, 1) will replace messages.
+				// We need a way to add *new* messages without re-fetching and reversing all.
+				// For now, this simple poll will just refresh the latest page.
+				// To get truly "new" messages, backend needs a way to get messages after a certain ID/timestamp.
+				// Let's assume for now fetchRoomMessages(roomId, 1) is efficient enough for latest.
+				// Or, better: create a new function in context: fetchNewestMessages
+				fetchRoomMessages(roomId, 1, false); // Fetch page 1, not as "loadMore"
+			};
+
+			pollingTimerRef.current = setInterval(poll, POLLING_INTERVAL);
+			return () => clearInterval(pollingTimerRef.current);
+		}
+		return () => clearInterval(pollingTimerRef.current); // Cleanup if roomId/currentRoom changes
+	}, [roomId, currentRoom, fetchRoomMessages]);
+
+	const handleFetchMoreMessages = useCallback(() => {
+		if (hasMoreMessages && !loadingMoreMessages && roomId) {
+			fetchRoomMessages(roomId, messagesPage + 1, true); // true for isLoadMore
+		}
+	}, [
+		hasMoreMessages,
+		loadingMoreMessages,
+		roomId,
+		messagesPage,
+		fetchRoomMessages,
+	]);
 
 	const handleJoinRoom = async () => {
-		const success = await joinRoom(roomId);
-		if (success) {
-			// Optionally show a success toast
+		// ... (same as before)
+		setIsJoining(true);
+		try {
+			const success = await joinRoom(roomId);
+			if (success) {
+				showSuccess(`Joined room: ${currentRoom?.name || "Room"}`);
+			}
+		} finally {
+			setIsJoining(false);
 		}
 	};
 
 	const handleLeaveRoom = async () => {
-		const success = await leaveRoom(roomId);
-		if (success) {
-			// Optionally show a success toast, or navigate away
-			navigate("/rooms");
+		// ... (same as before)
+		if (!currentRoom) return;
+		if (
+			window.confirm(`Are you sure you want to leave "${currentRoom.name}"?`)
+		) {
+			setIsLeaving(true);
+			try {
+				const success = await leaveRoom(roomId);
+				if (success) {
+					showSuccess(`Left room: ${currentRoom.name}`);
+					navigate("/rooms");
+				}
+			} finally {
+				setIsLeaving(false);
+			}
 		}
 	};
 
-	const handleSendMessage = async (roomId, messageData) => {
-		// Phase 3
+	const handleSendMessage = async (messageDataContent) => {
 		setIsSendingMessage(true);
 		try {
-			await sendMessage(roomId, messageData);
+			if (replyingTo) {
+				await replyToMessage(roomId, replyingTo.messageId, {
+					content: messageDataContent,
+				});
+				setReplyingTo(null); // Clear reply state
+			} else {
+				await sendMessage(roomId, {
+					content: messageDataContent,
+					format: "plain",
+				});
+			}
 		} catch (err) {
 			// error handled in context
 		} finally {
@@ -75,11 +166,55 @@ const RoomDetailPage = () => {
 		}
 	};
 
-	const isUserMember = currentRoomMembers.some(
-		(member) => member.user === user?._id || member.user?._id === user?._id
-	);
+	const handleSetReplyTo = (message) => {
+		if (!message) {
+			setReplyingTo(null);
+			return;
+		}
+		setReplyingTo({
+			messageId: message._id,
+			userName:
+				message.roomMember?.user?.fullName ||
+				message.roomMember?.nickname ||
+				message.roomMember?.anonymousId ||
+				"User",
+			contentSnippet:
+				message.content.substring(0, 50) +
+				(message.content.length > 50 ? "..." : ""),
+		});
+	};
 
-	if (loadingCurrentRoom && !currentRoom) {
+	const handleAdminDelete = async (messageId) => {
+		if (
+			window.confirm("Are you sure you want to delete this message as admin?")
+		) {
+			await adminDeleteMessage(roomId, messageId);
+		}
+	};
+
+	const handleReaction = async (messageId, emoji) => {
+		// This is a simplified reaction. A real system would toggle.
+		await reactToMessage(roomId, messageId, emoji);
+	};
+
+	const isUserMember = React.useMemo(() => {
+		if (!user || !currentRoomMembers || currentRoomMembers.length === 0)
+			return false;
+		return currentRoomMembers.some(
+			(member) => member.user && member.user._id === user._id
+		);
+	}, [user, currentRoomMembers]);
+
+	const isUserAdmin = React.useMemo(() => {
+		if (!isUserMember || !currentRoomMembers) return false;
+		const member = currentRoomMembers.find(
+			(m) => m.user && m.user._id === user._id
+		);
+		return member?.role === "admin";
+	}, [user, currentRoomMembers, isUserMember]);
+
+	// ... (loading and error states same as before) ...
+	if (loadingCurrentRoom && !currentRoom && !pageError) {
 		return (
 			<div className="flex h-screen items-center justify-center bg-gray-900">
 				<LoadingSpinner />
@@ -87,18 +222,10 @@ const RoomDetailPage = () => {
 		);
 	}
 
-	if (error) {
+	if (pageError && !currentRoom) {
 		return (
-			<div className="flex h-screen items-center justify-center bg-gray-900 p-4">
-				<ErrorMessage message={error} />
-			</div>
-		);
-	}
-
-	if (!currentRoom && !loadingCurrentRoom) {
-		return (
-			<div className="flex h-screen items-center justify-center bg-gray-900 p-4">
-				<ErrorMessage message="Room not found or could not be loaded." />
+			<div className="flex flex-col h-screen items-center justify-center bg-gray-900 p-4">
+				<ErrorMessage message={pageError} />
 				<Link to="/rooms" className="mt-4 text-purple-400 hover:underline">
 					Back to Rooms
 				</Link>
@@ -106,52 +233,70 @@ const RoomDetailPage = () => {
 		);
 	}
 
-	const RoomInfoModal = () => (
+	if (!currentRoom && !loadingCurrentRoom) {
+		return (
+			<div className="flex flex-col h-screen items-center justify-center bg-gray-900 p-4">
+				<ErrorMessage message="Room not found or you do not have permission to view it." />
+				<Link to="/rooms" className="mt-4 text-purple-400 hover:underline">
+					Back to Rooms
+				</Link>
+			</div>
+		);
+	}
+
+	const RoomInfoModalContent = () => (
+		// ... (same as before) ...
 		<div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
 			<Card
 				title="Room Information"
-				className="w-full max-w-md bg-gray-800"
+				className="w-full max-w-md bg-gray-800 border-gray-700"
 				headerAction={
 					<button
 						onClick={() => setShowInfoModal(false)}
-						className="text-gray-400 hover:text-white p-1 rounded-full"
+						className="text-gray-400 hover:text-white p-1 rounded-full text-2xl leading-none"
 					>
 						×
 					</button>
 				}
 			>
-				<p>
-					<strong>Name:</strong> {currentRoom.name}
-				</p>
-				<p>
-					<strong>Description:</strong> {currentRoom.description || "N/A"}
-				</p>
-				<p>
-					<strong>Category:</strong> {currentRoom.category}
-				</p>
-				<p>
-					<strong>Type:</strong> {currentRoom.roomType}
-				</p>
-				<p>
-					<strong>Members:</strong> {currentRoom.participantCount || 0} /{" "}
-					{currentRoom.maxParticipants || "∞"}
-				</p>
-				<p>
-					<strong>Resets:</strong>{" "}
-					{new Date(currentRoom.nextResetAt).toLocaleString()}
-				</p>
-				{currentRoom.expiresAt && (
+				<div className="text-sm space-y-2 text-gray-300">
 					<p>
-						<strong>Expires:</strong>{" "}
-						{new Date(currentRoom.expiresAt).toLocaleString()}
+						<strong>Name:</strong>{" "}
+						<span className="text-white">{currentRoom.name}</span>
 					</p>
-				)}
+					<p>
+						<strong>Description:</strong> {currentRoom.description || "N/A"}
+					</p>
+					<p>
+						<strong>Category:</strong>{" "}
+						<span className="text-purple-400">{currentRoom.category}</span>
+					</p>
+					<p>
+						<strong>Type:</strong>{" "}
+						<span className="text-blue-400">{currentRoom.roomType}</span>
+					</p>
+					<p>
+						<strong>Members:</strong> {currentRoom.participantCount || 0} /{" "}
+						{currentRoom.maxParticipants || "∞"}
+					</p>
+					<p>
+						<strong>Resets:</strong>{" "}
+						{new Date(currentRoom.nextResetAt).toLocaleString()}
+					</p>
+					{currentRoom.expiresAt && (
+						<p>
+							<strong>Expires:</strong>{" "}
+							{new Date(currentRoom.expiresAt).toLocaleString()}
+						</p>
+					)}
+				</div>
 			</Card>
 		</div>
 	);
 
 	return (
 		<div className="flex flex-col h-screen bg-gray-900 text-white">
+			{/* ... (header same as before) ... */}
 			<header className="bg-gray-850 p-3 border-b border-gray-700 flex items-center justify-between sticky top-0 z-10">
 				<Link
 					to="/rooms"
@@ -159,71 +304,90 @@ const RoomDetailPage = () => {
 				>
 					<ArrowLeft size={20} />
 				</Link>
-				<div className="text-center">
-					<h1 className="text-lg font-semibold truncate">
+				<div className="text-center flex-1 min-w-0 px-2">
+					<h1
+						className="text-lg font-semibold truncate"
+						title={currentRoom?.name}
+					>
 						{currentRoom?.name}
 					</h1>
-					<p className="text-xs text-gray-400">
-						{currentRoom?.participantCount || 0} members
-					</p>
+					{loadingMembers ? (
+						<p className="text-xs text-gray-500">Loading members...</p>
+					) : (
+						<p className="text-xs text-gray-400">
+							{currentRoomMembers?.length || 0} members
+						</p>
+					)}
 				</div>
-				<div className="flex items-center space-x-2">
+				<div className="flex items-center space-x-1 sm:space-x-2">
 					<button
 						onClick={() => setShowInfoModal(true)}
-						className="p-2 rounded-full hover:bg-gray-700 text-gray-300 hover:text-white md:hidden" // Show on mobile, hide on md+
+						className="p-2 rounded-full hover:bg-gray-700 text-gray-300 hover:text-white"
 						title="Room Info"
 					>
 						<Info size={20} />
 					</button>
 					<button
 						onClick={() => setShowMembersAside(!showMembersAside)}
-						className="p-2 rounded-full hover:bg-gray-700 text-gray-300 hover:text-white lg:hidden" // Show on mobile/tablet, hide on lg+
+						className="p-2 rounded-full hover:bg-gray-700 text-gray-300 hover:text-white lg:hidden"
 						title="Toggle Members List"
 					>
 						<Users size={20} />
 					</button>
-					{isUserMember &&
-						currentRoom?.createdBy === user?._id && ( // Placeholder for Room Settings
-							<Link
-								to={`/room/${roomId}/settings`}
-								className="p-2 rounded-full hover:bg-gray-700 text-gray-300 hover:text-white"
-							>
-								<Settings size={20} />
-							</Link>
-						)}
+					{isUserAdmin && ( // Show settings only if user is admin of this room
+						<Link
+							to={`/room/${roomId}/settings`}
+							className="p-2 rounded-full hover:bg-gray-700 text-gray-300 hover:text-white"
+							title="Room Settings"
+						>
+							<Settings size={20} />
+						</Link>
+					)}
 				</div>
 			</header>
 
-			<div className="flex flex-grow overflow-hidden">
-				{/* Main Chat Area */}
-				<main className="flex-grow flex flex-col">
+			<div className="flex flex-grow overflow-hidden relative">
+				<main className="flex-grow flex flex-col overflow-hidden">
 					<RoomMessageList
 						messages={currentRoomMessages}
-						loading={loadingMessages}
+						loading={loadingMessages && currentRoomMessages.length === 0}
+						loadingMore={loadingMoreMessages}
 						currentUserId={user?._id}
-						// onFetchMoreMessages={...} // Add pagination later
-						// hasMoreMessages={...}
+						onFetchMoreMessages={handleFetchMoreMessages}
+						hasMoreMessages={hasMoreMessages}
+						onSetReplyTo={handleSetReplyTo} // Pass function to set reply context
+						onAdminDelete={isUserAdmin ? handleAdminDelete : null} // Pass admin delete if user is admin
+						onReact={handleReaction} // Pass reaction handler
 					/>
 					{isUserMember ? (
 						<RoomMessageForm
 							roomId={roomId}
 							onSendMessage={handleSendMessage}
 							isSending={isSendingMessage}
+							replyingTo={replyingTo} // Pass replyingTo state
+							onCancelReply={() => setReplyingTo(null)} // Pass function to cancel reply
 						/>
 					) : (
+						// ... (Join button same as before) ...
 						<div className="p-4 border-t border-gray-700 bg-gray-800 text-center">
 							<button
 								onClick={handleJoinRoom}
-								className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition flex items-center gap-2 mx-auto"
+								disabled={isJoining}
+								className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition flex items-center gap-2 mx-auto disabled:opacity-70"
 							>
-								<LogIn size={18} /> Join Room to Chat
+								{isJoining ? (
+									<Loader2 size={18} className="animate-spin" />
+								) : (
+									<LogIn size={18} />
+								)}
+								{isJoining ? "Joining..." : "Join Room to Chat"}
 							</button>
 						</div>
 					)}
 				</main>
 
-				{/* Desktop Member List & Room Info Sidebar */}
-				<aside className="hidden lg:flex flex-col w-72 border-l border-gray-700 bg-gray-850 p-0">
+				{/* ... (Desktop Member List & Room Info Sidebar same as before) ... */}
+				<aside className="hidden lg:flex flex-col w-72 border-l border-gray-700 bg-gray-850">
 					<div className="p-4 border-b border-gray-700">
 						<h3 className="text-md font-semibold text-white">Room Details</h3>
 						<p className="text-xs text-gray-400 mt-1">
@@ -235,19 +399,29 @@ const RoomDetailPage = () => {
 							<span className="text-blue-400">{currentRoom?.roomType}</span>
 						</p>
 						<p className="text-xs text-gray-400">
-							Resets: {new Date(currentRoom?.nextResetAt).toLocaleDateString()}
+							Resets:{" "}
+							{currentRoom?.nextResetAt
+								? new Date(currentRoom.nextResetAt).toLocaleDateString()
+								: "N/A"}
 						</p>
 						{currentRoom?.expiresAt && (
 							<p className="text-xs text-gray-400">
-								Expires: {new Date(currentRoom?.expiresAt).toLocaleDateString()}
+								Expires: {new Date(currentRoom.expiresAt).toLocaleDateString()}
 							</p>
 						)}
+
 						{isUserMember && (
 							<button
 								onClick={handleLeaveRoom}
-								className="mt-3 w-full px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm flex items-center justify-center gap-2"
+								disabled={isLeaving}
+								className="mt-3 w-full px-3 py-1.5 bg-red-700 text-white rounded-md hover:bg-red-800 transition text-sm flex items-center justify-center gap-2 disabled:opacity-70"
 							>
-								<LogOut size={16} /> Leave Room
+								{isLeaving ? (
+									<Loader2 size={16} className="animate-spin" />
+								) : (
+									<LogOut size={16} />
+								)}
+								{isLeaving ? "Leaving..." : "Leave Room"}
 							</button>
 						)}
 					</div>
@@ -260,51 +434,59 @@ const RoomDetailPage = () => {
 				</aside>
 			</div>
 
-			{/* Mobile/Tablet Member List Overlay/Drawer */}
+			{/* ... (Mobile/Tablet Member List Overlay same as before) ... */}
 			{showMembersAside && (
 				<div
-					className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+					className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
 					onClick={() => setShowMembersAside(false)}
 				>
 					<aside
-						className="fixed top-0 right-0 h-full w-72 bg-gray-800 shadow-xl p-0 transform transition-transform duration-300 ease-in-out lg:hidden z-40 overflow-y-auto"
-						onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
+						className="fixed top-0 right-0 h-full w-72 bg-gray-800 shadow-xl flex flex-col transform transition-transform duration-300 ease-in-out lg:hidden z-40"
+						onClick={(e) => e.stopPropagation()}
 						style={{
 							transform: showMembersAside
 								? "translateX(0)"
 								: "translateX(100%)",
 						}}
 					>
-						<div className="p-4 border-b border-gray-700 flex justify-between items-center">
+						<div className="p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
 							<h3 className="text-md font-semibold text-white">
 								Members ({currentRoomMembers.length})
 							</h3>
 							<button
 								onClick={() => setShowMembersAside(false)}
-								className="text-gray-400 hover:text-white p-1 rounded-full"
+								className="text-gray-400 hover:text-white p-1 rounded-full text-2xl leading-none"
 							>
 								×
 							</button>
 						</div>
-						<RoomMemberList
-							members={currentRoomMembers}
-							loading={loadingMembers}
-							title=""
-						/>
+						<div className="flex-grow overflow-y-auto">
+							<RoomMemberList
+								members={currentRoomMembers}
+								loading={loadingMembers}
+								title=""
+							/>
+						</div>
 						{isUserMember && (
-							<div className="p-4 border-t border-gray-700">
+							<div className="p-4 border-t border-gray-700 flex-shrink-0">
 								<button
 									onClick={handleLeaveRoom}
-									className="w-full px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm flex items-center justify-center gap-2"
+									disabled={isLeaving}
+									className="w-full px-3 py-1.5 bg-red-700 text-white rounded-md hover:bg-red-800 transition text-sm flex items-center justify-center gap-2 disabled:opacity-70"
 								>
-									<LogOut size={16} /> Leave Room
+									{isLeaving ? (
+										<Loader2 size={16} className="animate-spin" />
+									) : (
+										<LogOut size={16} />
+									)}
+									{isLeaving ? "Leaving..." : "Leave Room"}
 								</button>
 							</div>
 						)}
 					</aside>
 				</div>
 			)}
-			{showInfoModal && <RoomInfoModal />}
+			{showInfoModal && <RoomInfoModalContent />}
 		</div>
 	);
 };

@@ -1,34 +1,70 @@
+// client/src/components/Rooms/RoomMessageList.jsx
+import { Loader2 } from "lucide-react";
 import React, { useEffect, useRef } from "react";
 import EmptyState from "../UI/EmptyState";
 import LoadingSpinner from "../UI/LoadingSpinner";
-import RoomMessageItem from "./RoomMessageItem";
+import RoomMessageItem from "./RoomMessageItem"; // Correct import
 
 const RoomMessageList = ({
 	messages,
 	loading,
+	loadingMore,
 	currentUserId,
 	onFetchMoreMessages,
 	hasMoreMessages,
+	onSetReplyTo,
+	onAdminDelete,
+	onReact,
 }) => {
 	const messagesEndRef = useRef(null);
 	const messagesContainerRef = useRef(null);
+	const prevScrollHeightRef = useRef(null);
 
-	const scrollToBottom = () => {
-		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+	const scrollToBottom = (behavior = "smooth") => {
+		if (messagesEndRef.current) {
+			messagesEndRef.current.scrollIntoView({ behavior });
+		}
 	};
 
 	useEffect(() => {
-		// Scroll to bottom when new messages are added,
-		// but only if user is already near the bottom (to avoid interrupting scrolling up)
 		if (messagesContainerRef.current) {
-			const { scrollTop, scrollHeight, clientHeight } =
+			const { scrollHeight, scrollTop, clientHeight } =
 				messagesContainerRef.current;
-			// Consider "near bottom" if scroll is within (e.g.) 2x clientHeight of the bottom
-			if (scrollHeight - scrollTop < clientHeight * 2.5) {
-				scrollToBottom();
+			// If it's not loading more (i.e., new messages at bottom or initial load)
+			if (!loadingMore) {
+				// Check if user was near the bottom OR it's the initial set of messages (prevScrollHeight is null)
+				// The 300px threshold is arbitrary, adjust as needed
+				const isNearBottom = scrollHeight - scrollTop - clientHeight < 300;
+				if (isNearBottom || prevScrollHeightRef.current === null) {
+					scrollToBottom("auto");
+				}
+			}
+			// Update prevScrollHeight *after* potential scroll adjustment or new messages render
+			// Do this in a timeout to ensure DOM has updated
+			setTimeout(() => {
+				if (messagesContainerRef.current) {
+					prevScrollHeightRef.current =
+						messagesContainerRef.current.scrollHeight;
+				}
+			}, 0);
+		}
+	}, [messages, loadingMore]);
+
+	useEffect(() => {
+		// This effect is for maintaining scroll position when older messages are loaded (prepended)
+		if (
+			!loadingMore &&
+			messagesContainerRef.current &&
+			prevScrollHeightRef.current != null
+		) {
+			const currentScrollHeight = messagesContainerRef.current.scrollHeight;
+			if (prevScrollHeightRef.current !== currentScrollHeight) {
+				// Content was prepended, adjust scroll to maintain view
+				messagesContainerRef.current.scrollTop +=
+					currentScrollHeight - prevScrollHeightRef.current;
 			}
 		}
-	}, [messages]);
+	}, [loadingMore]); // Only run when loadingMore changes
 
 	if (loading && (!messages || messages.length === 0)) {
 		return (
@@ -41,39 +77,46 @@ const RoomMessageList = ({
 	return (
 		<div
 			ref={messagesContainerRef}
-			className="flex-grow p-4 space-y-2 overflow-y-auto bg-gray-850 rounded-b-lg"
+			className="flex-grow p-4 space-y-1 overflow-y-auto bg-gray-850 rounded-b-lg"
 		>
-			{/* Placeholder for "Load More" button */}
-			{hasMoreMessages && !loading && (
-				<div className="text-center my-2">
+			{hasMoreMessages && !loadingMore && (
+				<div className="text-center my-3">
 					<button
 						onClick={onFetchMoreMessages}
-						className="text-purple-400 hover:text-purple-300 text-xs py-1 px-3 rounded-full border border-purple-500 hover:bg-purple-500/10"
+						className="text-purple-400 hover:text-purple-300 text-xs py-1.5 px-4 rounded-full border border-purple-500/50 hover:bg-purple-500/10 transition-colors"
 					>
 						Load older messages
 					</button>
 				</div>
 			)}
-			{loading && messages && messages.length > 0 && (
-				<div className="text-center my-2">
-					<LoadingSpinner />
+			{loadingMore && (
+				<div className="text-center my-3 flex justify-center items-center text-purple-400">
+					<Loader2 size={18} className="animate-spin mr-2" /> Loading...
 				</div>
 			)}
 
 			{!loading && (!messages || messages.length === 0) && (
-				<div className="flex-grow flex items-center justify-center">
+				<div className="flex-grow flex items-center justify-center h-full">
 					<EmptyState message="No messages yet. Be the first to say something!" />
 				</div>
 			)}
 
 			{messages &&
-				messages.map((msg) => (
-					<RoomMessageItem
-						key={msg._id}
-						message={msg}
-						currentUserId={currentUserId}
-					/>
-				))}
+				messages.map(
+					(
+						msg // msg should be defined here
+					) =>
+						msg ? ( // Add a check to ensure msg itself is not undefined in the array
+							<RoomMessageItem
+								key={msg._id || `msg-${Math.random()}`} // Fallback key if _id is missing
+								message={msg}
+								currentUserId={currentUserId}
+								onSetReplyTo={onSetReplyTo}
+								onAdminDelete={onAdminDelete}
+								onReact={onReact}
+							/>
+						) : null
+				)}
 			<div ref={messagesEndRef} />
 		</div>
 	);

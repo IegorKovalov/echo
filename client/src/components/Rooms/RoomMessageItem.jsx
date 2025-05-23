@@ -1,115 +1,133 @@
-import { formatDistanceToNow } from "date-fns";
-import { CornerUpLeft, ShieldAlert, UserCircle } from "lucide-react";
-import React from "react";
-import ProfileAvatar from "../UI/ProfileAvatar"; // Assuming member might have user data later
+// client/src/components/Rooms/RoomMessageList.jsx
+import { Loader2 } from "lucide-react"; // For loading more spinner
+import React, { useEffect, useRef } from "react";
+import EmptyState from "../UI/EmptyState";
+import LoadingSpinner from "../UI/LoadingSpinner";
+import RoomMessageItem from "./RoomMessageItem";
 
-const RoomMessageItem = ({ message, currentUserId }) => {
-	const {
-		roomMember,
-		content,
-		createdAt,
-		format,
-		replyTo,
-		isSystem,
-		isAdminDeleted,
-	} = message;
+const RoomMessageList = ({
+	messages,
+	loading, // Initial loading
+	loadingMore, // Loading more messages
+	currentUserId,
+	onFetchMoreMessages,
+	hasMoreMessages,
+	onSetReplyTo,
+	onAdminDelete,
+	onReact,
+}) => {
+	const messagesEndRef = useRef(null);
+	const messagesContainerRef = useRef(null);
+	const prevScrollHeightRef = useRef(null); // To keep track of scroll height before new messages load
 
-	// Use anonymousId or nickname from roomMember for display
-	// The roomMember object from the message should have anonymousId and nickname
-	const senderDisplayName =
-		roomMember?.nickname || roomMember?.anonymousId || "System";
-	const senderProfilePic = roomMember?.user?.profilePicture; // If user is populated on roomMember
+	const scrollToBottom = (behavior = "smooth") => {
+		messagesEndRef.current?.scrollIntoView({ behavior });
+	};
 
-	// Check if the message is from the current user
-	// This requires roomMember.user to be populated with the actual user ID
-	// const isOwnMessage = roomMember?.user?._id === currentUserId;
-	// For now, let's assume we don't have user._id on roomMember directly for messages for simplicity
-	const isOwnMessage = false;
+	useEffect(() => {
+		// On initial load or when messages array fundamentally changes (e.g., new room)
+		if (!loadingMore && messagesContainerRef.current) {
+			// If it's not loading more, it's likely initial load or new messages at bottom
+			const { scrollHeight } = messagesContainerRef.current;
+			if (scrollHeight !== prevScrollHeightRef.current && messages.length > 0) {
+				const isNearBottom =
+					messagesContainerRef.current.scrollHeight -
+						messagesContainerRef.current.scrollTop -
+						messagesContainerRef.current.clientHeight <
+					200;
+				if (isNearBottom || !prevScrollHeightRef.current) {
+					// Scroll if near bottom or first load
+					scrollToBottom("auto"); // "auto" for instant scroll on new message/initial
+				}
+			}
+			prevScrollHeightRef.current = scrollHeight;
+		}
+	}, [messages, loadingMore]);
 
-	const timeAgo = formatDistanceToNow(new Date(createdAt), { addSuffix: true });
+	useEffect(() => {
+		// When loading more (older) messages, try to maintain scroll position
+		if (
+			loadingMore &&
+			messagesContainerRef.current &&
+			prevScrollHeightRef.current != null
+		) {
+			// Content is being prepended.
+			// No specific action needed here if prepending maintains visual stability.
+			// If jumpiness occurs, one might need to adjust scrollTop after new messages are rendered.
+		} else if (
+			!loadingMore &&
+			messagesContainerRef.current &&
+			prevScrollHeightRef.current != null
+		) {
+			// After older messages are loaded
+			const currentScrollHeight = messagesContainerRef.current.scrollHeight;
+			if (
+				prevScrollHeightRef.current !== currentScrollHeight &&
+				prevScrollHeightRef.current !== null
+			) {
+				// Adjust scroll position to maintain view
+				messagesContainerRef.current.scrollTop +=
+					currentScrollHeight - prevScrollHeightRef.current;
+			}
+		}
 
-	if (isSystem) {
+		// Update previous scroll height *before* new messages potentially change it in the next render cycle
+		if (messagesContainerRef.current) {
+			prevScrollHeightRef.current = messagesContainerRef.current.scrollHeight;
+		}
+	}, [messages, loadingMore]);
+
+	if (loading && (!messages || messages.length === 0)) {
 		return (
-			<div className="py-2 px-3 my-1 text-center">
-				<p className="text-xs text-gray-500 italic">{content}</p>
-			</div>
-		);
-	}
-
-	if (isAdminDeleted) {
-		return (
-			<div
-				className={`flex ${
-					isOwnMessage ? "justify-end" : "justify-start"
-				} mb-2`}
-			>
-				<div
-					className={`py-2 px-3 rounded-lg max-w-xs lg:max-w-md ${
-						isOwnMessage
-							? "bg-purple-600 text-white"
-							: "bg-gray-700 text-gray-200"
-					}`}
-				>
-					<div className="flex items-center mb-1">
-						<ShieldAlert size={16} className="mr-2 text-yellow-400" />
-						<p className="text-xs italic">{content}</p>
-					</div>
-				</div>
+			<div className="flex-grow flex items-center justify-center p-4">
+				<LoadingSpinner />
 			</div>
 		);
 	}
 
 	return (
 		<div
-			className={`flex ${
-				isOwnMessage ? "justify-end" : "justify-start"
-			} mb-3 last:mb-0`}
+			ref={messagesContainerRef}
+			className="flex-grow p-4 space-y-1 overflow-y-auto bg-gray-850 rounded-b-lg"
 		>
-			<div className={`flex items-start gap-2.5 max-w-[75%]`}>
-				{!isOwnMessage && (
-					<div className="mt-1">
-						{senderProfilePic ? (
-							<ProfileAvatar
-								user={{ profilePicture: senderProfilePic }}
-								size="xs"
-							/>
-						) : (
-							<UserCircle size={32} className="text-gray-500 flex-shrink-0" />
-						)}
-					</div>
-				)}
-				<div
-					className={`flex flex-col p-2.5 rounded-lg ${
-						isOwnMessage
-							? "bg-purple-600 text-white rounded-br-none"
-							: "bg-gray-700 text-gray-200 rounded-bl-none"
-					}`}
-				>
-					{!isOwnMessage && (
-						<p className="text-xs font-semibold text-purple-300 mb-0.5">
-							{senderDisplayName}
-						</p>
-					)}
-					{replyTo && ( // Basic display for reply context
-						<div className="mb-1 p-1.5 border-l-2 border-purple-400 bg-gray-600/50 rounded text-xs text-gray-300 italic">
-							<CornerUpLeft size={12} className="inline mr-1" />
-							Replying to a message...{" "}
-							{/* Enhance this later to show replied message snippet */}
-						</div>
-					)}
-					{/* TODO: Handle markdown if format === 'markdown' */}
-					<p className="text-sm leading-snug break-words">{content}</p>
-					<p
-						className={`text-xs mt-1 ${
-							isOwnMessage ? "text-purple-200" : "text-gray-500"
-						} self-end`}
+			{hasMoreMessages && !loadingMore && (
+				<div className="text-center my-3">
+					<button
+						onClick={onFetchMoreMessages}
+						className="text-purple-400 hover:text-purple-300 text-xs py-1.5 px-4 rounded-full border border-purple-500/50 hover:bg-purple-500/10 transition-colors"
 					>
-						{timeAgo}
-					</p>
+						Load older messages
+					</button>
 				</div>
-			</div>
+			)}
+			{loadingMore && (
+				<div className="text-center my-3 flex justify-center items-center text-purple-400">
+					<Loader2 size={18} className="animate-spin mr-2" /> Loading...
+				</div>
+			)}
+
+			{!loading && (!messages || messages.length === 0) && (
+				<div className="flex-grow flex items-center justify-center h-full">
+					{" "}
+					{/* Ensure it takes height */}
+					<EmptyState message="No messages yet. Be the first to say something!" />
+				</div>
+			)}
+
+			{messages &&
+				messages.map((msg) => (
+					<RoomMessageItem
+						key={msg._id}
+						message={msg}
+						currentUserId={currentUserId}
+						onSetReplyTo={onSetReplyTo}
+						onAdminDelete={onAdminDelete}
+						onReact={onReact}
+					/>
+				))}
+			<div ref={messagesEndRef} />
 		</div>
 	);
 };
 
-export default RoomMessageItem;
+export default RoomMessageList;
