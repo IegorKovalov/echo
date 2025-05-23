@@ -135,9 +135,9 @@ const OTPVerificationPage = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row bg-gray-950">
+    <div className="flex min-h-screen flex-row bg-gray-950">
       {/* Left Column - OTP Form */}
-      <div className="flex flex-1 items-center justify-center p-6 md:p-10">
+      <div className="flex flex-1 items-center justify-center p-10">
         <div className="w-full max-w-md space-y-8">
           <div className="space-y-2 text-center">
             <div className="flex justify-center">
@@ -225,7 +225,7 @@ const OTPVerificationPage = () => {
       </div>
       
       {/* Right Column - Hero Image */}
-      <div className="hidden flex-1 bg-gradient-to-br from-gray-900 to-black md:block relative overflow-hidden">
+      <div className="flex-1 bg-gradient-to-br from-gray-900 to-black relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('/placeholder.svg?height=800&width=800')] opacity-10 bg-cover bg-center"></div>
         <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-blue-900/20"></div>
         <div className="relative flex h-full flex-col items-center justify-center p-10 text-white">

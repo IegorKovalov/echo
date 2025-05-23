@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 export default function MessageSidebar() {
 	return (
-		<div className="hidden md:block md:col-span-1">
+		<div className="col-span-1">
 			<div className="sticky top-20 rounded-xl border border-gray-800/50 bg-gray-900/40 backdrop-blur-sm p-5 shadow-xl">
 				<div className="mb-4 flex items-center justify-between">
 					<h3 className="font-medium text-white flex items-center gap-2">

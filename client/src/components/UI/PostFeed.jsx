@@ -104,7 +104,7 @@ export default function PostFeed({
 	const visiblePosts = posts.filter((post) => !post.expired);
 
 	return (
-		<div className="md:col-span-2 lg:col-span-2">
+		<div className="col-span-2">
 			{/* Post Form */}
 			<PostForm
 				user={user}

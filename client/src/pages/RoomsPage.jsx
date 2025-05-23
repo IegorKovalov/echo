@@ -20,7 +20,7 @@ export default function RoomsPage() {
 				<div className="container px-4 py-6 max-w-7xl mx-auto">
 					{/* Header Section */}
 					<div className="mb-8">
-						<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+						<div className="flex flex-row items-center justify-between gap-4 mb-6">
 							<div>
 								<h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-2">
 									<Users className="h-8 w-8 text-purple-400" />
@@ -62,7 +62,7 @@ export default function RoomsPage() {
 					</div>
 
 					{/* Stats Section */}
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+					<div className="grid grid-cols-3 gap-4 mb-8">
 						<Card className="p-4">
 							<div className="flex items-center gap-3">
 								<div className="rounded-full bg-purple-600/20 p-3">

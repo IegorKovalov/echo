@@ -11,7 +11,7 @@ export default function ChatMessage({ message }) {
 			}`}
 		>
 			<div
-				className={`max-w-md lg:max-w-lg ${
+				className={`max-w-lg ${
 					message.isOwn
 						? "bg-purple-600 text-white"
 						: "bg-gray-800 text-gray-100"

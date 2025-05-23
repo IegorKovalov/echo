@@ -21,7 +21,7 @@ export default function NotFoundPage() {
 					</p>
 				</div>
 
-				<div className="flex flex-col sm:flex-row gap-4">
+				<div className="flex flex-row gap-4">
 					<Link
 						to="/"
 						className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 text-center font-medium text-white hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all duration-200 shadow-md shadow-purple-900/20"

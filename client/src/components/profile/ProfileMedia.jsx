@@ -27,7 +27,7 @@ export default function ProfileMedia({
 						/>
 					</div>
 				) : (
-					<div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+					<div className="grid grid-cols-4 gap-4">
 						{/* Media Grid */}
 						{mediaPosts.map((post) =>
 							post.media.map((mediaItem) => (

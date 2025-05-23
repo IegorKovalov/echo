@@ -1,11 +1,8 @@
 import { useAuth } from "../../context/AuthContext";
-// Remove this import as we no longer need it
-// import { PostProvider } from "../../context/PostContext";
 import Header from "./Header";
 
 export default function Layout({ children, showHeader = true }) {
 	const { user } = useAuth();
-	// Simplified content assignment
 	const content = children;
 
 	return (

@@ -322,7 +322,7 @@ export default function SettingsPage() {
 								<h2 className="text-xl font-semibold text-white">
 									Basic Information
 								</h2>
-								<div className="grid gap-4 sm:grid-cols-2">
+								<div className="grid gap-4 grid-cols-2">
 									<div className="space-y-2">
 										<label htmlFor="fullName" className="text-sm font-medium text-gray-300">Full Name</label>
 										<div className="relative">
@@ -357,7 +357,7 @@ export default function SettingsPage() {
 									<textarea id="bio" name="bio" value={profileForm.values.bio} onChange={profileForm.handleChange} rows="3" className={`w-full rounded-lg border ${profileForm.errors.bio ? 'border-red-500' : 'border-gray-700'} bg-gray-800 p-2.5 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500`} placeholder="Write a short bio about yourself..."></textarea>
 									{profileForm.errors.bio && <p className="text-xs text-red-400 mt-1">{profileForm.errors.bio}</p>}
 								</div>
-								<div className="grid gap-4 sm:grid-cols-2">
+								<div className="grid gap-4 grid-cols-2">
 									<div className="space-y-2">
 										<label htmlFor="location" className="text-sm font-medium text-gray-300">Location</label>
 										<input type="text" id="location" name="location" value={profileForm.values.location} onChange={profileForm.handleChange} className={`w-full rounded-lg border ${profileForm.errors.location ? 'border-red-500' : 'border-gray-700'} bg-gray-800 p-2.5 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500`} placeholder="City, Country" />

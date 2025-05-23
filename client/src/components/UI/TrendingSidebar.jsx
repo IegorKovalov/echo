@@ -10,7 +10,7 @@ export default function TrendingSidebar({
 	getHoursLeft,
 }) {
 	return (
-		<div className="hidden lg:block lg:col-span-1">
+		<div className="col-span-1">
 			<div className="sticky top-20 rounded-xl border border-gray-800/50 bg-gray-900/40 backdrop-blur-sm p-5 shadow-xl">
 				<h3 className="mb-4 font-medium text-white flex items-center gap-2">
 					<TrendingUp className="h-5 w-5 text-purple-400" />

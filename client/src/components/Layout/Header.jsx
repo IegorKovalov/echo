@@ -24,11 +24,6 @@ export default function Header() {
 	const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 	const [notificationsAnchorRect, setNotificationsAnchorRect] = useState(null);
 	const location = useLocation();
-	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-	useEffect(() => {
-		setIsMobileMenuOpen(false);
-	}, [location.pathname]);
 
 	const handleLogout = async () => {
 		try {
@@ -64,10 +59,6 @@ export default function Header() {
 		setIsNotificationsOpen(false);
 	};
 
-	const toggleMobileMenu = () => {
-		setIsMobileMenuOpen(!isMobileMenuOpen);
-	};
-
 	const isActive = (path) => {
 		return (
 			location.pathname === path || location.pathname.startsWith(`${path}/`)
@@ -89,7 +80,7 @@ export default function Header() {
 					</div>
 
 					{/* Desktop Navigation */}
-					<nav className="hidden md:flex items-center gap-6">
+					<nav className="flex items-center gap-6">
 						<Link
 							to="/"
 							className={`text-sm font-medium flex items-center gap-1.5 transition-all duration-200 ${
@@ -134,40 +125,9 @@ export default function Header() {
 						</button>
 					</nav>
 
-					{/* Mobile menu button */}
-					<button
-						className="md:hidden p-2 rounded-md text-gray-400 hover:bg-gray-800/70 hover:text-white transition-colors duration-200"
-						onClick={toggleMobileMenu}
-						aria-label="Toggle menu"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							className="h-6 w-6"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-						>
-							{isMobileMenuOpen ? (
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M6 18L18 6M6 6l12 12"
-								/>
-							) : (
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M4 6h16M4 12h16M4 18h16"
-								/>
-							)}
-						</svg>
-					</button>
-
 					{/* User Profile & Menu */}
 					{user && (
-						<div className="hidden md:flex items-center gap-4">
+						<div className="flex items-center gap-4">
 							<div className="relative group">
 								<button className="rounded-full p-2 hover:bg-gray-800/70 transition-colors duration-200">
 									<ProfileAvatar user={user} size="xs" />
@@ -212,76 +172,6 @@ export default function Header() {
 						</div>
 					)}
 				</div>
-
-				{/* Mobile Menu */}
-				{isMobileMenuOpen && (
-					<nav className="md:hidden bg-gray-900/95 backdrop-blur-sm border-t border-gray-800/80 shadow-lg shadow-black/20">
-						<div className="px-2 pt-2 pb-3 space-y-1">
-							<Link
-								to="/"
-								className={`flex items-center gap-2 px-3 py-2.5 rounded-md ${
-									isActive("/")
-										? "bg-gray-800/80 text-white"
-										: "text-gray-300 hover:bg-gray-800/60 hover:text-white"
-								} transition-colors duration-150`}
-							>
-								<Home className="h-5 w-5" />
-								Feed
-							</Link>
-							<button
-								onClick={() => {
-									handleOpenSearch();
-									setIsMobileMenuOpen(false);
-								}}
-								className="w-full text-left flex items-center gap-2 px-3 py-2.5 rounded-md text-gray-300 hover:bg-gray-800/60 hover:text-white transition-colors duration-150"
-							>
-								<Search className="h-5 w-5" />
-								Search
-							</button>
-							<button
-								onClick={() => {
-									handleToggleNotifications();
-									setIsMobileMenuOpen(false);
-								}}
-								className="w-full text-left flex items-center justify-between px-3 py-2.5 rounded-md text-gray-300 hover:bg-gray-800/60 hover:text-white transition-colors duration-150"
-							>
-								<div className="flex items-center gap-2">
-									<Bell className="h-5 w-5" />
-									Notifications
-								</div>
-								<span className="flex h-2 w-2 relative">
-									<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-									<span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
-								</span>
-							</button>
-							{user && (
-								<>
-									<Link
-										to="/profile"
-										className="flex items-center gap-2 px-3 py-2.5 rounded-md text-gray-300 hover:bg-gray-800/60 hover:text-white transition-colors duration-150"
-									>
-										<User className="h-5 w-5" />
-										Your Profile
-									</Link>
-									<Link
-										to="/settings"
-										className="flex items-center gap-2 px-3 py-2.5 rounded-md text-gray-300 hover:bg-gray-800/60 hover:text-white transition-colors duration-150"
-									>
-										<Settings className="h-5 w-5" />
-										Settings
-									</Link>
-									<button
-										onClick={handleLogout}
-										className="w-full text-left flex items-center gap-2 px-3 py-2.5 rounded-md text-red-400 hover:bg-gray-800/60 hover:text-red-300 transition-colors duration-150"
-									>
-										<LogOut className="h-5 w-5" />
-										Logout
-									</button>
-								</>
-							)}
-						</div>
-					</nav>
-				)}
 			</header>
 
 			{/* Floating Bubble Search */}

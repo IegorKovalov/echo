@@ -30,7 +30,7 @@ export default function HomePage() {
 	return (
 		<div className="flex flex-col">
 			<main className="flex-1 py-8">
-				<div className="container grid grid-cols-1 gap-8 px-4 md:grid-cols-3 lg:grid-cols-4">
+				<div className="container grid grid-cols-4 gap-8 px-4">
 					{/* Message Sidebar */}
 					<MessageSidebar />
 

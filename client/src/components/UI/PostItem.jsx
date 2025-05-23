@@ -271,7 +271,7 @@ export default function PostItem({
 					) : (
 						<>
 							<div className={`grid gap-1 ${
-								showAllMedia && post.media.length > 4 ? 'grid-cols-3 md:grid-cols-4' :
+								showAllMedia && post.media.length > 4 ? 'grid-cols-4' :
 								post.media.length === 2 ? 'grid-cols-2' : 
 								post.media.length === 3 ? 'grid-cols-3' : 
 								'grid-cols-2 grid-rows-2'
@@ -286,7 +286,7 @@ export default function PostItem({
 									return (
 										<div
 											key={`media-${mediaItem._id || mediaItem.publicId || index}-${Date.now()}`}
-											className={`overflow-hidden relative ${isFirstItemInGridOfMany ? 'col-span-1 row-span-1 md:col-span-1' : ''}`}
+											className={`overflow-hidden relative ${isFirstItemInGridOfMany ? 'col-span-1 row-span-1' : ''}`}
 										>
 											{(mediaItem.type === "image" || mediaItem.type?.startsWith("image/")) && (
 												<div className="aspect-square">

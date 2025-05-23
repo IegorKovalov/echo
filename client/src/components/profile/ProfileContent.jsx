@@ -63,11 +63,11 @@ export default function ProfileContent({ profileData, isOwnProfile }) {
 	return (
 		<div>
 			{/* Cover Image */}
-			<div className="h-40 w-full bg-gradient-to-r from-purple-900 to-blue-900 md:h-60" />
+			<div className="h-60 w-full bg-gradient-to-r from-purple-900 to-blue-900" />
 
 			{/* Profile Image and Basic Info */}
 			<div className="container px-4">
-				<div className="relative -mt-16 flex flex-col items-center md:-mt-20 md:flex-row md:items-end">
+				<div className="relative -mt-20 flex flex-row items-end">
 					<div className="relative">
 						<ProfileAvatar
 							user={profileData}
@@ -85,7 +85,7 @@ export default function ProfileContent({ profileData, isOwnProfile }) {
 						)}
 					</div>
 
-					<div className="mt-4 text-center md:ml-6 md:text-left">
+					<div className="mt-4 ml-6 text-left">
 						<h2 className="text-2xl font-bold text-white">
 							{profileData.fullName}
 						</h2>
@@ -94,7 +94,7 @@ export default function ProfileContent({ profileData, isOwnProfile }) {
 						</p>
 					</div>
 
-					<div className="mt-4 md:ml-auto">
+					<div className="mt-4 ml-auto">
 						{isOwnProfile ? (
 							<Link
 								to="/settings"
