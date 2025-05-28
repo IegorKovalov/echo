@@ -1,57 +1,59 @@
 const Post = require("../models/postModel");
+const fs = require("fs");
+const { sendError, sendSuccess } = require("../utils/http/responseUtils");
+const {
+	populatePostFields,
+	enhancePostWithVirtuals,
+	validateExpirationTime,
+	calculateExpirationDate,
+	getPaginationInfo,
+} = require("../utils/post/postUtils");
+const {
+	uploadMediaToCloudinary,
+	deleteMediaFromCloudinary,
+	cleanupTempFiles,
+	cleanupOldTempFiles,
+} = require("../utils/media/mediaUtils");
 
-const populatePostFields = (query) => {
-	return query
-		.populate({
-			path: "user",
-			select: "username fullName profilePicture",
-		})
-		.populate({
-			path: "comments.user",
-			select: "username fullName profilePicture",
-		});
+const enhancePostsWithVirtuals = (posts) => {
+	return posts.map((post) => enhancePostWithVirtuals(post));
 };
 
 exports.createPost = async (req, res) => {
 	try {
 		const { content, expirationTime } = req.body;
 		if (!content) {
-			return res.status(400).json({
-				status: "failed",
-				message: "Post content is required",
-			});
+			return sendError(res, 400, "Post content is required");
 		}
 
 		const postData = { content, user: req.user._id };
 
 		if (expirationTime) {
-			const hours = parseFloat(expirationTime);
-			if (isNaN(hours) || hours <= 0 || hours > 168) {
-				return res.status(400).json({
-					status: "failed",
-					message:
-						"Expiration time must be between 1 hour and 168 hours (1 week)",
-				});
+			const validation = validateExpirationTime(expirationTime);
+			if (!validation.valid) {
+				return sendError(res, 400, validation.message);
 			}
-
-			const now = new Date();
-			postData.expiresAt = new Date(now.getTime() + hours * 60 * 60 * 1000);
+			postData.expiresAt = calculateExpirationDate(validation.hours);
 		}
 
+		try {
+			postData.media = await uploadMediaToCloudinary(req.files);
+		} catch (error) {
+			console.error("Media upload error:", error);
+			return sendError(res, 500, `Error uploading media: ${error.message}`);
+		}
 		const newPost = await Post.create(postData);
 
 		const populatedPost = await populatePostFields(Post.findById(newPost._id));
-
-		res.status(201).json({
-			status: "success",
+		return sendSuccess(res, 201, "Post created successfully", {
 			data: {
 				post: populatedPost,
 			},
 		});
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error creating post",
+		console.error("Error in createPost:", error);
+		cleanupTempFiles(req.files);
+		return sendError(res, 500, "Error creating post", {
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
@@ -60,149 +62,183 @@ exports.createPost = async (req, res) => {
 exports.getUserPosts = async (req, res) => {
 	try {
 		const userId = req.params.userId;
-		const { includeExpired } = req.query;
+		const { includeExpired, page = 1, limit = 15 } = req.query;
 
+		const pagination = getPaginationInfo(page, limit, 0);
 		let query = Post.find({ user: userId });
 
 		if (includeExpired === "true") {
 			query = query.where({ includeExpired: true });
 		}
 
-		const posts = await populatePostFields(query).sort({
-			createdAt: -1,
-		});
+		const totalPosts = await Post.countDocuments(query.getQuery());
+		query = query
+			.skip(pagination.skip)
+			.limit(pagination.itemsPerPage)
+			.sort({ createdAt: -1 });
+		const posts = await populatePostFields(query);
+		const enhancedPosts = enhancePostsWithVirtuals(posts);
 
-		const enhancedPosts = posts.map((post) => {
-			const postObj = post.toObject({ virtuals: true });
-
-			postObj.isExpired = post.isExpired;
-			postObj.remainingTime = post.remainingTime;
-			postObj.expirationProgress = post.expirationProgress;
-			return postObj;
-		});
-
-		res.status(200).json({
-			status: "success",
-			results: enhancedPosts.length,
+		return sendSuccess(res, 200, "User posts retrieved successfully", {
 			data: {
 				posts: enhancedPosts,
+				count: enhancedPosts.length,
+				pagination: getPaginationInfo(page, limit, totalPosts),
 			},
 		});
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error retrieving user posts",
-			error: process.env.NODE_ENV === "development" ? error.message : undefined,
-		});
+		return sendError(res, 500, "Error retrieving user posts");
 	}
 };
 
 exports.getAllPosts = async (req, res) => {
 	try {
-		const { includeExpired } = req.query;
+		const {
+			page = 1,
+			limit = 10,
+			includeExpired = false,
+			sortBy = "-createdAt",
+		} = req.query;
 
-		let query = Post.find();
+		const pagination = getPaginationInfo(page, limit, 0);
+		let query = {};
 
-		if (includeExpired === "true") {
-			query = query.where({ includeExpired: true });
+		if (includeExpired !== "true") {
+			query.expiresAt = { $gt: new Date() };
 		}
 
-		const posts = await populatePostFields(query).sort({ createdAt: -1 });
+		const totalPosts = await Post.countDocuments(query);
+		const posts = await populatePostFields(
+			Post.find(query)
+				.skip(pagination.skip)
+				.limit(pagination.itemsPerPage)
+				.sort(sortBy)
+		);
+		const enhancedPosts = enhancePostsWithVirtuals(posts);
 
-		const enhancedPosts = posts.map((post) => {
-			const postObj = post.toObject({ virtuals: true });
-			postObj.isExpired = post.isExpired;
-			postObj.remainingTime = post.remainingTime;
-			postObj.expirationProgress = post.expirationProgress;
-			return postObj;
-		});
-
-		res.status(200).json({
-			status: "success",
-			results: enhancedPosts.length,
+		return sendSuccess(res, 200, "Posts retrieved successfully", {
 			data: {
 				posts: enhancedPosts,
+				count: enhancedPosts.length,
+				pagination: getPaginationInfo(page, limit, totalPosts),
 			},
 		});
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error retrieving posts",
-			error: process.env.NODE_ENV === "development" ? error.message : undefined,
-		});
+		console.error("Error in getAllPosts controller:", error);
+		return sendError(res, 500, "Failed to retrieve posts");
 	}
 };
 
 exports.getPost = async (req, res) => {
 	try {
-		// Use includeExpired to potentially see expired posts
 		const post = await populatePostFields(
 			Post.findById(req.params.id).where({ includeExpired: true })
 		);
 
 		if (!post) {
-			return res.status(404).json({
-				status: "failed",
-				message: "No post found",
-			});
+			return sendError(res, 404, "No post found");
 		}
 
-		// Add virtual properties
-		const postObj = post.toObject({ virtuals: true });
-		postObj.isExpired = post.isExpired;
-		postObj.remainingTime = post.remainingTime;
-		postObj.expirationProgress = post.expirationProgress;
-
-		res.status(200).json({
-			status: "success",
+		return sendSuccess(res, 200, "Post retrieved successfully", {
 			data: {
-				post: postObj,
+				post: enhancePostWithVirtuals(post),
 			},
 		});
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error retrieving post",
+		return sendError(res, 500, "Error retrieving post", {
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
 };
+
 exports.updatePost = async (req, res) => {
 	try {
-		const { content } = req.body;
+		const tempFilesToCleanup = req.files
+			? req.files.map((file) => file.path)
+			: [];
+		const content = req.body.content;
+		const duration = req.body.duration;
+
+		let existingMediaIds = req.body.existingMediaIds;
+
+		if (existingMediaIds === "") {
+			existingMediaIds = [];
+		} else if (existingMediaIds && !Array.isArray(existingMediaIds)) {
+			existingMediaIds = [existingMediaIds];
+		}
 
 		if (!content || content.trim() === "") {
-			return res.status(400).json({
-				status: "failed",
-				message: "Post content is required",
-			});
+			cleanupTempFiles(tempFilesToCleanup);
+			return sendError(res, 400, "Post content is required");
 		}
 
-		const updatedPost = await populatePostFields(
-			Post.findOneAndUpdate(
-				{ _id: req.params.id, user: req.user._id },
-				{ content },
-				{ new: true, runValidators: true }
-			)
-		);
+		const post = await Post.findOne({
+			_id: req.params.id,
+			user: req.user._id,
+		});
 
-		if (!updatedPost) {
-			return res.status(404).json({
-				status: "failed",
-				message: "Post not found or you're not authorized to update it",
-			});
+		if (!post) {
+			cleanupTempFiles(tempFilesToCleanup);
+			return sendError(
+				res,
+				404,
+				"Post not found or you're not authorized to update it"
+			);
 		}
 
-		res.status(200).json({
-			status: "success",
+		post.content = content.trim();
+		if (duration) {
+			const validation = validateExpirationTime(duration);
+			if (validation.valid) {
+				post.expiresAt = calculateExpirationDate(validation.hours);
+			}
+		}
+
+		// Handle existing media
+		if (existingMediaIds !== undefined) {
+			const mediaToKeep =
+				existingMediaIds.length > 0
+					? post.media.filter((item) =>
+							existingMediaIds.includes(item._id.toString())
+					  )
+					: [];
+			const mediaToDelete = post.media.filter(
+				(item) => !existingMediaIds.includes(item._id.toString())
+			);
+
+			await deleteMediaFromCloudinary(mediaToDelete);
+			post.media = mediaToKeep;
+		}
+
+		// Add new media
+		if (req.files && req.files.length > 0) {
+			try {
+				const newMedia = await uploadMediaToCloudinary(req.files);
+				post.media = [...post.media, ...newMedia];
+			} catch (uploadError) {
+				return sendError(
+					res,
+					500,
+					`Error uploading media: ${uploadError.message}`
+				);
+			}
+		}
+
+		await post.save({ timestamps: false });
+		const updatedPost = await populatePostFields(Post.findById(post._id));
+
+		// Clean up any remaining temp files
+		cleanupTempFiles(tempFilesToCleanup);
+
+		return sendSuccess(res, 200, "Post updated successfully", {
 			data: {
-				post: updatedPost,
+				post: enhancePostWithVirtuals(updatedPost),
 			},
 		});
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error updating post",
+		console.error("Error updating post:", error);
+		cleanupTempFiles(req.files);
+		return sendError(res, 500, "Error updating post", {
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
@@ -217,16 +253,16 @@ exports.deletePost = async (req, res) => {
 			return sendError(res, 403, "You're not authorized to delete this post");
 		}
 
+		// Delete associated media
+		await deleteMediaFromCloudinary(post.media);
 		await post.deleteOne();
-		res.status(200).json({
-			status: "success",
-			message: "Post deleted successfully",
-		});
+
+		// Clean up old temporary files
+		cleanupOldTempFiles();
+
+		return sendSuccess(res, 200, "Post deleted successfully");
 	} catch (error) {
-		console.log(error);
-		res.status(500).json({
-			status: "failed",
-			message: "Error deleting post",
+		return sendError(res, 500, "Error deleting post", {
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
@@ -236,19 +272,13 @@ exports.addComment = async (req, res) => {
 	try {
 		const { commentContent } = req.body;
 		if (!commentContent || commentContent.trim() === "") {
-			return res.status(400).json({
-				status: "failed",
-				message: "Comment Content is required",
-			});
+			return sendError(res, 400, "Comment Content is required");
 		}
 
 		let post = await Post.findById(req.params.id);
 
 		if (!post) {
-			return res.status(404).json({
-				status: "failed",
-				message: "Post not found",
-			});
+			return sendError(res, 404, "Post not found");
 		}
 
 		const newComment = {
@@ -261,16 +291,13 @@ exports.addComment = async (req, res) => {
 
 		post = await populatePostFields(Post.findById(post._id));
 
-		res.status(201).json({
-			status: "success",
+		return sendSuccess(res, 201, "Comment added successfully", {
 			data: {
 				post,
 			},
 		});
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error adding comment",
+		return sendError(res, 500, "Error adding comment", {
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
@@ -280,10 +307,7 @@ exports.deleteComment = async (req, res) => {
 	try {
 		let post = await Post.findById(req.params.id);
 		if (!post) {
-			return res.status(404).json({
-				status: "failed",
-				message: "Post not found",
-			});
+			return sendError(res, 404, "Post not found");
 		}
 
 		const commentIndex = post.comments.findIndex(
@@ -293,10 +317,11 @@ exports.deleteComment = async (req, res) => {
 		);
 
 		if (commentIndex === -1) {
-			return res.status(403).json({
-				status: "failed",
-				message: "Comment not found or you're not authorized to delete it",
-			});
+			return sendError(
+				res,
+				403,
+				"Comment not found or you're not authorized to delete it"
+			);
 		}
 
 		post.comments.splice(commentIndex, 1);
@@ -304,18 +329,102 @@ exports.deleteComment = async (req, res) => {
 
 		post = await populatePostFields(Post.findById(post._id));
 
-		res.status(200).json({
-			status: "success",
-			message: "Comment deleted",
+		return sendSuccess(res, 200, "Comment deleted successfully", {
+			data: {
+				post: enhancePostWithVirtuals(post),
+			},
 		});
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error deleting comment",
-			error: process.env.NODE_ENV === "development" ? error.message : undefined,
-		});
+		return sendError(res, 500, "Error deleting comment");
 	}
 };
+
+exports.addCommentReply = async (req, res) => {
+	try {
+		const { replyContent } = req.body;
+
+		if (!replyContent || replyContent.trim() === "") {
+			return sendError(res, 400, "Reply Content is required");
+		}
+
+		let post = await Post.findById(req.params.id);
+		if (!post) {
+			return sendError(res, 404, "Post not found");
+		}
+
+		const commentIndex = post.comments.findIndex(
+			(c) => c._id.toString() === req.params.commentId
+		);
+
+		if (commentIndex === -1) {
+			return sendError(res, 404, "Comment not found");
+		}
+
+		const newReply = {
+			user: req.user._id,
+			content: replyContent.trim(),
+			replyToUser: req.body.replyToUser || post.comments[commentIndex].user,
+		};
+
+		post.comments[commentIndex].replies =
+			post.comments[commentIndex].replies || [];
+		post.comments[commentIndex].replies.push(newReply);
+		await post.save();
+
+		post = await populatePostFields(Post.findById(post._id));
+
+		return sendSuccess(res, 201, "Reply added successfully", {
+			data: {
+				post,
+			},
+		});
+	} catch (error) {
+		return sendError(res, 500, "Error adding reply");
+	}
+};
+
+exports.deleteCommentReply = async (req, res) => {
+	try {
+		let post = await Post.findById(req.params.id);
+		if (!post) {
+			return sendError(res, 404, "Post not found");
+		}
+
+		const comment = post.comments.find(
+			(c) => c._id.toString() === req.params.commentId
+		);
+		if (!comment) {
+			return sendError(res, 404, "Comment not found");
+		}
+
+		const replyIndex = comment.replies.findIndex(
+			(r) =>
+				r._id.toString() === req.params.replyId &&
+				r.user.toString() === req.user._id.toString()
+		);
+
+		if (replyIndex === -1) {
+			return sendError(
+				res,
+				403,
+				"Reply not found or you're not authorized to delete it"
+			);
+		}
+
+		comment.replies.splice(replyIndex, 1);
+		await post.save();
+		post = await populatePostFields(Post.findById(post._id));
+
+		return sendSuccess(res, 200, "Reply deleted successfully", {
+			data: {
+				post,
+			},
+		});
+	} catch (error) {
+		return sendError(res, 500, "Error deleting reply");
+	}
+};
+
 exports.renewPost = async (req, res) => {
 	try {
 		const post = await Post.findOne({
@@ -325,59 +434,49 @@ exports.renewPost = async (req, res) => {
 		});
 
 		if (!post) {
-			return res.status(404).json({
-				status: "failed",
-				message: "Post not found or you're not authorized to renew it",
-			});
+			return sendError(
+				res,
+				404,
+				"Post not found or you're not authorized to renew it"
+			);
 		}
 
 		if (post.renewalCount >= 3) {
-			return res.status(400).json({
-				status: "failed",
-				message: "Post has reached the maximum number of renewals (3)",
-			});
+			return sendError(
+				res,
+				400,
+				"Post has reached the maximum number of renewals (3)"
+			);
 		}
 
 		const { hours } = req.body;
-		const renewalHours = hours ? parseFloat(hours) : 24;
+		const validation = validateExpirationTime(hours);
 
-		if (isNaN(renewalHours) || renewalHours <= 0 || renewalHours > 168) {
-			return res.status(400).json({
-				status: "failed",
-				message: "Renewal time must be between 1 hour and 168 hours (1 week)",
-			});
+		if (!validation.valid) {
+			return sendError(res, 400, validation.message);
 		}
 
 		const now = new Date();
-		post.expiresAt = new Date(now.getTime() + renewalHours * 60 * 60 * 1000);
+		post.expiresAt = calculateExpirationDate(validation.hours);
 		post.renewalCount += 1;
 		post.renewedAt = now;
 
 		await post.save();
 
 		const updatedPost = await populatePostFields(Post.findById(post._id));
-		const postObj = updatedPost.toObject({ virtuals: true });
-		postObj.isExpired = updatedPost.isExpired;
-		postObj.remainingTime = updatedPost.remainingTime;
-		postObj.expirationProgress = updatedPost.expirationProgress;
 
-		res.status(200).json({
-			status: "success",
-			message: "Post renewed successfully",
+		return sendSuccess(res, 200, "Post renewed successfully", {
 			data: {
-				post: postObj,
+				post: enhancePostWithVirtuals(updatedPost),
 			},
 		});
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error renewing post",
+		return sendError(res, 500, "Error renewing post", {
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
 };
 
-// Increment the views counter for a post
 exports.incrementViews = async (req, res) => {
 	try {
 		const post = await Post.findByIdAndUpdate(
@@ -387,101 +486,75 @@ exports.incrementViews = async (req, res) => {
 		);
 
 		if (!post) {
-			return res.status(404).json({
-				status: "failed",
-				message: "Post not found",
-			});
+			return sendError(res, 404, "Post not found");
 		}
 
-		res.status(200).json({
-			status: "success",
+		return sendSuccess(res, 200, "Post views updated successfully", {
 			data: {
 				views: post.views,
 			},
 		});
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error updating post views",
+		return sendError(res, 500, "Error updating post views", {
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
 };
 
-// Batch increment views for multiple posts
 exports.batchIncrementViews = async (req, res) => {
 	try {
 		const { postIds } = req.body;
 
 		if (!postIds || !Array.isArray(postIds) || postIds.length === 0) {
-			return res.status(400).json({
-				status: "failed",
-				message: "Valid postIds array is required",
-			});
+			return sendError(res, 400, "Valid postIds array is required");
 		}
 
-		// Update the view count for all posts in a single operation
 		const result = await Post.updateMany(
 			{ _id: { $in: postIds } },
 			{ $inc: { views: 1 } }
 		);
 
-		res.status(200).json({
-			status: "success",
-			data: {
-				modifiedCount: result.modifiedCount,
-				message: `Updated views for ${result.modifiedCount} posts`,
-			},
-		});
+		return sendSuccess(
+			res,
+			200,
+			`Updated views for ${result.modifiedCount} posts`,
+			{
+				data: {
+					modifiedCount: result.modifiedCount,
+				},
+			}
+		);
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error updating post views in batch",
+		return sendError(res, 500, "Error updating post views in batch", {
 			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
 };
 
-// Get trending posts based on views and recency
 exports.getTrendingPosts = async (req, res) => {
 	try {
-		// Calculate date 48 hours ago for trending window
 		const trendingWindow = new Date(Date.now() - 48 * 60 * 60 * 1000);
 
-		// Find non-expired posts created within the trending window
 		const posts = await Post.find({
 			createdAt: { $gte: trendingWindow },
-			expiresAt: { $gt: new Date() }, // Only non-expired posts
+			expiresAt: { $gt: new Date() },
 		})
 			.populate({
 				path: "user",
 				select: "username fullName profilePicture",
 			})
-			// Sort by views and creation date only (removed likes)
 			.sort({ views: -1, createdAt: -1 })
-			.limit(5); // Get top 5 trending posts
+			.limit(5);
 
-		// Enhance posts with virtual properties
-		const enhancedPosts = posts.map((post) => {
-			const postObj = post.toObject({ virtuals: true });
-			postObj.isExpired = post.isExpired;
-			postObj.remainingTime = post.remainingTime;
-			postObj.expirationProgress = post.expirationProgress;
-			return postObj;
-		});
+		const enhancedPosts = enhancePostsWithVirtuals(posts);
 
-		res.status(200).json({
-			status: "success",
-			results: enhancedPosts.length,
+		return sendSuccess(res, 200, "Trending posts retrieved successfully", {
 			data: {
 				posts: enhancedPosts,
+				count: enhancedPosts.length,
 			},
 		});
 	} catch (error) {
-		res.status(500).json({
-			status: "failed",
-			message: "Error retrieving trending posts",
-			error: process.env.NODE_ENV === "development" ? error.message : undefined,
-		});
+		return sendError(res, 500, "Error retrieving trending posts");
 	}
 };

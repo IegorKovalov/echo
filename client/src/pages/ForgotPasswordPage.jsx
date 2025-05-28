@@ -3,9 +3,11 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import { useForm } from "../hooks/useForm";
+import LoadingSpinner from "../components/UI/LoadingSpinner";
 
 export default function ForgotPasswordPage() {
-	const { forgotPassword, loading } = useAuth();
+	const { forgotPassword, loading: authLoading } = useAuth();
 	const { showSuccess, showError } = useToast();
 	const [email, setEmail] = useState("");
 	const [formError, setFormError] = useState("");
@@ -33,9 +35,17 @@ export default function ForgotPasswordPage() {
 		}
 	};
 
+	if (authLoading) {
+		return (
+			<div className="flex min-h-screen items-center justify-center bg-gray-950">
+				<LoadingSpinner />
+			</div>
+		);
+	}
+
 	return (
 		<div className="flex min-h-screen flex-col bg-gray-950">
-			<div className="flex flex-1 items-center justify-center p-6 md:p-10">
+			<div className="flex flex-1 items-center justify-center p-10">
 				<div className="w-full max-w-md space-y-8">
 					<div className="space-y-2 text-center">
 						<div className="flex justify-center">
@@ -98,10 +108,10 @@ export default function ForgotPasswordPage() {
 
 							<button
 								type="submit"
-								disabled={loading}
-								className="w-full rounded-md bg-gradient-to-r from-purple-600 to-blue-600 py-2 text-sm font-medium text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-70"
+								disabled={authLoading || form.isSubmitting}
+								className="w-full rounded-md bg-gradient-to-r from-purple-600 to-blue-600 py-2.5 text-sm font-medium text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-70"
 							>
-								{loading ? "Sending..." : "Send Reset Link"}
+								{authLoading || form.isSubmitting ? "Sending..." : "Send Reset Link"}
 							</button>
 						</form>
 					)}

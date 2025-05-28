@@ -13,6 +13,13 @@ const postSchema = new Schema(
 			required: [true, "Post must have content"],
 			trim: true,
 		},
+		media: [
+			{
+				url: { type: String, required: true },
+				type: { type: String, enum: ["image", "video"], required: true },
+				publicId: { type: String, required: true },
+			},
+		],
 		views: {
 			type: Number,
 			default: 0,
@@ -33,6 +40,28 @@ const postSchema = new Schema(
 					type: Date,
 					default: Date.now,
 				},
+				replies: [
+					{
+						user: {
+							type: Schema.Types.ObjectId,
+							ref: "User",
+							required: true,
+						},
+						content: {
+							type: String,
+							required: true,
+							trim: true,
+						},
+						createdAt: {
+							type: Date,
+							default: Date.now,
+						},
+						replyToUser: {
+							type: Schema.Types.ObjectId,
+							ref: "User",
+						},
+					},
+				],
 			},
 		],
 		expiresAt: {
@@ -81,7 +110,7 @@ postSchema.virtual("expirationProgress").get(function () {
 });
 
 postSchema.pre(/^find/, function (next) {
-	if (!this.getQuery().includeExpired) {
+	if (this.getOptions().includeExpired !== true) {
 		this.find({ expiresAt: { $gt: new Date() } });
 	}
 	next();

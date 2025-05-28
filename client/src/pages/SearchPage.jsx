@@ -2,9 +2,11 @@ import { Search, Sparkles, User, Users } from "lucide-react";
 import { useState } from "react";
 import Card from "../components/UI/Card";
 import { useAuth } from "../context/AuthContext";
+import LoadingSpinner from "../components/UI/LoadingSpinner";
+import EmptyState from "../components/UI/EmptyState";
 
 export default function SearchPage() {
-	const { user, loading } = useAuth();
+	const { user, loading: authLoading } = useAuth();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [searchResults, setSearchResults] = useState([]);
 	const [searching, setSearching] = useState(false);
@@ -23,13 +25,10 @@ export default function SearchPage() {
 	};
 
 	// If still loading, show loading state
-	if (loading) {
+	if (authLoading) {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-gray-950">
-				<div className="text-center">
-					<Sparkles className="mx-auto h-12 w-12 animate-pulse text-purple-500" />
-					<p className="mt-4 text-gray-400">Loading...</p>
-				</div>
+				<LoadingSpinner />
 			</div>
 		);
 	}
@@ -70,25 +69,11 @@ export default function SearchPage() {
 					{/* Search Results */}
 					<div className="space-y-4">
 						{searching ? (
-							<div className="text-center py-10">
-								<Sparkles className="mx-auto h-8 w-8 animate-pulse text-purple-500" />
-								<p className="mt-2 text-gray-400">Searching...</p>
+							<div className="py-10">
+								<LoadingSpinner />
 							</div>
 						) : searchQuery && searchResults.length === 0 ? (
-							<Card>
-								<div className="p-8 text-center">
-									<div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gray-800 p-4">
-										<Users className="h-8 w-8 text-gray-600" />
-									</div>
-									<h3 className="text-lg font-medium text-white">
-										No results found
-									</h3>
-									<p className="mt-2 text-gray-400">
-										No matches found for "{searchQuery}". Try different
-										keywords.
-									</p>
-								</div>
-							</Card>
+							<EmptyState message={`No matches found for "${searchQuery}". Try different keywords.`} />
 						) : searchQuery ? (
 							<Card>
 								<div className="p-8 text-center">

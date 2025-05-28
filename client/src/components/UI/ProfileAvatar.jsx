@@ -1,9 +1,3 @@
-/**
- * Reusable profile avatar component that handles:
- * - Image display if available
- * - Fallback to initials with gradient background if no image
- * - Multiple size options
- */
 export default function ProfileAvatar({
 	user = {},
 	size = "md",
@@ -11,6 +5,7 @@ export default function ProfileAvatar({
 }) {
 	// Define size classes
 	const sizeClasses = {
+		"2xs": "h-6 w-6",
 		xs: "h-8 w-8",
 		sm: "h-10 w-10",
 		md: "h-12 w-12",
@@ -22,6 +17,7 @@ export default function ProfileAvatar({
 
 	// Define text size classes for fallback initials
 	const textSizeClasses = {
+		"2xs": "text-[10px]",
 		xs: "text-xs",
 		sm: "text-sm",
 		md: "text-md",
@@ -44,7 +40,7 @@ export default function ProfileAvatar({
 
 	return (
 		<div
-			className={`overflow-hidden rounded-full ${sizeClasses[size]} ${className}`}
+			className={`overflow-hidden rounded-full border border-purple-900/20 ${sizeClasses[size]} ${className} shadow-md shadow-purple-900/10 transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-purple-900/15`}
 		>
 			{user.profilePicture ? (
 				<img

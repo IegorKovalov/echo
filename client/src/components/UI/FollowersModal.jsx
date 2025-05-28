@@ -1,8 +1,34 @@
-import { User, UserCheck, UserPlus, X } from "lucide-react";
+import { Sparkles, User, UserCheck, UserPlus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
+import FollowerService from "../../services/follower.service";
+import { useFollower } from "../../context/FollowerContext";
+import ProfileAvatar from "./ProfileAvatar";
+import LoadingSpinner from "./LoadingSpinner";
+import EmptyState from "./EmptyState";
+import ErrorMessage from "./ErrorMessage";
 
-export default function FollowersModal({ isOpen, onClose, initialTab }) {
+export default function FollowersModal({
+	isOpen,
+	onClose,
+	initialTab,
+	userId,
+}) {
 	const [activeTab, setActiveTab] = useState(initialTab || "followers");
+	const [users, setUsers] = useState([]);
+	const [loading, setLoading] = useState(true);
+	const [fetchError, setFetchError] = useState(null);
+	const [hasMore, setHasMore] = useState(false);
+	const [currentPage, setCurrentPage] = useState(1);
+	const [totalPages, setTotalPages] = useState(1);
+	const [totalCount, setTotalCount] = useState(0);
+
+	const { user } = useAuth();
+	const { showError, showSuccess } = useToast();
+	const { toggleFollow: contextToggleFollow } = useFollower();
+
 	useEffect(() => {
 		if (initialTab) {
 			setActiveTab(initialTab);
@@ -10,33 +36,83 @@ export default function FollowersModal({ isOpen, onClose, initialTab }) {
 	}, [initialTab]);
 
 	const modalRef = useRef(null);
+	useEffect(() => {
+		if (isOpen && userId) {
+			setLoading(true);
+			setUsers([]);
+			setCurrentPage(1);
+			setFetchError(null);
+			fetchUsers(1);
+		}
+	}, [isOpen, userId, activeTab]);
 
-	// Mock data for the placeholder UI
-	const mockFollowers = [
-		{ id: 1, fullName: "Alex Johnson", username: "alexj", profilePicture: "" },
-		{ id: 2, fullName: "Morgan Smith", username: "msmith", profilePicture: "" },
-		{
-			id: 3,
-			fullName: "Jamie Wilson",
-			username: "jwilson",
-			profilePicture: "",
-		},
-		{ id: 4, fullName: "Jordan Lee", username: "jlee", profilePicture: "" },
-		{ id: 5, fullName: "Taylor Swift", username: "tswift", profilePicture: "" },
-	];
+	const fetchUsers = async (page = 1) => {
+		try {
+			if (!userId) return;
+			setLoading(true);
+			setFetchError(null);
 
-	const mockFollowing = [
-		{
-			id: 6,
-			fullName: "Chris Rodriguez",
-			username: "chrisr",
-			profilePicture: "",
-		},
-		{ id: 7, fullName: "Pat Taylor", username: "ptaylor", profilePicture: "" },
-		{ id: 8, fullName: "Casey Brown", username: "cbrown", profilePicture: "" },
-	];
+			let response;
+			if (activeTab === "followers") {
+				response = await FollowerService.getFollowers(userId, page);
+			} else {
+				response = await FollowerService.getFollowing(userId, page);
+			}
 
-	// Close on click outside
+			if (response.status === "success") {
+				const data =
+					activeTab === "followers"
+						? response.data.followers
+						: response.data.following;
+
+				if (page === 1) {
+					setUsers(data);
+				} else {
+					setUsers((prev) => [...prev, ...data]);
+				}
+
+				setTotalCount(response.data.total);
+				setTotalPages(response.data.pages);
+				setHasMore(response.data.hasMore);
+				setCurrentPage(response.data.currentPage);
+			}
+		} catch (error) {
+			console.error(`Error fetching ${activeTab}:`, error);
+			const errorMessage = error.message || `Failed to load ${activeTab}`;
+			setFetchError(errorMessage);
+			showError(errorMessage);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const loadMore = () => {
+		if (hasMore && !loading) {
+			fetchUsers(currentPage + 1);
+		}
+	};
+
+	const handleFollowToggle = async (targetUserId, isFollowing) => {
+		try {
+			const success = await contextToggleFollow(targetUserId, isFollowing);
+
+			if (success) {
+				setUsers((prevUsers) =>
+					prevUsers.map((u) =>
+						u.user._id === targetUserId
+							? { ...u, isFollowing: !isFollowing }
+							: u
+					)
+				);
+			} else {
+				showError("Failed to update follow status from modal.");
+			}
+		} catch (error) {
+			console.error("Error toggling follow in modal:", error);
+			showError(error.message || "Failed to update follow status");
+		}
+	};
+
 	useEffect(() => {
 		const handleClickOutside = (event) => {
 			if (modalRef.current && !modalRef.current.contains(event.target)) {
@@ -52,28 +128,7 @@ export default function FollowersModal({ isOpen, onClose, initialTab }) {
 			document.removeEventListener("mousedown", handleClickOutside);
 		};
 	}, [isOpen, onClose]);
-
-	// Close on escape key
-	useEffect(() => {
-		const handleEsc = (event) => {
-			if (event.key === "Escape") {
-				onClose();
-			}
-		};
-
-		if (isOpen) {
-			document.addEventListener("keydown", handleEsc);
-		}
-
-		return () => {
-			document.removeEventListener("keydown", handleEsc);
-		};
-	}, [isOpen, onClose]);
-
 	if (!isOpen) return null;
-
-	// Get the appropriate user list based on active tab
-	const users = activeTab === "followers" ? mockFollowers : mockFollowing;
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-950/80 backdrop-blur-sm">
@@ -103,6 +158,11 @@ export default function FollowersModal({ isOpen, onClose, initialTab }) {
 							}`}
 						>
 							Followers
+							{totalCount > 0 && activeTab === "followers" && (
+								<span className="ml-1 text-xs text-gray-500">
+									({totalCount})
+								</span>
+							)}
 						</button>
 						<button
 							onClick={() => setActiveTab("following")}
@@ -113,72 +173,91 @@ export default function FollowersModal({ isOpen, onClose, initialTab }) {
 							}`}
 						>
 							Following
+							{totalCount > 0 && activeTab === "following" && (
+								<span className="ml-1 text-xs text-gray-500">
+									({totalCount})
+								</span>
+							)}
 						</button>
 					</div>
 				</div>
 
 				{/* User list */}
 				<div className="max-h-96 overflow-y-auto">
-					{users.length > 0 ? (
+					{loading ? (
+						<LoadingSpinner />
+					) : fetchError ? (
+						<ErrorMessage message={fetchError} />
+					) : users.length > 0 ? (
 						<div>
-							{users.map((user) => (
+							{users.map((item) => (
 								<div
-									key={user.id}
+									key={item.user._id}
 									className="flex items-center justify-between p-4 border-b border-gray-800 hover:bg-gray-800/50"
 								>
-									<div className="flex items-center gap-3">
-										<div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-900/50 to-blue-900/50 flex items-center justify-center">
-											{user.profilePicture ? (
-												<img
-													src={user.profilePicture}
-													alt={user.fullName}
-													className="h-full w-full rounded-full object-cover"
-												/>
-											) : (
-												<User className="h-5 w-5 text-gray-300" />
-											)}
-										</div>
+									<Link
+										to={`/profile/${item.user._id}`}
+										className="flex items-center gap-3"
+									>
+										<ProfileAvatar user={item.user} size="sm" />
 										<div>
-											<p className="font-medium text-white">{user.fullName}</p>
-											<p className="text-xs text-gray-400">@{user.username}</p>
+											<p className="font-medium text-white">
+												{item.user.fullName}
+											</p>
+											<p className="text-xs text-gray-400">
+												@{item.user.username}
+											</p>
 										</div>
-									</div>
+									</Link>
 
-									{/* Follow/Following button - changes based on the active tab */}
-									{activeTab === "followers" ? (
-										<button className="rounded-full border border-purple-500 bg-transparent px-3 py-1 text-xs font-medium text-purple-400 hover:bg-purple-500/10">
+									{/* Follow/Following button - don't show for current user */}
+									{user._id !== item.user._id && (
+										<button
+											onClick={() =>
+												handleFollowToggle(item.user._id, item.isFollowing)
+											}
+											className={`rounded-full border ${
+												item.isFollowing
+													? "border-purple-500 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20"
+													: "border-purple-500 bg-transparent text-purple-400 hover:bg-purple-500/10"
+											} px-3 py-1 text-xs font-medium`}
+										>
 											<span className="flex items-center gap-1">
-												<UserPlus className="h-3 w-3" />
-												Follow
-											</span>
-										</button>
-									) : (
-										<button className="rounded-full bg-purple-500/10 px-3 py-1 text-xs font-medium text-purple-400 hover:bg-purple-500/20">
-											<span className="flex items-center gap-1">
-												<UserCheck className="h-3 w-3" />
-												Following
+												{item.isFollowing ? (
+													<>
+														<UserCheck className="h-3 w-3" />
+														Following
+													</>
+												) : (
+													<>
+														<UserPlus className="h-3 w-3" />
+														Follow
+													</>
+												)}
 											</span>
 										</button>
 									)}
 								</div>
 							))}
+
+							{hasMore && (
+								<div className="p-3 text-center">
+									<button
+										onClick={loadMore}
+										className="text-sm text-purple-400 hover:text-purple-300"
+										disabled={loading}
+									>
+										{loading ? "Loading..." : "Load more"}
+									</button>
+								</div>
+							)}
 						</div>
 					) : (
-						<div className="py-12 text-center">
-							<div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gray-800 p-4">
-								<User className="h-8 w-8 text-gray-600" />
-							</div>
-							<h3 className="text-lg font-medium text-white">
-								{activeTab === "followers"
-									? "No followers yet"
-									: "Not following anyone"}
-							</h3>
-							<p className="mt-2 text-sm text-gray-400">
-								{activeTab === "followers"
-									? "When people follow you, they'll appear here."
-									: "When you follow people, they'll appear here."}
-							</p>
-						</div>
+						<EmptyState 
+							message={activeTab === "followers" 
+								? "This user doesn\'t have any followers yet."
+								: "This user isn\'t following anyone yet."}
+						/>
 					)}
 				</div>
 			</div>

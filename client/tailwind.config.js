@@ -64,10 +64,39 @@ export default {
 					from: { height: "var(--radix-accordion-content-height)" },
 					to: { height: "0" },
 				},
+				"gradient": {
+					"0%, 100%": { backgroundPosition: "0% 50%" },
+					"50%": { backgroundPosition: "100% 50%" },
+				},
+				"pulse-soft": {
+					"0%, 100%": { opacity: 1 },
+					"50%": { opacity: 0.8 },
+				},
+				"shimmer": {
+					"0%": { backgroundPosition: "-200% 0" },
+					"100%": { backgroundPosition: "200% 0" },
+				},
+				"fade-in": {
+					"0%": { opacity: 0 },
+					"100%": { opacity: 1 },
+				},
+				"slide-up": {
+					"0%": { transform: "translateY(10px)", opacity: 0 },
+					"100%": { transform: "translateY(0)", opacity: 1 },
+				},
 			},
 			animation: {
 				"accordion-down": "accordion-down 0.2s ease-out",
 				"accordion-up": "accordion-up 0.2s ease-out",
+				"gradient": "gradient 8s ease infinite",
+				"pulse-soft": "pulse-soft 2s ease-in-out infinite",
+				"shimmer": "shimmer 2s infinite linear",
+				"fade-in": "fade-in 0.3s ease-out",
+				"slide-up": "slide-up 0.3s ease-out",
+			},
+			boxShadow: {
+				'glow-sm': '0 0 10px rgba(147, 51, 234, 0.3)',
+				'glow-md': '0 0 20px rgba(147, 51, 234, 0.4)',
 			},
 		},
 	},

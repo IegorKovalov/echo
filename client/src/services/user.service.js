@@ -4,110 +4,88 @@ const USER_URL = "/users";
 
 const UserService = {
 	getProfile: async () => {
-		const token = localStorage.getItem("token");
-		const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-		const response = await api.get(`${USER_URL}/me`, { headers });
-		return response.data;
+		try {
+			const response = await api.get(`${USER_URL}/me`);
+			return response.data;
+		} catch (error) {
+			console.error("Get profile error:", error);
+			const errorMessage = error.response?.data?.message || "Failed to fetch profile.";
+			throw new Error(errorMessage);
+		}
 	},
 
-	updateProfile: async (userData) => {
-		const token = localStorage.getItem("token");
-		const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-		const response = await api.patch(`${USER_URL}/updateMe`, userData, {
-			headers,
-		});
-		if (response.data.data.user) {
-			localStorage.setItem("user", JSON.stringify(response.data.data.user));
+	getUserProfile: async (userId) => {
+		try {
+			const response = await api.get(`${USER_URL}/${userId}`);
+			return response.data;
+		} catch (error) {
+			console.error(`Get user profile error for ${userId}:`, error);
+			const errorMessage = error.response?.data?.message || "Failed to fetch user profile.";
+			throw new Error(errorMessage);
 		}
-		return response.data;
+	},
+
+	updateMe: async (userData) => {
+		try {
+			const response = await api.patch(`${USER_URL}/updateMe`, userData);
+			return response.data;
+		} catch (error) {
+			console.error("Update profile error:", error);
+			const errorMessage = error.response?.data?.message || "Failed to update profile.";
+			throw new Error(errorMessage);
+		}
 	},
 
 	changePassword: async (passwordCurrent, password, passwordConfirm) => {
-		const token = localStorage.getItem("token");
-		const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-		const response = await api.patch(
-			`${USER_URL}/update-password`,
-			{
-				passwordCurrent,
-				password,
-				passwordConfirm,
-			},
-			{ headers }
-		);
-		if (response.data.token) {
-			localStorage.setItem("token", response.data.token);
+		try {
+			const response = await api.patch(
+				`${USER_URL}/update-password`,
+				{
+					passwordCurrent,
+					password,
+					passwordConfirm,
+				}
+			);
+			// Token handling, if any, should be done by AuthContext after this call succeeds.
+			// if (response.data.token) {
+			// 	localStorage.setItem("token", response.data.token);
+			// }
+			return response.data;
+		} catch (error) {
+			console.error("Change password error:", error);
+			const errorMessage = error.response?.data?.message || "Failed to change password.";
+			throw new Error(errorMessage);
 		}
-		return response.data;
-	},
-
-	updateProfileInfo: async (profileData) => {
-		const token = localStorage.getItem("token");
-		const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-		const response = await api.patch(
-			`${USER_URL}/updateProfileInfo`,
-			profileData,
-			{ headers }
-		);
-		return response.data;
 	},
 
 	updateProfilePicture: async (formData) => {
 		try {
-			const token = localStorage.getItem("token");
 			const response = await api.patch(
 				`${USER_URL}/update-profile-picture`,
 				formData,
 				{
 					headers: {
-						Authorization: `Bearer ${token}`,
 						"Content-Type": "multipart/form-data",
 					},
 				}
 			);
-
-			if (response.data.data.user) {
-				const currentUser = JSON.parse(localStorage.getItem("user"));
-				currentUser.profilePicture = response.data.data.user.profilePicture;
-				localStorage.setItem("user", JSON.stringify(currentUser));
-			}
-
 			return response.data;
 		} catch (error) {
 			console.error("Update profile picture error:", error);
-			throw error;
+			const errorMessage = error.response?.data?.message || "Failed to update profile picture.";
+			throw new Error(errorMessage);
 		}
 	},
 
 	deleteProfilePicture: async () => {
 		try {
-			const token = localStorage.getItem("token");
-			const response = await api.delete(`${USER_URL}/delete-profile-picture`, {
-				headers: {
-					Authorization: `Bearer ${token}`,
-				},
-			});
-
-			if (response.data.data.user) {
-				const currentUser = JSON.parse(localStorage.getItem("user"));
-				currentUser.profilePicture = null;
-				localStorage.setItem("user", JSON.stringify(currentUser));
-			}
-
+			const response = await api.delete(`${USER_URL}/delete-profile-picture`);
 			return response.data;
 		} catch (error) {
 			console.error("Delete profile picture error:", error);
-			throw error;
+			const errorMessage = error.response?.data?.message || "Failed to delete profile picture.";
+			throw new Error(errorMessage);
 		}
-	},
-
-	updateUserInStorage: (userData) => {
-		const currentUser = JSON.parse(localStorage.getItem("user"));
-		const updatedUser = { ...currentUser, ...userData };
-		localStorage.setItem("user", JSON.stringify(updatedUser));
 	},
 };
 

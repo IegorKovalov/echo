@@ -9,9 +9,11 @@ import {
 	Trash2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { usePost } from "../../context/PostContext";
 import { useToast } from "../../context/ToastContext";
 import { useViewTracking } from "../../context/ViewTrackingContext";
-import PostService from "../../services/post.service";
 import Card from "./Card";
 import CommentSection from "./CommentSection";
 import PostForm from "./PostForm";
@@ -25,54 +27,69 @@ export default function PostItem({
 	onRenew,
 	onEdit,
 }) {
+	const { user } = useAuth();
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [isRenewing, setIsRenewing] = useState(false);
 	const [hasTrackedView, setHasTrackedView] = useState(false);
 	const [showComments, setShowComments] = useState(false);
-	const [commentCount, setCommentCount] = useState(post.comments?.length || 0);
 	const [isEditing, setIsEditing] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [showAllMedia, setShowAllMedia] = useState(false);
+
 	const { showSuccess, showError, showInfo } = useToast();
 	const { trackView, getViewCount, initializeViewCount } = useViewTracking();
-	const initializedRef = useRef(false);
+	const { updatePost, deletePost, renewPost, addComment, deleteComment } =
+		usePost();
 
-	// Initialize view count - using the ref to prevent multiple calls
+	const initializedRef = useRef(false);
+	const isOwnPost = user._id === post.user._id;
+	const commentCount = post.comments ? post.comments.length : 0;
+	const isMounted = useRef(true);
+
+	// Add cleanup for the component
 	useEffect(() => {
-		// This will run only once per component mount
+		return () => {
+			isMounted.current = false;
+		};
+	}, []);
+
+	useEffect(() => {
 		if (!initializedRef.current) {
 			initializedRef.current = true;
-			// Initialize with the post's current view count
 			initializeViewCount(post._id, post.views || 0);
 		}
 	}, [post._id, post.views, initializeViewCount]);
 
-	// Update comment count when post comments change
 	useEffect(() => {
-		if (post.comments) {
-			setCommentCount(post.comments.length);
-		}
-	}, [post.comments]);
-
-	// Track view once per component mount using the batch system
-	useEffect(() => {
+		// Only track views once and only for non-expired posts
 		if (!hasTrackedView && !post.expired) {
 			trackView(post._id);
 			setHasTrackedView(true);
 		}
+
+		// No cleanup needed - view tracking is batched at context level
 	}, [post._id, post.expired, hasTrackedView, trackView]);
 
-	// Get the current view count for this post
 	const viewCount = getViewCount(post._id) || post.views || 0;
 
 	const handleDelete = async () => {
 		if (window.confirm("Are you sure you want to delete this post?")) {
 			setIsDeleting(true);
 			try {
-				await onDelete(post._id);
-				showSuccess("Post deleted successfully");
+				if (onDelete) {
+					await onDelete(post._id);
+				} else {
+					await deletePost(post._id);
+				}
 			} catch (error) {
-				showError(error.response?.data?.message || "Failed to delete post");
+				console.error("Error deleting post:", error);
+				if (isMounted.current) {
+					showError("Failed to delete post");
+				}
 			} finally {
-				setIsDeleting(false);
+				if (isMounted.current) {
+					setIsDeleting(false);
+				}
 			}
 		}
 	};
@@ -80,50 +97,68 @@ export default function PostItem({
 	const handleRenew = async () => {
 		setIsRenewing(true);
 		try {
-			await onRenew(post._id);
-			showSuccess("Post renewed for another 24 hours");
+			const renewedPost = await renewPost(post._id);
+			if (onRenew && isMounted.current) {
+				onRenew(post._id);
+			}
+			return renewedPost;
 		} catch (error) {
-			showError(error.response?.data?.message || "Failed to renew post");
+			console.error("Error renewing post:", error);
+			if (isMounted.current) {
+				showError("Failed to renew post");
+			}
 		} finally {
-			setIsRenewing(false);
+			if (isMounted.current) {
+				setIsRenewing(false);
+			}
 		}
 	};
 
 	const handleEdit = async (updatedPostData) => {
+		setIsSubmitting(true);
 		try {
-			const updatedPost = await PostService.updatePost(
-				post._id,
-				updatedPostData
-			);
-			setIsEditing(false);
-			if (onEdit) {
-				onEdit(updatedPost);
+			// Make a copy of the form data entries for debugging
+			if (updatedPostData instanceof FormData) {
+				console.log("Media files in form:", updatedPostData.getAll('media'));
+				console.log("Existing media IDs:", updatedPostData.getAll('existingMediaIds'));
 			}
-			showSuccess("Post updated successfully");
+			
+			const updatedPost = await updatePost(post._id, updatedPostData);
+			if (isMounted.current) {
+				setIsEditing(false);
+				if (onEdit) {
+					onEdit(updatedPost);
+				}
+			}
+			return updatedPost;
 		} catch (error) {
-			showError(error.response?.data?.message || "Failed to update post");
+			console.error("Error updating post:", error);
+			if (isMounted.current) {
+				showError("Failed to update post");
+			}
+		} finally {
+			if (isMounted.current) {
+				setIsSubmitting(false);
+			}
 		}
 	};
 
-	// Handle comment count updates
-	const handleCommentUpdate = (updatedComments) => {
-		setCommentCount(updatedComments.length);
-	};
-
 	const handleShare = () => {
-		// Copy post URL to clipboard
 		const postUrl = `${window.location.origin}/post/${post._id}`;
 		navigator.clipboard
 			.writeText(postUrl)
 			.then(() => {
-				showInfo("Post link copied to clipboard");
+				if (isMounted.current) {
+					showInfo("Post link copied to clipboard");
+				}
 			})
 			.catch(() => {
-				showError("Failed to copy link");
+				if (isMounted.current) {
+					showError("Failed to copy link");
+				}
 			});
 	};
 
-	// Hours left until expiration
 	const getHoursLeft = () => {
 		if (!post.expiresAt) return 0;
 		return Math.ceil(
@@ -131,7 +166,6 @@ export default function PostItem({
 		);
 	};
 
-	// Format date for readability
 	const formatDate = (dateString) => {
 		const date = new Date(dateString);
 		return `${date.toLocaleDateString()} at ${date.toLocaleTimeString([], {
@@ -140,8 +174,8 @@ export default function PostItem({
 		})}`;
 	};
 
-	// Show edit form instead of post content when editing
 	if (isEditing) {
+		console.log("Editing post with media:", post.media);
 		return (
 			<Card className="mb-4">
 				<div className="mb-3 flex items-center justify-between">
@@ -161,127 +195,227 @@ export default function PostItem({
 					user={currentUser}
 					initialContent={post.content}
 					initialDuration={getHoursLeft()}
+					initialMedia={post.media || []}
 					isEditing={true}
 					onSubmit={handleEdit}
+					isSubmitting={isSubmitting}
 				/>
 			</Card>
 		);
 	}
 
 	return (
-		<Card className="mb-4">
-			<div className="mb-3 flex items-center justify-between">
+		<Card className="mb-4 overflow-visible">
+			<div className="mb-4 flex items-center justify-between">
 				<div className="flex items-center gap-3">
 					<ProfileAvatar user={post.user || currentUser} size="sm" />
 					<div>
-						<h3 className="font-medium text-white">
-							{post.user?.fullName || currentUser?.fullName || "User"}
-						</h3>
-						<p className="text-xs text-gray-400">
+						{post.user && post.user._id ? (
+							<Link
+								to={`/profile/${post.user._id}`}
+								className="font-medium text-white hover:text-purple-400 transition-colors duration-200"
+							>
+								{post.user?.fullName || currentUser?.fullName || "User"}
+							</Link>
+						) : (
+							<h3 className="font-medium text-white">
+								{post.user?.fullName || currentUser?.fullName || "User"}
+							</h3>
+						)}
+						<p className="text-xs text-gray-400 mt-0.5">
 							{formatDate(post.createdAt)}
 						</p>
 					</div>
 				</div>
 
 				{!post.expired ? (
-					<div className="flex items-center gap-1 rounded-full bg-purple-900/30 px-2 py-1 text-xs font-medium text-purple-400">
+					<div className="flex items-center gap-1.5 rounded-full bg-purple-900/30 px-3 py-1 text-xs font-medium text-purple-400 shadow-sm border border-purple-900/20">
 						<Clock className="h-3 w-3" />
 						<span>{getHoursLeft()}h left</span>
 					</div>
 				) : (
-					<div className="flex items-center gap-1 rounded-full bg-gray-800 px-2 py-1 text-xs font-medium text-gray-400">
+					<div className="flex items-center gap-1.5 rounded-full bg-gray-800/70 px-3 py-1 text-xs font-medium text-gray-400 border border-gray-800/50">
 						<Clock className="h-3 w-3" />
 						<span>Expired</span>
 					</div>
 				)}
 			</div>
 
-			<p className="mb-4 text-sm text-gray-200">{post.content}</p>
+			{/* Post Content */}
+			<div className="mb-4">
+				<p className="text-white/90 whitespace-pre-wrap break-words">{post.content}</p>
+			</div>
 
-			{post.image && (
-				<img
-					src={post.image}
-					alt="Post"
-					className="mb-4 h-64 w-full rounded-lg object-cover"
-				/>
-			)}
-
-			{showActions && (
-				<div className="flex items-center justify-between border-t border-gray-800 pt-3">
-					<div className="flex gap-4">
-						<button
-							onClick={() => setShowComments(!showComments)}
-							className="flex items-center gap-1 text-xs text-gray-400 hover:text-purple-400"
-						>
-							<MessageCircle className="h-4 w-4" />
-							<span>{commentCount} comments</span>
-							{showComments ? (
-								<ChevronUp className="h-3 w-3" />
-							) : (
-								<ChevronDown className="h-3 w-3" />
+			{/* Post Media - Modern Style */}
+			{post.media && post.media.length > 0 && (
+				<div className="mb-4 overflow-hidden rounded-xl bg-gray-900/30">
+					{post.media.length === 1 ? (
+						<div className="aspect-video relative">
+							{(post.media[0].type === "image" || post.media[0].type?.startsWith("image/")) && (
+								<img
+									src={post.media[0].url}
+									alt="Post media"
+									className="h-full w-full object-cover"
+								/>
 							)}
-						</button>
-
-						<button
-							onClick={handleShare}
-							className="flex items-center gap-1 text-xs text-gray-400 hover:text-purple-400"
-						>
-							<Send className="h-4 w-4" />
-							<span>Share</span>
-						</button>
-
-						<div className="flex items-center gap-1 text-xs text-gray-400">
-							<Eye className="h-4 w-4" />
-							<span>{viewCount} views</span>
-						</div>
-					</div>
-
-					<div className="flex gap-2">
-						{!post.expired && onRenew && (
-							<button
-								onClick={handleRenew}
-								disabled={isRenewing}
-								className="rounded-full bg-gradient-to-r from-purple-600 to-blue-600 px-3 py-1 text-xs font-medium text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-50"
-							>
-								{isRenewing ? "Renewing..." : "Renew"}
-							</button>
-						)}
-
-						{/* Edit button - only show if the post belongs to the current user */}
-						{currentUser && post.user && currentUser._id === post.user._id && (
-							<button
-								onClick={() => setIsEditing(true)}
-								className="rounded-full bg-blue-600/20 p-1 text-blue-400 hover:bg-blue-600/40"
-							>
-								<Edit2 className="h-4 w-4" />
-								<span className="sr-only">Edit</span>
-							</button>
-						)}
-
-						{onDelete &&
-							currentUser &&
-							post.user &&
-							currentUser._id === post.user._id && (
-								<button
-									onClick={handleDelete}
-									disabled={isDeleting}
-									className="rounded-full bg-red-600/20 p-1 text-red-400 hover:bg-red-600/40 disabled:opacity-50"
+							{(post.media[0].type === "video" || post.media[0].type?.startsWith("video/")) && (
+								<video
+									src={post.media[0].url}
+									controls
+									className="h-full w-full object-cover bg-black"
 								>
-									<Trash2 className="h-4 w-4" />
-									<span className="sr-only">Delete</span>
-								</button>
+									Your browser does not support the video tag.
+								</video>
 							)}
-					</div>
+						</div>
+					) : (
+						<>
+							<div className={`grid gap-1 ${
+								showAllMedia && post.media.length > 4 ? 'grid-cols-4' :
+								post.media.length === 2 ? 'grid-cols-2' : 
+								post.media.length === 3 ? 'grid-cols-3' : 
+								'grid-cols-2 grid-rows-2'
+							}`}>
+								{post.media.map((mediaItem, index) => {
+									// Show first 4 in grid view or all if showAllMedia is true
+									if (!showAllMedia && index > 3) return null;
+									if (showAllMedia && index > 4) return null; // Cap at 5 visible items max
+									
+									const isFirstItemInGridOfMany = post.media.length > 3 && index === 0;
+									
+									return (
+										<div
+											key={`media-${mediaItem._id || mediaItem.publicId || index}-${Date.now()}`}
+											className={`overflow-hidden relative ${isFirstItemInGridOfMany ? 'col-span-1 row-span-1' : ''}`}
+										>
+											{(mediaItem.type === "image" || mediaItem.type?.startsWith("image/")) && (
+												<div className="aspect-square">
+													<img
+														src={mediaItem.url}
+														alt={`Post media ${index + 1}`}
+														className="h-full w-full object-cover"
+													/>
+												</div>
+											)}
+											{(mediaItem.type === "video" || mediaItem.type?.startsWith("video/")) && (
+												<div className="aspect-square relative">
+													<video
+														src={mediaItem.url}
+														className="h-full w-full object-cover bg-black"
+													>
+														Your browser does not support the video tag.
+													</video>
+													<div className="absolute inset-0 flex items-center justify-center">
+														<button 
+															onClick={(e) => {
+																e.stopPropagation();
+																// Create a fullscreen modal with the video
+																const modal = document.createElement('div');
+																modal.className = 'fixed inset-0 bg-black/90 z-50 flex items-center justify-center';
+																modal.onclick = () => modal.remove();
+																
+																const videoElement = document.createElement('video');
+																videoElement.src = mediaItem.url;
+																videoElement.className = 'max-h-screen max-w-screen-lg';
+																videoElement.controls = true;
+																videoElement.autoplay = true;
+																
+																modal.appendChild(videoElement);
+																document.body.appendChild(modal);
+															}}
+															className="h-12 w-12 rounded-full bg-black/50 flex items-center justify-center text-white"
+														>
+															<Send className="h-5 w-5 transform rotate-90" />
+														</button>
+													</div>
+												</div>
+											)}
+											{!showAllMedia && post.media.length > 4 && index === 3 && (
+												<div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+													<span className="text-white text-xl font-bold">+{post.media.length - 4}</span>
+												</div>
+											)}
+										</div>
+									);
+								})}
+							</div>
+							{post.media.length > 4 && (
+								<div className="mt-2 px-2 pb-2">
+									<button 
+										onClick={() => setShowAllMedia(!showAllMedia)}
+										className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+									>
+										{showAllMedia ? "Show less" : `Show all ${post.media.length} media items`}
+									</button>
+								</div>
+							)}
+						</>
+					)}
 				</div>
 			)}
 
-			{/* Comments Section */}
+			{/* Post Actions */}
+			<div className="flex items-center justify-between">
+				<div className="flex items-center gap-4">
+					{/* View count */}
+					<div className="flex items-center gap-1 text-gray-400 text-sm">
+						<Eye className="h-4 w-4" />
+						<span>{viewCount}</span>
+					</div>
+
+					{/* Comment button */}
+					<button
+						onClick={() => setShowComments(!showComments)}
+						className="flex items-center gap-1 text-gray-400 hover:text-purple-400 transition-colors duration-200 text-sm"
+					>
+						<MessageCircle className="h-4 w-4" />
+						<span>{commentCount}</span>
+					</button>
+				</div>
+
+				{/* Admin actions */}
+				{showActions && isOwnPost && !post.expired && (
+					<div className="flex items-center gap-2">
+						<button
+							onClick={() => setIsEditing(true)}
+							className="rounded-md bg-gray-800 px-2.5 py-1 text-xs font-medium text-white hover:bg-gray-700 transition-colors duration-200"
+						>
+							<Edit2 className="h-3.5 w-3.5" />
+							<span className="sr-only">Edit</span>
+						</button>
+						<button
+							onClick={handleDelete}
+							disabled={isDeleting}
+							className="rounded-md bg-red-900/30 px-2.5 py-1 text-xs font-medium text-red-400 hover:bg-red-900/50 transition-colors duration-200"
+						>
+							<Trash2 className="h-3.5 w-3.5" />
+							<span className="sr-only">Delete</span>
+						</button>
+					</div>
+				)}
+
+				{/* Renew Post button */}
+				{showActions && post.expired && isOwnPost && (
+					<button
+						onClick={handleRenew}
+						disabled={isRenewing}
+						className="rounded-md bg-gradient-to-r from-purple-600 to-blue-600 px-3 py-1 text-xs font-medium text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-70 transition-colors duration-200"
+					>
+						{isRenewing ? "Renewing..." : "Renew Post"}
+					</button>
+				)}
+			</div>
+
+			{/* Comments section */}
 			{showComments && (
-				<CommentSection
-					post={post}
-					currentUser={currentUser}
-					onCommentUpdate={handleCommentUpdate}
-				/>
+				<div className="mt-4 pt-4 border-t border-gray-800/50">
+					<CommentSection
+						post={post}
+						onAddComment={addComment}
+						onDeleteComment={deleteComment}
+						currentUser={user}
+					/>
+				</div>
 			)}
 		</Card>
 	);

@@ -5,6 +5,7 @@ import {
 	useEffect,
 	useRef,
 	useState,
+	useMemo,
 } from "react";
 import PostService from "../services/post.service";
 
@@ -15,6 +16,8 @@ export const ViewTrackingProvider = ({ children }) => {
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [viewCounts, setViewCounts] = useState({});
 	const initializedPosts = useRef(new Set());
+	const timerRef = useRef(null);
+	const batchSizeThreshold = 5; // Process when we reach this many views
 
 	// Track a post view
 	const trackView = useCallback((postId) => {
@@ -26,7 +29,12 @@ export const ViewTrackingProvider = ({ children }) => {
 			newViews.add(postId);
 			return newViews;
 		});
-	}, []);
+
+		// Process immediately if we've reached the threshold
+		if (pendingViews.size >= batchSizeThreshold) {
+			processBatch();
+		}
+	}, [pendingViews]);
 
 	// Get the view count for a specific post
 	const getViewCount = useCallback(
@@ -36,46 +44,74 @@ export const ViewTrackingProvider = ({ children }) => {
 		[viewCounts]
 	);
 
-	// Process pending views in batch
-	useEffect(() => {
-		const processBatch = async () => {
-			if (pendingViews.size === 0 || isProcessing) return;
+	// Process pending views in batch - extracted as a named function to call directly
+	const processBatch = useCallback(async () => {
+		if (pendingViews.size === 0 || isProcessing) return;
 
-			setIsProcessing(true);
+		setIsProcessing(true);
+		if (timerRef.current) {
+			clearTimeout(timerRef.current);
+			timerRef.current = null;
+		}
 
-			try {
-				const postIds = Array.from(pendingViews);
+		try {
+			const postIds = Array.from(pendingViews);
+			console.log(`Processing batch of ${postIds.length} views`);
 
-				// Send batch request to track views
-				const result = await PostService.batchIncrementViews(postIds);
+			const result = await PostService.batchIncrementViews(postIds);
 
-				if (result.status === "success") {
-					// Clear processed views
-					setPendingViews(new Set());
-
-					// For now, we'll just update the view counts by adding 1 to each
-					// In a real implementation, you might want to fetch updated counts
-					setViewCounts((prev) => {
-						const updated = { ...prev };
-						postIds.forEach((id) => {
-							updated[id] = (updated[id] || 0) + 1;
-						});
-						return updated;
+			// If batchIncrementViews was successful, 'result' contains the success data.
+			// Assuming 'result' has a 'status' field and 'data.updatedCounts' upon success from the service structure.
+			if (result.status === "success" && result.data && result.data.updatedCounts) {
+				setPendingViews(new Set());
+				setViewCounts((prev) => ({
+					...prev,
+					...result.data.updatedCounts
+				}));
+			} else if (result.status === "success") { // Successful but structure might vary (e.g., no updatedCounts)
+				 console.warn("ViewTrackingContext: Batch increment success but no updatedCounts, falling back to local increment.");
+				 setPendingViews(new Set());
+				 setViewCounts((prev) => {
+					const updated = { ...prev };
+					postIds.forEach((id) => {
+						updated[id] = (updated[id] || 0) + 1;
 					});
-				}
-			} catch (error) {
-				console.error("Error processing batch view tracking:", error);
-			} finally {
-				setIsProcessing(false);
+					return updated;
+				});
+			} else {
+				// This case should ideally not be hit if service throws errors or returns a clear success structure.
+				console.warn("ViewTrackingContext: Unexpected result structure from successful batchIncrementViews:", result);	
+			}
+		} catch (error) {
+			console.warn(
+				"ViewTrackingContext: Failed to batch increment views. Message:",
+				error.message || "No specific error message returned from service."
+			);
+			// Pending views are not cleared here, allowing for a retry on the next batch attempt.
+		} finally {
+			setIsProcessing(false);
+		}
+	}, [pendingViews, isProcessing]);
+
+	// Process pending views in batch with a timer
+	useEffect(() => {
+		// Only set a timer if we have pending views and aren't already processing
+		if (pendingViews.size > 0 && !isProcessing && !timerRef.current) {
+			// Create a timer to process batches
+			timerRef.current = setTimeout(() => {
+				processBatch();
+				timerRef.current = null;
+			}, 3000);
+		}
+
+		// Clean up the timer on unmount or when dependencies change
+		return () => {
+			if (timerRef.current) {
+				clearTimeout(timerRef.current);
+				timerRef.current = null;
 			}
 		};
-
-		// Create a timer to process batches every few seconds
-		const timer = setTimeout(processBatch, 3000);
-
-		// Clean up the timer
-		return () => clearTimeout(timer);
-	}, [pendingViews, isProcessing]);
+	}, [pendingViews, isProcessing, processBatch]);
 
 	// Initialize view counts from initial post data - now uses useRef to prevent re-renders
 	const initializeViewCount = useCallback((postId, initialCount) => {
@@ -99,11 +135,22 @@ export const ViewTrackingProvider = ({ children }) => {
 	}, []);
 
 	// Context value - wrap in useMemo to avoid unnecessary re-renders
-	const value = {
+	const value = useMemo(() => ({
 		trackView,
 		getViewCount,
 		initializeViewCount,
-	};
+		processBatchNow: processBatch // Expose the ability to force processing
+	}), [trackView, getViewCount, initializeViewCount, processBatch]);
+
+	// Process any remaining views when unmounting
+	useEffect(() => {
+		return () => {
+			// On unmount, process any pending views before component is destroyed
+			if (pendingViews.size > 0 && !isProcessing) {
+				processBatch();
+			}
+		};
+	}, [pendingViews, isProcessing, processBatch]);
 
 	return (
 		<ViewTrackingContext.Provider value={value}>

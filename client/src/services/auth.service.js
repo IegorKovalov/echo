@@ -4,16 +4,12 @@ const AuthService = {
 	signup: async (userData) => {
 		try {
 			const response = await api.post(`/users/signup`, userData);
-			if (response.data.token) {
-				localStorage.setItem("token", response.data.token);
-				localStorage.setItem("user", JSON.stringify(response.data.data.user));
-			}
 			return response.data;
 		} catch (error) {
 			const errorMessage =
 				error.response?.data?.message ||
 				"Registration failed. Please try again.";
-			console.error("Registration error:", errorMessage);
+			console.error("Registration error:", error);
 			throw new Error(errorMessage);
 		}
 	},
@@ -21,6 +17,7 @@ const AuthService = {
 	login: async (email, password) => {
 		try {
 			const response = await api.post(`/users/login`, { email, password });
+			
 			if (response.data.token) {
 				localStorage.setItem("token", response.data.token);
 				localStorage.setItem("user", JSON.stringify(response.data.data.user));
@@ -30,23 +27,64 @@ const AuthService = {
 			const errorMessage =
 				error.response?.data?.message ||
 				"Login failed. Please check your credentials.";
-			console.error("Login error:", errorMessage);
+			
+			console.error("Login error:", error);
+			
+			const loginError = new Error(errorMessage);
+			if (error.response?.data?.userId) {
+				loginError.isVerificationError = true;
+				loginError.userId = error.response.data.userId;
+			}
+			throw loginError;
+		}
+	},
+	
+	verifyOTP: async (userId, otp) => {
+		try {
+			const response = await api.post(`/users/verify-otp/${userId}`, { otp });
+			
+			if (response.data.token) {
+				localStorage.setItem("token", response.data.token);
+				localStorage.setItem("user", JSON.stringify(response.data.data.user));
+			}
+			
+			return response.data;
+		} catch (error) {
+			const errorMessage =
+				error.response?.data?.message ||
+				"OTP verification failed. Please try again.";
+			console.error("OTP verification error:", error);
+			throw new Error(errorMessage);
+		}
+	},
+	
+	resendOTP: async (userId) => {
+		try {
+			const response = await api.post(`/users/resend-otp/${userId}`);
+			return response.data;
+		} catch (error) {
+			const errorMessage =
+				error.response?.data?.message ||
+				"Failed to resend verification code. Please try again.";
+			console.error("OTP resend error:", error);
 			throw new Error(errorMessage);
 		}
 	},
 
 	logout: async () => {
+		localStorage.removeItem("token");
+		localStorage.removeItem("user");
 		try {
 			await api.get(`/users/logout`);
-			localStorage.removeItem("token");
-			localStorage.removeItem("user");
 			return { success: true };
 		} catch (error) {
-			console.error("Logout error:", error);
-			// Still remove items from localStorage even if API call fails
-			localStorage.removeItem("token");
-			localStorage.removeItem("user");
-			return { success: false, error };
+			console.error("Logout API error:", error);
+			const logoutError = new Error(
+				error.response?.data?.message ||
+				"Server logout may have failed. You have been logged out locally."
+			);
+			logoutError.isLogoutError = true;
+			throw logoutError; 
 		}
 	},
 
@@ -58,7 +96,7 @@ const AuthService = {
 			const errorMessage =
 				error.response?.data?.message ||
 				"Failed to send password reset email. Please try again.";
-			console.error("Forgot password error:", errorMessage);
+			console.error("Forgot password error:", error);
 			throw new Error(errorMessage);
 		}
 	},
@@ -78,7 +116,7 @@ const AuthService = {
 			const errorMessage =
 				error.response?.data?.message ||
 				"Password reset failed. Please try again.";
-			console.error("Reset password error:", errorMessage);
+			console.error("Reset password error:", error);
 			throw new Error(errorMessage);
 		}
 	},

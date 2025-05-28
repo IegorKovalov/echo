@@ -1,93 +1,53 @@
+// client/src/components/UI/CommentSection.jsx
 import { Send } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { usePost } from "../../context/PostContext";
 import { useToast } from "../../context/ToastContext";
-import PostService from "../../services/post.service";
 import CommentItem from "./CommentItem";
 import ProfileAvatar from "./ProfileAvatar";
+import EmptyState from "./EmptyState";
 
-/**
- * Component for displaying and managing comments on a post
- */
-export default function CommentSection({ post, currentUser, onCommentUpdate }) {
-	const [comments, setComments] = useState(post.comments || []);
+export default function CommentSection({
+	post,
+	currentUser,
+	onAddComment,
+	onDeleteComment,
+}) {
 	const [commentContent, setCommentContent] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isExpanded, setIsExpanded] = useState(false);
 	const { showSuccess, showError } = useToast();
+	const postContext = usePost();
+	const comments = post.comments || [];
 
-	// Sync comments with post prop when it changes
-	useEffect(() => {
-		setComments(post.comments || []);
-	}, [post.comments]);
-
-	// Add a new comment
 	const handleAddComment = async (e) => {
 		e.preventDefault();
 		if (!commentContent.trim()) return;
 
 		setIsSubmitting(true);
 		try {
-			const response = await PostService.addComment(
-				post._id,
-				commentContent.trim()
-			);
-
-			if (response.data && response.data.post && response.data.post.comments) {
-				const updatedComments = response.data.post.comments;
-				setComments(updatedComments);
-
-				// Notify parent component that comments have been updated
-				if (onCommentUpdate) {
-					onCommentUpdate(updatedComments);
-				}
-
-				// Show success toast
-				showSuccess("Comment added successfully");
-			}
+			const addCommentFn = onAddComment || postContext.addComment;
+			await addCommentFn(post._id, commentContent.trim());
+			showSuccess("Comment added successfully");
 			setCommentContent("");
 		} catch (error) {
 			console.error("Error adding comment:", error);
-			showError(error.response?.data?.message || "Failed to add comment");
+			showError(error.message || "Failed to add comment");
 		} finally {
 			setIsSubmitting(false);
 		}
 	};
 
-	// Delete a comment
 	const handleDeleteComment = async (postId, commentId) => {
 		try {
-			const response = await PostService.deleteComment(postId, commentId);
-
-			if (response.data && response.data.post && response.data.post.comments) {
-				const updatedComments = response.data.post.comments;
-				setComments(updatedComments);
-
-				// Notify parent component that comments have been updated
-				if (onCommentUpdate) {
-					onCommentUpdate(updatedComments);
-				}
-
-				// Show success toast
-				showSuccess("Comment deleted successfully");
-			} else {
-				// Fallback: Remove the comment locally if API doesn't return updated comments
-				const filteredComments = comments.filter((c) => c._id !== commentId);
-				setComments(filteredComments);
-
-				if (onCommentUpdate) {
-					onCommentUpdate(filteredComments);
-				}
-
-				// Show success toast for the fallback case
-				showSuccess("Comment deleted successfully");
-			}
+			const deleteCommentFn = onDeleteComment || postContext.deleteComment;
+			await deleteCommentFn(postId, commentId);
+			showSuccess("Comment deleted successfully");
 		} catch (error) {
 			console.error("Error deleting comment:", error);
-			showError(error.response?.data?.message || "Failed to delete comment");
+			showError(error.message || "Failed to delete comment");
 		}
 	};
-
-	// Show all comments or just the most recent ones
 	const displayedComments = isExpanded ? comments : comments.slice(-3);
 	const hasMoreComments = comments.length > 3;
 
@@ -102,18 +62,18 @@ export default function CommentSection({ post, currentUser, onCommentUpdate }) {
 						value={commentContent}
 						onChange={(e) => setCommentContent(e.target.value)}
 						placeholder="Add a comment..."
-						className="w-full rounded-full border border-gray-800 bg-gray-800 pl-4 pr-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+						className="w-full rounded-full border border-gray-800/80 bg-gray-900/50 pl-4 pr-12 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 transition-colors duration-200"
 						disabled={isSubmitting}
 					/>
+					<button
+						type="submit"
+						disabled={!commentContent.trim() || isSubmitting}
+						className="absolute right-1.5 top-1.5 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 p-1.5 text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 transition-all duration-200 shadow-sm shadow-purple-900/20"
+					>
+						<Send className="h-4 w-4" />
+						<span className="sr-only">Post comment</span>
+					</button>
 				</div>
-				<button
-					type="submit"
-					disabled={!commentContent.trim() || isSubmitting}
-					className="rounded-full bg-purple-600 p-2.5 text-white hover:bg-purple-700 disabled:opacity-50"
-				>
-					<Send className="h-5 w-5" />
-					<span className="sr-only">Post comment</span>
-				</button>
 			</form>
 
 			{/* Comment list */}
@@ -122,17 +82,17 @@ export default function CommentSection({ post, currentUser, onCommentUpdate }) {
 					{hasMoreComments && !isExpanded && (
 						<button
 							onClick={() => setIsExpanded(true)}
-							className="mb-3 ml-2 text-xs text-purple-400 hover:text-purple-300"
+							className="mb-3 ml-2 text-xs text-purple-400 hover:text-purple-300 transition-colors duration-200 font-medium"
 						>
 							View all {comments.length} comments
 						</button>
 					)}
 
-					<div className="border-t border-gray-800 pt-2">
+					<div className="border-t border-gray-800/50 pt-3">
 						{displayedComments.map((comment) => (
 							<div
 								key={comment._id}
-								className="border-b border-gray-800 last:border-b-0"
+								className="border-b border-gray-800/30 last:border-b-0 hover:bg-gray-800/30 transition-colors duration-200 rounded-md"
 							>
 								<CommentItem
 									comment={comment}
@@ -146,16 +106,16 @@ export default function CommentSection({ post, currentUser, onCommentUpdate }) {
 					{isExpanded && comments.length > 3 && (
 						<button
 							onClick={() => setIsExpanded(false)}
-							className="mt-3 ml-2 mb-2 text-xs text-purple-400 hover:text-purple-300"
+							className="mt-3 ml-2 mb-2 text-xs text-purple-400 hover:text-purple-300 transition-colors duration-200 font-medium"
 						>
 							Show less
 						</button>
 					)}
 				</div>
 			) : (
-				<p className="text-center text-xs text-gray-500 py-4 border-t border-gray-800">
-					Be the first to comment on this post
-				</p>
+				<div className="border-t border-gray-800/50 pt-4 pb-4">
+					<EmptyState message="Be the first to comment on this post" />
+				</div>
 			)}
 		</div>
 	);

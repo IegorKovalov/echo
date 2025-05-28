@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const fs = require("fs");
 const path = require("path");
 
+
 dotenv.config({ path: "./.env" });
 
 const app = require("./app");
@@ -31,7 +32,6 @@ const server = app.listen(port, () => {
 	console.log(`App running on port ${port} in ${process.env.NODE_ENV} mode...`);
 });
 
-// Handle unhandled promise rejections
 process.on("unhandledRejection", (err) => {
 	console.log("UNHANDLED REJECTION! 💥 Shutting down...");
 	console.log(err.name, err.message);

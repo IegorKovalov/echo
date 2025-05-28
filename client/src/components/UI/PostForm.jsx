@@ -1,84 +1,169 @@
-import { Clock, Image, Mic } from "lucide-react";
-import { useState } from "react";
+import { Clock, Image, XCircle } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { useToast } from "../../context/ToastContext";
 import Card from "./Card";
 import ProfileAvatar from "./ProfileAvatar";
 
-/**
- * Reusable form component for creating and editing posts
- */
 export default function PostForm({
 	user,
 	initialContent = "",
-	initialDuration = 24,
+	initialMedia = [],
 	isEditing = false,
 	onSubmit,
 	isSubmitting = false,
 }) {
+	const { showError, showInfo } = useToast();
 	const [content, setContent] = useState(initialContent);
-	const [duration, setDuration] = useState(initialDuration);
-	const [image, setImage] = useState(null);
-	const [imagePreview, setImagePreview] = useState(null);
-	const { showSuccess, showError, showLoading, showInfo } = useToast();
+	const [expirationTime, setExpirationTime] = useState("24");
+	const [mediaItems, setMediaItems] = useState([]);
 
-	const handleImageChange = (e) => {
-		const file = e.target.files[0];
-		if (!file) return;
+	useEffect(() => {
+		setContent(initialContent);
+		const initialExistingMedia = Array.isArray(initialMedia)
+			? initialMedia
+					.filter((item) => {
+						return item && (item.url || item._id);
+					})
+					.map((item) => {
+						let mediaType = item.type;
+						if (!mediaType && item.url) {
+							mediaType = determineMediaTypeFromUrl(item.url);
+						}
 
-		// Check file size (limit to 5MB)
-		if (file.size > 5 * 1024 * 1024) {
-			showError("Image is too large. Maximum size is 5MB.");
+						return {
+							id: item._id || item.id,
+							url: item.url,
+							type: mediaType,
+							isExisting: true,
+							publicId: item.publicId,
+						};
+					})
+			: [];
+		setMediaItems(initialExistingMedia);
+	}, [initialContent, initialMedia]);
+
+	const determineMediaTypeFromUrl = (url) => {
+		if (!url) return "unknown";
+		if (url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) return "image";
+		if (url.match(/\.(mp4|webm|ogg)$/i)) return "video";
+		return "unknown";
+	};
+
+	useEffect(() => {
+		const urlsToRevoke = mediaItems
+			.filter((item) => !item.isExisting && item.previewUrl)
+			.map((item) => item.previewUrl);
+
+		return () => {
+			urlsToRevoke.forEach((url) => URL.revokeObjectURL(url));
+		};
+	}, [mediaItems]);
+
+	const handleFileChange = (e) => {
+		const selectedFiles = Array.from(e.target.files);
+
+		for (const file of selectedFiles) {
+			if (!(file.type.startsWith("image/") || file.type.startsWith("video/"))) {
+				showError("Only images and videos are allowed.");
+				e.target.value = null;
+				return;
+			}
+			if (file.size > 200 * 1024 * 1024) {
+				showError("Each file must be less than 200MB.");
+				e.target.value = null;
+				return;
+			}
+		}
+		if (mediaItems.length + selectedFiles.length > 5) {
+			showError("You can add a maximum of 5 media items per post.");
+			e.target.value = null;
 			return;
 		}
 
-		// Preview image
-		const reader = new FileReader();
-		reader.onloadend = () => {
-			setImagePreview(reader.result);
-		};
-		reader.readAsDataURL(file);
-		setImage(file);
-		showSuccess("Image added successfully");
+		const newMedia = selectedFiles.map((file) => ({
+			file: file,
+			previewUrl: URL.createObjectURL(file),
+			type: file.type,
+			isExisting: false,
+			tempId: Date.now() + Math.random(),
+		}));
+
+		setMediaItems((prevMedia) => [...prevMedia, ...newMedia]);
+		e.target.value = null;
 	};
 
-	const removeImage = () => {
-		setImage(null);
-		setImagePreview(null);
-		showInfo("Image removed");
-	};
+	const removeMedia = useCallback(
+		(itemToRemove) => {
+			setMediaItems((prevMediaItems) => {
+				const newMediaItems = prevMediaItems.filter(
+					(item) => item !== itemToRemove
+				);
+				return newMediaItems;
+			});
+			showInfo("Media removed");
+		},
+		[showInfo]
+	);
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
-
-		if (!content.trim()) return;
-
+		if (!content.trim()) {
+			showInfo("Content cannot be empty.");
+			return;
+		}
 		const formData = new FormData();
 		formData.append("content", content);
-		formData.append("duration", duration);
-		if (image) {
-			formData.append("image", image);
+		formData.append("expirationTime", expirationTime);
+		const existingMediaIdsToKeep = mediaItems
+			.filter((item) => item.isExisting)
+			.map((item) => item.id || item._id)
+			.filter(Boolean);
+		mediaItems.forEach((item) => {
+			if (!item.isExisting && item.file) {
+				formData.append("media", item.file);
+			}
+		});
+		if (isEditing) {
+			if (existingMediaIdsToKeep.length > 0) {
+				existingMediaIdsToKeep.forEach((id) => {
+					formData.append("existingMediaIds", id);
+				});
+			} else {
+				formData.append("existingMediaIds", "");
+			}
 		}
 
 		try {
-			// Use promise-based toast for the submission
-			await showLoading(onSubmit(formData), {
-				loading: isEditing ? "Updating post..." : "Creating post...",
-				success: isEditing
-					? "Post updated successfully!"
-					: "Post created successfully!",
-				error: (err) => `Error: ${err.message || "Something went wrong"}`,
-			});
-
-			// Reset form if not editing
+			await onSubmit(formData);
 			if (!isEditing) {
 				setContent("");
-				setImage(null);
-				setImagePreview(null);
+				setMediaItems([]);
+				setExpirationTime("24");
 			}
 		} catch (error) {
-			// Error is handled by the showLoading toast
-			console.error("Post submission error:", error);
-		}
+			showError(error.message || "Failed to create post. Please try again.");
+		} 
+	};
+
+	// Helper functions for media type checking
+	const isImage = (type) => {
+		return (
+			type === "image" ||
+			type === "image/jpeg" ||
+			type === "image/png" ||
+			type === "image/gif" ||
+			type.startsWith("image/")
+		);
+	};
+
+	const isVideo = (type) => {
+		return (
+			type === "video" ||
+			type === "video/mp4" ||
+			type === "video/webm" ||
+			type === "video/ogg" ||
+			type.startsWith("video/")
+		);
 	};
 
 	return (
@@ -89,86 +174,110 @@ export default function PostForm({
 
 					<div className="flex-1">
 						<textarea
-							className="min-h-[80px] w-full resize-none rounded-lg border border-gray-800 bg-transparent p-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+							className="min-h-[80px] w-full resize-none rounded-lg border border-gray-800/80 bg-gray-900/50 p-3 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 transition-colors duration-200"
 							placeholder={`What's on your mind? It'll disappear in ${
-								duration || 24
+								expirationTime || 24
 							} hours..`}
 							value={content}
 							onChange={(e) => setContent(e.target.value)}
 						/>
 
-						{imagePreview && (
-							<div className="mt-2 relative">
-								<img
-									src={imagePreview}
-									alt="Preview"
-									className="h-48 w-full rounded-lg object-cover"
-								/>
-								<button
-									type="button"
-									onClick={removeImage}
-									className="absolute top-2 right-2 rounded-full bg-gray-900/80 p-1 text-white hover:bg-gray-900"
-								>
-									<span className="sr-only">Remove</span>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										className="h-5 w-5"
-										viewBox="0 0 20 20"
-										fill="currentColor"
-									>
-										<path
-											fillRule="evenodd"
-											d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-											clipRule="evenodd"
-										/>
-									</svg>
-								</button>
+						{mediaItems.length > 0 && (
+							<div className="mt-3 flex flex-wrap gap-2">
+								{mediaItems.map((item, idx) => {
+									const url = item.isExisting ? item.url : item.previewUrl;
+
+									if (!url) return null;
+
+									return (
+										<div
+											key={item.id || item.tempId || idx}
+											className="relative group h-24 w-24 rounded-md overflow-hidden shadow-md"
+										>
+											{isImage(item.type) ? (
+												<img
+													src={url}
+													alt={
+														item.isExisting
+															? "Existing media"
+															: `Preview of ${item.file.name}`
+													}
+													className="h-full w-full object-cover"
+												/>
+											) : isVideo(item.type) ? (
+												<video
+													src={url}
+													controls
+													className="h-full w-full object-cover"
+												/>
+											) : (
+												<div className="h-full w-full bg-gray-800 text-white flex items-center justify-center text-center text-xs p-1">
+													Cannot preview{" "}
+													{item.isExisting
+														? `Media (${item.id})`
+														: item.file.name}
+												</div>
+											)}
+											<button
+												type="button"
+												onClick={() => removeMedia(item)}
+												className="absolute top-1 right-1 rounded-full bg-gray-900/90 text-white hover:bg-gray-900 p-1 transition-all opacity-0 group-hover:opacity-100"
+												aria-label="Remove media"
+											>
+												<XCircle className="h-4 w-4" aria-hidden="true" />
+											</button>
+										</div>
+									);
+								})}
+								{mediaItems.length > 0 && (
+									<p className="w-full mt-1 text-xs text-gray-400">{mediaItems.length} media item(s) selected {mediaItems.length >= 5 && "(Maximum reached)"}</p>
+								)}
 							</div>
 						)}
 
-						<div className="mt-2 flex items-center justify-between">
+						<div className="mt-3 flex items-center justify-between">
 							<div className="flex gap-2">
-								<label className="cursor-pointer rounded-full p-2 hover:bg-gray-800">
+								<label className="cursor-pointer rounded-full p-2 hover:bg-gray-800/70 transition-colors duration-200">
 									<input
 										type="file"
-										accept="image/*"
+										accept="image/*,video/*"
 										className="hidden"
-										onChange={handleImageChange}
+										onChange={handleFileChange}
+										multiple
 									/>
-									<Image className="h-4 w-4 text-gray-500" />
-									<span className="sr-only">Add image</span>
+									<Image
+										className="h-5 w-5 text-purple-400"
+										aria-hidden="true"
+									/>
+									<span className="sr-only">Add media</span>
 								</label>
-
-								<button
-									type="button"
-									className="rounded-full p-2 hover:bg-gray-800"
-								>
-									<Mic className="h-4 w-4 text-gray-500" />
-									<span className="sr-only">Voice note</span>
-								</button>
-
-								<div className="flex items-center gap-1 rounded-lg border border-gray-800 px-2 py-1">
-									<Clock className="h-3 w-3 text-gray-500" />
-									<select
-										className="bg-transparent text-xs text-gray-500"
-										value={duration}
-										onChange={(e) => setDuration(Number(e.target.value))}
-									>
-										<option value={24}>24 hours</option>
-										<option value={48}>48 hours</option>
-										<option value={72}>3 days</option>
-										<option value={168}>7 days</option>
-									</select>
-								</div>
 							</div>
 
-							<button
-								type="submit"
-								disabled={!content.trim() || isSubmitting}
-								className="rounded-full bg-gradient-to-r from-purple-600 to-blue-500 px-4 py-1 text-sm font-medium text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-60"
-							>
-								{isSubmitting ? "Posting..." : isEditing ? "Update" : "Echo"}
-							</button>
+							<div className="flex items-center gap-3">
+								<div className="flex items-center gap-1.5 text-sm">
+									<Clock className="h-4 w-4 text-gray-400" aria-hidden="true" />
+									<span className="text-gray-400">Duration:</span>
+									<select
+										value={expirationTime}
+										onChange={(e) => setExpirationTime(e.target.value)}
+										className="rounded border border-gray-800/80 bg-gray-900/50 px-1.5 py-1 text-sm text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+									>
+										<option value="12">12 hours</option>
+										<option value="24">24 hours</option>
+										<option value="48">48 hours</option>
+										<option value="72">3 days</option>
+										<option value="168">7 days</option>
+									</select>
+								</div>
+
+								<button
+									type="submit"
+									disabled={isSubmitting}
+									className="rounded-md bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:from-purple-700 hover:to-blue-700 transition-all duration-200 disabled:opacity-70"
+								>
+									{isSubmitting ? "Posting..." : isEditing ? "Update" : "Post"}
+								</button>
+							</div>
 						</div>
 					</div>
 				</div>
