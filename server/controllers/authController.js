@@ -63,13 +63,7 @@ exports.login = async (req, res) => {
 };
 
 exports.signup = async (req, res) => {
-  // TEMPORARY TEST - remove after testing
-  return res.status(200).json({
-    status: "success",
-    message: "Signup endpoint reached successfully",
-    method: req.method,
-  });
-	
+  
   try {
     const {
       username,
