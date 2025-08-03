@@ -63,70 +63,77 @@ exports.login = async (req, res) => {
 };
 
 exports.signup = async (req, res) => {
-	try {
-		const {
-			username,
-			email,
-			password,
-			passwordConfirm,
-			fullName,
-			profilePicture,
-		} = req.body;
+  // TEMPORARY TEST - remove after testing
+  return res.status(200).json({
+    status: "success",
+    message: "Signup endpoint reached successfully",
+    method: req.method,
+  });
+	
+  try {
+    const {
+      username,
+      email,
+      password,
+      passwordConfirm,
+      fullName,
+      profilePicture,
+    } = req.body;
 
-		const existingEmail = await User.findOne({ email });
-		if (existingEmail) {
-			return sendError(res, 400, "Email already in use");
-		}
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return sendError(res, 400, "Email already in use");
+    }
 
-		const existingUsername = await User.findOne({ username });
-		if (existingUsername) {
-			return sendError(res, 400, "Username already taken");
-		}
+    const existingUsername = await User.findOne({ username });
+    if (existingUsername) {
+      return sendError(res, 400, "Username already taken");
+    }
 
-		const user = await User.create({
-			username,
-			email,
-			password,
-			passwordConfirm,
-			fullName,
-			profilePicture,
-			isVerified: false,
-		});
+    const user = await User.create({
+      username,
+      email,
+      password,
+      passwordConfirm,
+      fullName,
+      profilePicture,
+      isVerified: false,
+    });
 
-		const otp = user.generateOTP();
-		await user.save({ validateBeforeSave: false });
+    const otp = user.generateOTP();
+    await user.save({ validateBeforeSave: false });
 
-		try {
-			const message = otpEmailTemplate(otp, user.fullName || user.username);
-			await sendEmail({
-				email: user.email,
-				subject: "Your Email Verification Code",
-				message,
-			});
+    try {
+      const message = otpEmailTemplate(otp, user.fullName || user.username);
+      await sendEmail({
+        email: user.email,
+        subject: "Your Email Verification Code",
+        message,
+      });
 
-			return sendSuccess(
-				res,
-				201,
-				"Signup successful! Please check your email for verification code.",
-				{
-					userId: user._id,
-				}
-			);
-		} catch (emailError) {
-			console.error("Failed to send verification email:", emailError);
-			return sendSuccess(
-				res,
-				201,
-				"Account created but failed to send verification email. Please use the resend option.",
-				{
-					status: "partial_success",
-					userId: user._id,
-				}
-			);
-		}
-	} catch (err) {
-		return sendError(res, 400, err.message);
-	}
+      return sendSuccess(
+        res,
+        201,
+        "Signup successful! Please check your email for verification code.",
+        {
+          userId: user._id,
+        }
+      );
+    } catch (emailError) {
+      console.error("Failed to send verification email:", emailError);
+      return sendSuccess(
+        res,
+        201,
+        "Account created but failed to send verification email. Please use the resend option.",
+        {
+          status: "partial_success",
+          userId: user._id,
+        }
+      );
+    }
+  } catch (err) {
+    return sendError(res, 400, err.message);
+  }
 };
 
 exports.logout = (req, res) => {
