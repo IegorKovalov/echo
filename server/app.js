@@ -19,6 +19,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
+      "https://localhost:5173",
       "https://echo-backend-q3g2.onrender.com", // Add your Render URL
     ],
     credentials: true,
