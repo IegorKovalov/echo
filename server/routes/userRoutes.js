@@ -18,7 +18,7 @@ router.post("/verify-otp/:userId", otpController.verifyOTP);
 router.post("/generate-otp/:userId", otpController.generateOTP);
 router.post("/resend-otp/:userId", otpController.resendOTP);
 
-router.use(authController.protect);
+// router.use(authController.protect);
 
 router.use(authController.requireVerification);
 router.get("/me", userController.getMe);
