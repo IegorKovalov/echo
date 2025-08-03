@@ -17,10 +17,10 @@ app.use(morgan("dev"));
 app.use(helmet());
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? process.env.FRONTEND_URL
-        : "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://echo-backend-q3g2.onrender.com", // Add your Render URL
+    ],
     credentials: true,
   })
 );
